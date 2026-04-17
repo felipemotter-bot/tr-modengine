@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record id="view_pricelist_report_wizard_form" model="ir.ui.view">
+        <field name="name">tr.pricelist.report.wizard.form</field>
+        <field name="model">tr.pricelist.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Print Price List">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="condition_id" readonly="1" />
+                            <field name="layout" />
+                            <field name="date_end" />
+                            <field name="discount_display" />
+                        </group>
+                        <group>
+                            <field
+                name="category_ids"
+                widget="many2many_tags"
+                options="{'no_create': True}"
+              />
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button
+            name="action_generate"
+            string="Generate PDF"
+            type="object"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

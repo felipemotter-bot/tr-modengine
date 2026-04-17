@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+
+    Remove the visibility bindings of the native pricelist print entry
+    points. The records themselves stay registered so internal code that
+    invokes them by id keeps working; only the "Print" dropdown is cleaned.
+-->
+<odoo noupdate="1">
+
+    <record id="product.action_product_price_list_report" model="ir.actions.server">
+        <field name="binding_model_id" eval="False" />
+        <field name="binding_view_types" />
+    </record>
+
+    <record
+    id="product.action_product_template_price_list_report"
+    model="ir.actions.server"
+  >
+        <field name="binding_model_id" eval="False" />
+        <field name="binding_view_types" />
+    </record>
+
+</odoo>

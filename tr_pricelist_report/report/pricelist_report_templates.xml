@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <template id="report_pricelist_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure" />
+
+                    <!-- Header -->
+                    <div class="row mb-3">
+                        <div class="col-8">
+                            <h2>
+                                TABELA DE PREÇOS —
+                                <span t-esc="condition.display_name" />
+                            </h2>
+                            <p>
+                                <strong>Cliente:</strong>
+                                <span t-esc="partner.display_name" />
+                                <t t-if="partner.vat"> — CNPJ
+                                    <span t-esc="partner.vat" />
+                                </t>
+                            </p>
+                        </div>
+                        <div class="col-4 text-end">
+                            <p>
+                                <strong>Emissão:</strong>
+                                <span
+                  t-esc="date_issued"
+                  t-options="{'widget': 'date'}"
+                />
+                            </p>
+                            <p>
+                                <strong>Válida até:</strong>
+                                <span t-esc="date_end" t-options="{'widget': 'date'}" />
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Sections -->
+                    <t t-foreach="sections" t-as="section">
+                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
+                            <t t-esc="section['title']" />
+                        </h3>
+                        <table class="table table-sm table-borderless">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #444;">
+                                    <th style="width: 12%;">Código</th>
+                                    <th>Descrição</th>
+                                    <t t-if="discount_display == 'show_discounts'">
+                                        <th
+                      class="text-end"
+                      style="width: 12%;"
+                    >Preço Ref.</th>
+                                        <th
+                      class="text-end"
+                      style="width: 8%;"
+                    >Desc. %</th>
+                                    </t>
+                                    <th class="text-end" style="width: 12%;">Preço</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="section['rows']" t-as="row">
+                                    <tr style="border-bottom: 1px solid #ddd;">
+                                        <td>
+                                            <t
+                        t-esc="row['template'].default_code or ''"
+                      />
+                                        </td>
+                                        <td>
+                                            <strong t-esc="row['template'].name" />
+                                        </td>
+                                        <t t-if="discount_display == 'show_discounts'">
+                                            <td class="text-end">
+                                                <span
+                          t-esc="row['pricing']['reference']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </td>
+                                            <td class="text-end">
+                                                <span
+                          t-esc="row['pricing']['seller_discount']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        />
+                                            </td>
+                                        </t>
+                                        <td class="text-end">
+                                            <strong>
+                                                <span
+                          t-esc="row['pricing']['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    <tr
+                    t-if="len(row['variants']) &gt; 1 or (row['variants'] and row['variants'][0]['code'] != (row['template'].default_code or ''))"
+                  >
+                                        <td />
+                                        <td
+                      t-att-colspan="3 if discount_display == 'show_discounts' else 1"
+                      style="font-size: 0.85em; color: #555;"
+                    >
+                                            <t
+                        t-foreach="row['variants']"
+                        t-as="variant"
+                      ><t t-if="not variant_first">, </t>[<t
+                          t-esc="variant['code']"
+                        />] <t t-esc="variant['label']" /></t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <!-- Variant exceptions -->
+                    <t t-if="variant_exceptions">
+                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
+                            Preços Especiais por Variante
+                        </h3>
+                        <table class="table table-sm table-borderless">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #444;">
+                                    <th style="width: 12%;">Código</th>
+                                    <th>Descrição</th>
+                                    <th class="text-end" style="width: 12%;">Preço</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                  t-foreach="variant_exceptions"
+                  t-as="exc"
+                  style="border-bottom: 1px solid #ddd;"
+                >
+                                    <td t-esc="exc['product'].default_code or ''" />
+                                    <td t-esc="exc['product'].display_name" />
+                                    <td class="text-end">
+                                        <span
+                      t-esc="exc['price_unit']"
+                      t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                    />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <!-- Quantity-tier exceptions -->
+                    <t t-if="qty_exceptions">
+                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
+                            Preços por Quantidade
+                        </h3>
+                        <table class="table table-sm table-borderless">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #444;">
+                                    <th>Produto</th>
+                                    <th
+                    class="text-end"
+                    style="width: 15%;"
+                  >Qtd. Mín.</th>
+                                    <th class="text-end" style="width: 15%;">Preço</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                  t-foreach="qty_exceptions"
+                  t-as="qex"
+                  style="border-bottom: 1px solid #ddd;"
+                >
+                                    <td t-esc="qex['target'].display_name" />
+                                    <td
+                    class="text-end"
+                    t-esc="qex['min_qty']"
+                    t-options="{'widget': 'float', 'precision': 2}"
+                  />
+                                    <td class="text-end">
+                                        <span
+                      t-esc="qex['pricing']['price_unit']"
+                      t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                    />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <!-- Footer: conditions -->
+                    <div class="mt-4">
+                        <h4>Condições Comerciais</h4>
+                        <ul>
+                            <li t-if="condition.payment_term_id">
+                                <strong>Prazo de pagamento:</strong>
+                                <span t-esc="condition.payment_term_id.name" />
+                            </li>
+                            <li t-if="condition.payment_mode_id">
+                                <strong>Modo de pagamento:</strong>
+                                <span t-esc="condition.payment_mode_id.name" />
+                            </li>
+                            <li t-if="condition.incoterm_id">
+                                <strong>Incoterm:</strong>
+                                <span t-esc="condition.incoterm_id.display_name" />
+                            </li>
+                            <li t-if="condition.cash_discount">
+                                Para pagamento à vista, abater
+                                <span
+                  t-esc="condition.cash_discount"
+                  t-options="{'widget': 'float', 'precision': 2}"
+                />% do total.
+                            </li>
+                            <li t-if="condition.fob_discount">
+                                Para retirada FOB, abater
+                                <span
+                  t-esc="condition.fob_discount"
+                  t-options="{'widget': 'float', 'precision': 2}"
+                />% do total.
+                            </li>
+                        </ul>
+                        <p class="text-muted mt-3">
+                            <em>
+                                Preços não incluem tributos, calculados conforme
+                                legislação e operação.
+                            </em>
+                        </p>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

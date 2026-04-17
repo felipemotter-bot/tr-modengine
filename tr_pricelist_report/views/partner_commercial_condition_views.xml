@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record
+    id="view_partner_commercial_condition_form_pricelist_report"
+    model="ir.ui.view"
+  >
+        <field name="name">partner.commercial.condition.form.pricelist.report</field>
+        <field name="model">partner.commercial.condition</field>
+        <field
+      name="inherit_id"
+      ref="tr_commercial_policy.partner_commercial_condition_form"
+    />
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button
+            name="action_print_pricelist"
+            string="Print Price List"
+            type="object"
+            class="btn-primary"
+            attrs="{'invisible': [('pricelist_id', '=', False)]}"
+          />
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
