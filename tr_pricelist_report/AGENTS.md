@@ -56,17 +56,56 @@ que chamam o action por código continuam funcionando.
 
 ## Wizard
 
-`tr.pricelist.report.wizard` (`TransientModel`). Campos PR1:
+`tr.pricelist.report.wizard` (`TransientModel`). Campos:
 
 - `condition_id` — `partner.commercial.condition`, obrigatório.
-- `layout` — selection (PR1: só `por_categoria`).
-- `category_ids` — M2M `product.category`.
+- `layout` — selection `por_categoria` / `geralzao`.
+- `group_axis` — selection `marca` / `categoria`. Exigido quando `layout=geralzao`.
+- `category_ids` — M2M `product.category`. Obrigatório quando `layout=por_categoria`;
+  opcional em `geralzao` (vazio = todo catálogo vendável).
 - `date_end` — validade do PDF; default = hoje + `validity_days`.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
-PRs futuras adicionam: `layout=geralzao` + `group_axis` (PR2), `historico` (PR3),
-`send_by_email` (PR4).
+PRs futuras adicionam: `historico` (PR3) e `send_by_email` (PR4).
+
+## Layouts
+
+### `por_categoria`
+
+- Filtro: vendedor seleciona uma ou mais `product.category` no wizard.
+- Agrupamento: resolvedor único de categoria (ver abaixo), respeita `category_depth`.
+
+### `geralzao`
+
+Escopo: todos os produtos `active` + `sale_ok` da base (ou filtrado por `category_ids`
+se preenchido). Dois sub-modos via `group_axis`:
+
+- **Modo A — `marca`**: particiona pelos valores do atributo configurado em
+  `tr_pricelist_report.group_attribute_name` (default `"MARCA"`). O `post_init_hook`
+  resolve o id do atributo no banco e grava em `tr_pricelist_report.group_attribute_id`.
+  Produtos sem o atributo (ou quando o próprio atributo não existe) caem em seções
+  adicionais ao final via **fallback por categoria** — mesmo resolvedor do Modo B, para
+  não criar duas noções de categoria.
+- **Modo B — `categoria`**: particiona pela categoria no nível configurado por
+  `category_depth`.
+
+## Resolvedor de categoria
+
+`_resolve_grouping_category(product, depth)` devolve a categoria na qual o produto é
+agrupado. Clamping silencioso (nunca levanta):
+
+- `depth = -1` → categoria folha (`product.categ_id`).
+- `depth = -2` → pai da folha. **Default** do módulo.
+- `depth = -N` acima da profundidade do produto → raiz da trilha.
+- `depth = N` positivo → nível absoluto a partir da raiz.
+- `depth = N` acima da profundidade do produto → folha (clamp).
+- `product.categ_id` vazio → recordset vazio; na agregação vira seção com título em
+  branco.
+
+O clamping é **por produto**: cada um é clampado no contexto da sua própria árvore. Um
+catálogo misto de produtos rasos e profundos aceita o mesmo `category_depth` sem
+inconsistência.
 
 ## Consolidação template-first
 
@@ -102,9 +141,15 @@ conversar com o Felipe antes.
 
 ## `ir.config_parameter`
 
-- `tr_pricelist_report.validity_days` (default 30) — criado nesta PR.
-- `tr_pricelist_report.category_depth` (default -1) — criado nesta PR.
-- `tr_pricelist_report.group_attribute_name` / `group_attribute_id` — PR2.
+- `tr_pricelist_report.validity_days` (default 30).
+- `tr_pricelist_report.category_depth` (default `-2`, pai da folha). Aceita `-1`
+  (folha), `-N` (N-ésimo ancestral, clampa à raiz), `N >= 0` (nível absoluto a partir da
+  raiz, clampa à folha).
+- `tr_pricelist_report.group_attribute_name` (default `"MARCA"`) — nome do
+  `product.attribute` usado como eixo do Modo A.
+- `tr_pricelist_report.group_attribute_id` — cache do id do atributo, resolvido pelo
+  `post_init_hook` a partir do nome configurado. Vazio quando nenhum atributo bate (Modo
+  A cai pro fallback por categoria).
 - `tr_pricelist_report.history_months_back` — PR3.
 
 ## Invariante

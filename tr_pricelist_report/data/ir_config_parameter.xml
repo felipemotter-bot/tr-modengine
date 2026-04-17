@@ -12,7 +12,12 @@
 
     <record id="config_category_depth" model="ir.config_parameter">
         <field name="key">tr_pricelist_report.category_depth</field>
-        <field name="value">-1</field>
+        <field name="value">-2</field>
+    </record>
+
+    <record id="config_group_attribute_name" model="ir.config_parameter">
+        <field name="key">tr_pricelist_report.group_attribute_name</field>
+        <field name="value">MARCA</field>
     </record>
 
 </odoo>

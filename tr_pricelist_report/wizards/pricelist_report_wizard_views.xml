@@ -15,6 +15,10 @@
                         <group>
                             <field name="condition_id" readonly="1" />
                             <field name="layout" />
+                            <field
+                name="group_axis"
+                attrs="{'invisible': [('layout', '!=', 'geralzao')], 'required': [('layout', '=', 'geralzao')]}"
+              />
                             <field name="date_end" />
                             <field name="discount_display" />
                         </group>
@@ -23,6 +27,7 @@
                 name="category_ids"
                 widget="many2many_tags"
                 options="{'no_create': True}"
+                attrs="{'required': [('layout', '=', 'por_categoria')]}"
               />
                         </group>
                     </group>
