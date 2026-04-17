@@ -4,6 +4,8 @@
 from collections import defaultdict
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare, float_round
@@ -29,6 +31,7 @@ class PricelistReportWizard(models.TransientModel):
         [
             ("por_categoria", "By Category"),
             ("geralzao", "Full Catalog"),
+            ("historico", "Customer History"),
         ],
         required=True,
         default="por_categoria",
@@ -97,6 +100,13 @@ class PricelistReportWizard(models.TransientModel):
         self.ensure_one()
         if self.layout == "por_categoria" and not self.category_ids:
             raise UserError(_("Pick at least one product category."))
+        if self.layout == "historico" and not self._resolve_history_quantities():
+            raise UserError(
+                _(
+                    "No sales history found for this customer in the "
+                    "configured period."
+                )
+            )
         # ``config=False`` skips the "configure external layout" wizard that
         # Odoo prompts admins with on first use (returns ir.actions.act_window
         # instead of the report). Pricelist printing shouldn't derail on the
@@ -156,6 +166,13 @@ class PricelistReportWizard(models.TransientModel):
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("tr_pricelist_report.category_depth", "-2")
+        )
+
+    def _get_history_months_back(self):
+        return int(
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("tr_pricelist_report.history_months_back", "6")
         )
 
     def _get_group_attribute(self):
@@ -458,6 +475,8 @@ class PricelistReportWizard(models.TransientModel):
           without MARCA fall back to the category partition at the end.
         - ``geralzao`` + ``categoria`` or ``por_categoria`` → partition by
           the category at ``category_depth`` (shared resolver).
+        - ``historico`` uses its own resolver and bypasses this router
+          (see ``_build_sections_from_history``).
         """
         if self.layout == "geralzao" and self.group_axis == "marca":
             return self._build_sections_by_marca(products, rates)
@@ -522,16 +541,111 @@ class PricelistReportWizard(models.TransientModel):
             sections.extend(self._build_sections_by_category(no_marca, rates))
         return sections
 
+    # ------------------------------------------------------------------
+    # Customer-history layout
+    # ------------------------------------------------------------------
+
+    def _resolve_history_quantities(self):
+        """Aggregate the partner's purchased quantity by product.
+
+        Walks ``sale.order.line`` for the condition's partner in the
+        window ``today - history_months_back``. Filters to confirmed or
+        done orders, and to products that are still ``active=True`` and
+        ``sale_ok=True`` (so the report is a recompra tool, not a full
+        audit log).
+
+        Crucially, this path **does not** apply the
+        ``tr_exclude_from_general_pricelist`` filter — the customer
+        already bought the product, and the price for a reorder must be
+        visible even when the category sits under the "production on
+        demand" subtree.
+
+        Returns a dict ``{product.product: qty_in_product_default_uom}``.
+        Line UoMs that differ from the product's default are converted
+        via ``product_uom._compute_quantity`` before aggregation.
+        """
+        months = self._get_history_months_back()
+        if months <= 0:
+            return {}
+        partner = self.condition_id.partner_id
+        threshold = fields.Date.today() - relativedelta(months=months)
+        lines = self.env["sale.order.line"].search(
+            [
+                ("order_id.partner_id", "=", partner.id),
+                ("order_id.state", "in", ("sale", "done")),
+                ("order_id.date_order", ">=", threshold),
+                ("product_id.active", "=", True),
+                ("product_id.sale_ok", "=", True),
+            ]
+        )
+        totals = defaultdict(float)
+        for line in lines:
+            qty = line.product_uom._compute_quantity(
+                line.product_uom_qty, line.product_id.uom_id
+            )
+            totals[line.product_id] += qty
+        return dict(totals)
+
+    def _build_sections_from_history(self, rates):
+        """Build report sections for the customer-history layout.
+
+        One row per purchased variant, grouped by the shared category
+        resolver so sections align with the other layouts' depth
+        setting. No template consolidation — the customer bought each
+        variant specifically, and the report must reflect that.
+        """
+        quantities = self._resolve_history_quantities()
+        depth = self._get_category_depth()
+        by_category = defaultdict(list)
+        for product, qty in quantities.items():
+            grouping = self._resolve_grouping_category(product, depth)
+            pricing = self._compute_pricing(product, rates)
+            by_category[grouping].append(
+                {
+                    "template": product.product_tmpl_id,
+                    "product": product,
+                    "pricing": pricing,
+                    "qty": qty,
+                    "uom_label": product.uom_id.name or "",
+                    # Consolidation doesn't apply here — no inline variants.
+                    "variants": [],
+                }
+            )
+        sections = []
+        for category in sorted(
+            by_category, key=lambda cat: cat.complete_name if cat else ""
+        ):
+            rows = sorted(
+                by_category[category], key=lambda row: row["product"].display_name
+            )
+            sections.append(
+                {
+                    "title": category.name if category else "",
+                    "rows": rows,
+                    "variant_exceptions": [],
+                }
+            )
+        return sections
+
+    # ------------------------------------------------------------------
+    # Entry point used by the report engine
+    # ------------------------------------------------------------------
+
     @api.model
     def _get_report_values(self, docids, data=None):
         wizard = self.browse(docids[0])
-        products = wizard._resolve_products()
         rates = get_policy_rates(self.env)
-        sections = wizard._build_sections(products, rates)
-        variant_exceptions = [
-            exc for section in sections for exc in section["variant_exceptions"]
-        ]
-        qty_exceptions = wizard._resolve_qty_exceptions(products, rates)
+        if wizard.layout == "historico":
+            sections = wizard._build_sections_from_history(rates)
+            variant_exceptions = []
+            qty_exceptions = []
+        else:
+            products = wizard._resolve_products()
+            sections = wizard._build_sections(products, rates)
+            variant_exceptions = [
+                exc for section in sections for exc in section["variant_exceptions"]
+            ]
+            qty_exceptions = wizard._resolve_qty_exceptions(products, rates)
         condition = wizard.condition_id
         partner = condition.partner_id
         return {

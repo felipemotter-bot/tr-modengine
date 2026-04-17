@@ -20,4 +20,9 @@
         <field name="value">MARCA</field>
     </record>
 
+    <record id="config_history_months_back" model="ir.config_parameter">
+        <field name="key">tr_pricelist_report.history_months_back</field>
+        <field name="value">6</field>
+    </record>
+
 </odoo>

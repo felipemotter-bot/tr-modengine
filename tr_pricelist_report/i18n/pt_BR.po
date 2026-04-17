@@ -111,6 +111,11 @@ msgid "Created by"
 msgstr "Criado por"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__layout__historico
+msgid "Customer History"
+msgstr "Histórico do Cliente"
+
+#. module: tr_pricelist_report
 #: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__create_date
 msgid "Created on"
 msgstr "Criado em"
@@ -189,6 +194,15 @@ msgstr "Layout"
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__net_price
 msgid "Net price only"
 msgstr "Somente preço líquido"
+
+#. module: tr_pricelist_report
+#. odoo-python
+#: code:addons/tr_pricelist_report/wizards/pricelist_report_wizard.py:0
+#, python-format
+msgid "No sales history found for this customer in the configured period."
+msgstr ""
+"Nenhum histórico de vendas encontrado para este cliente no período "
+"configurado."
 
 #. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
@@ -293,6 +307,11 @@ msgstr "Produto"
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "Qtd. Mín."
 msgstr "Qtd. Mín."
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Qtd. comprada"
+msgstr "Qtd. comprada"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__show_discounts
