@@ -40,6 +40,33 @@ msgstr ""
 "                            </em>"
 
 #. module: tr_pricelist_report
+#: model:mail.template,body_html:tr_pricelist_report.email_template_pricelist
+msgid ""
+"<div>\n"
+"                <p t-out=\"object.partner_id.name or ''\"></p>\n"
+"                <p>\n"
+"                    Please find attached the up-to-date price list for the\n"
+"                    period configured on your commercial condition.\n"
+"                </p>\n"
+"                <p>\n"
+"                    Let us know if you have any question.\n"
+"                </p>\n"
+"            </div>\n"
+"        "
+msgstr ""
+"<div>\n"
+"                <p t-out=\"object.partner_id.name or ''\"></p>\n"
+"                <p>\n"
+"                    Segue em anexo a tabela de preços atualizada para o\n"
+"                    período configurado na sua condição comercial.\n"
+"                </p>\n"
+"                <p>\n"
+"                    Qualquer dúvida, estamos à disposição.\n"
+"                </p>\n"
+"            </div>\n"
+"        "
+
+#. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "<strong>Cliente:</strong>"
 msgstr "<strong>Cliente:</strong>"
@@ -283,6 +310,11 @@ msgid "Pricelist Report Wizard"
 msgstr "Assistente de Relatório de Lista de Preços"
 
 #. module: tr_pricelist_report
+#: model:mail.template,name:tr_pricelist_report.email_template_pricelist
+msgid "Pricelist Report: Send to Customer"
+msgstr "Relatório de Lista de Preços: Enviar ao Cliente"
+
+#. module: tr_pricelist_report
 #. odoo-python
 #: code:addons/tr_pricelist_report/models/partner_commercial_condition.py:0
 #: code:addons/tr_pricelist_report/models/res_partner.py:0
@@ -312,6 +344,18 @@ msgstr "Qtd. Mín."
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "Qtd. comprada"
 msgstr "Qtd. comprada"
+
+#. module: tr_pricelist_report
+#. odoo-python
+#: code:addons/tr_pricelist_report/wizards/pricelist_report_wizard.py:0
+#, python-format
+msgid "Send Price List"
+msgstr "Enviar Lista de Preços"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__send_by_email
+msgid "Send by email"
+msgstr "Enviar por email"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__show_discounts
@@ -358,3 +402,8 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "— CNPJ"
 msgstr "— CNPJ"
+
+#. module: tr_pricelist_report
+#: model:mail.template,subject:tr_pricelist_report.email_template_pricelist
+msgid "{{ 'Price List - ' + (object.partner_id.name or '') }}"
+msgstr "{{ 'Lista de Preços - ' + (object.partner_id.name or '') }}"
