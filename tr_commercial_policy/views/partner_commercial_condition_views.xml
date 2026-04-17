@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Commercial Condition Form -->
+    <record id="partner_commercial_condition_form" model="ir.ui.view">
+        <field name="name">partner.commercial.condition.form</field>
+        <field name="model">partner.commercial.condition</field>
+        <field name="arch" type="xml">
+            <form string="Commercial Condition">
+                <sheet class="o_partner_commercial_condition">
+                    <group>
+                        <group string="General">
+                            <field name="partner_id" readonly="1" />
+                            <field
+                name="company_id"
+                readonly="1"
+                groups="base.group_multi_company"
+              />
+                            <field name="applicable_profile_id" readonly="1" />
+                            <field name="profile_source" readonly="1" />
+                        </group>
+                        <group string="Pricing">
+                            <field name="pricelist_id" />
+                            <field name="contractual_return" />
+                            <field
+                name="adjustment_factor"
+                attrs="{'invisible': [('contractual_return', '=', 0)]}"
+              />
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Discounts">
+                            <field name="cash_discount" />
+                            <field name="fob_discount" />
+                            <field name="seller_discount" />
+                            <field name="discount_display" />
+                        </group>
+                        <group string="Payment &amp; Delivery">
+                            <field name="payment_term_id" />
+                            <field name="payment_mode_id" />
+                            <field name="incoterm_id" />
+                            <field name="delivery_carrier_id" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Product Lines" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="applied_on" />
+                                    <field
+                    name="product_tmpl_id"
+                    attrs="{'readonly': [('applied_on', '!=', 'product_template')], 'required': [('applied_on', '=', 'product_template')]}"
+                  />
+                                    <field
+                    name="product_id"
+                    attrs="{'readonly': [('applied_on', '!=', 'product')], 'required': [('applied_on', '=', 'product')]}"
+                  />
+                                    <field name="seller_discount" />
+                                    <field name="extra_discount" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="activity_ids" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Commercial Condition Tree -->
+    <record id="partner_commercial_condition_tree" model="ir.ui.view">
+        <field name="name">partner.commercial.condition.tree</field>
+        <field name="model">partner.commercial.condition</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="partner_id" />
+                <field name="pricelist_id" />
+                <field name="contractual_return" />
+                <field name="cash_discount" />
+                <field name="fob_discount" />
+                <field name="seller_discount" />
+                <field name="discount_display" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Commercial Condition Search -->
+    <record id="partner_commercial_condition_search" model="ir.ui.view">
+        <field name="name">partner.commercial.condition.search</field>
+        <field name="model">partner.commercial.condition</field>
+        <field name="arch" type="xml">
+            <search string="Commercial Conditions">
+                <field name="partner_id" />
+                <field name="pricelist_id" />
+                <group expand="0" string="Group By">
+                    <filter
+            name="group_pricelist"
+            string="Pricelist"
+            context="{'group_by': 'pricelist_id'}"
+          />
+                    <filter
+            name="group_display"
+            string="Discount Display"
+            context="{'group_by': 'discount_display'}"
+          />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Commercial Condition Action -->
+    <record id="partner_commercial_condition_action" model="ir.actions.act_window">
+        <field name="name">Commercial Conditions</field>
+        <field name="res_model">partner.commercial.condition</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a commercial condition
+            </p>
+            <p>
+                Commercial conditions define pricelist, contractual return,
+                and default discounts for each customer.
+            </p>
+        </field>
+    </record>
+</odoo>

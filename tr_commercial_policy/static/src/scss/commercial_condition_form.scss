@@ -1,0 +1,5 @@
+// Widen label column in commercial condition form
+// Labels like "Retorno Contratual (%)" and "Método de Entrega" need more than the default 150px
+.o_partner_commercial_condition .o_group > .o_inner_group {
+  grid-template-columns: fit-content(220px) minmax(0, 1fr);
+}

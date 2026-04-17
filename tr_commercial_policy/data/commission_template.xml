@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="commission_formula_template" model="ir.config_parameter">
+        <field name="key">tr.commission_formula_template</field>
+        <field name="value">commission = {rate}
+punctuality_discount = 0.00
+
+if line._name == 'sale.order.line':
+    punctuality_discount = (line.order_id.punctuality_discount/100)
+
+if line._name == 'account.move.line':
+    punctuality_discount = (line.move_id.invoice_punctuality_discount/100)
+
+result = (line.fiscal_amount_untaxed * commission) * (1 - punctuality_discount)</field>
+    </record>
+</odoo>

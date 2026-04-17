@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Save Condition Wizard (General) -->
+    <record id="save_condition_wizard_form" model="ir.ui.view">
+        <field name="name">tr.save.condition.wizard.form</field>
+        <field name="model">tr.save.condition.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Save Conditions to Customer">
+                <group string="General Discounts">
+                    <group>
+                        <field name="order_id" invisible="1" />
+                        <field name="partner_id" />
+                    </group>
+                </group>
+                <group>
+                    <group string="Cash Discount">
+                        <field name="cash_discount_current" />
+                        <field name="cash_discount_new" />
+                        <field name="update_cash_discount" />
+                    </group>
+                    <group string="FOB Discount">
+                        <field name="fob_discount_current" />
+                        <field name="fob_discount_new" />
+                        <field name="update_fob_discount" />
+                    </group>
+                </group>
+                <group>
+                    <group string="Seller Discount (General)">
+                        <field name="seller_discount_current" />
+                        <field name="seller_discount_new" />
+                        <field name="update_seller_discount" />
+                        <field name="all_same_discount" invisible="1" />
+                    </group>
+                </group>
+                <group string="Product Lines with Differences">
+                    <field name="line_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="sale_line_id" invisible="1" />
+                            <field name="product_id" readonly="1" />
+                            <field name="seller_discount_current" readonly="1" />
+                            <field name="seller_discount_new" readonly="1" />
+                            <field name="extra_discount_current" readonly="1" />
+                            <field name="extra_discount_new" readonly="1" />
+                            <field name="save_as" />
+                            <field name="ignore" />
+                        </tree>
+                    </field>
+                </group>
+                <footer>
+                    <button
+            name="action_save"
+            string="Save to Customer"
+            type="object"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Save Condition Line Wizard (Per Line) -->
+    <record id="save_condition_line_wizard_form" model="ir.ui.view">
+        <field name="name">tr.save.condition.line.wizard.form</field>
+        <field name="model">tr.save.condition.line.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Save Line Condition">
+                <group>
+                    <field name="sale_line_id" invisible="1" />
+                    <field name="product_id" />
+                    <field name="product_tmpl_id" invisible="1" />
+                    <field name="source_level" />
+                    <field name="seller_discount_current" />
+                    <field name="seller_discount_new" />
+                    <field name="save_as" widget="radio" />
+                </group>
+                <footer>
+                    <button
+            name="action_save"
+            string="Save"
+            type="object"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Extra Discount Wizard -->
+    <record id="extra_discount_wizard_form" model="ir.ui.view">
+        <field name="name">tr.extra.discount.wizard.form</field>
+        <field name="model">tr.extra.discount.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Extra Discount">
+                <group>
+                    <field name="sale_line_id" invisible="1" />
+                    <field name="product_name" />
+                    <field name="current_extra_discount" />
+                    <field name="extra_discount" />
+                    <field
+            name="extra_discount_reason"
+            placeholder="Reason for extra discount..."
+          />
+                </group>
+                <footer>
+                    <button
+            name="action_apply"
+            string="Apply"
+            type="object"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_extra_discount_wizard" model="ir.actions.act_window">
+        <field name="name">Extra Discount</field>
+        <field name="res_model">tr.extra.discount.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

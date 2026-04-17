@@ -1,0 +1,20 @@
+pyopenssl==22.1.0
+lxml<5.2
+-e git+https://github.com/Engenere/python-sped.git#egg=python-sped
+# Direct dependencies
+odoo-addon-eng_punctuality_discount @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_punctuality_discount
+odoo-addon-engenere_commission @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_commission
+odoo-addon-engenere_dummy_br_coa_dependency @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_dummy_br_coa_dependency
+odoo-addon-trento_sale_usability @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_sale_usability
+odoo-addon-trento_invoice_usability @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_invoice_usability
+# Transitive dependencies of trento_sale_usability
+odoo-addon-eng_sale_first_time_state @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_sale_first_time_state
+odoo-addon-eng_partner_confirmation @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_partner_confirmation
+odoo-addon-engenere_volume_quantity @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_volume_quantity
+odoo-addon-engenere_store_line_br_amounts @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_store_line_br_amounts
+odoo-addon-engenere_l10n_br_fiscal_field_fix @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_l10n_br_fiscal_field_fix
+odoo-addon-engenere_account_invoice_br_discount @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_account_invoice_br_discount
+# Commission modality dependencies
+odoo-addon-engenere_partner_confirmation_usability @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_partner_confirmation_usability
+odoo-addon-engenere_commission_partner_confirmation @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_commission_partner_confirmation
+odoo-addon-engenere_commission_partial_payment @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_commission_partial_payment

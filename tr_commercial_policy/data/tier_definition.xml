@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo noupdate="1">
+    <!-- Manager tier: extra discount within manager limit -->
+    <record id="tier_def_discount_manager" model="tier.definition">
+        <field name="name">Discount approval - Manager</field>
+        <field name="model_id" ref="sale.model_sale_order" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_manager"
+    />
+        <field
+      name="definition_domain"
+    >[["discount_approval_level", "=", "manager"]]</field>
+        <field name="sequence">10</field>
+        <field name="has_comment" eval="True" />
+        <field name="notify_on_create" eval="True" />
+    </record>
+
+    <!-- Director tier: cash/fob/extra above limit / internal band -->
+    <record id="tier_def_discount_director" model="tier.definition">
+        <field name="name">Discount approval - Director</field>
+        <field name="model_id" ref="sale.model_sale_order" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_director"
+    />
+        <field
+      name="definition_domain"
+    >[["discount_approval_level", "=", "director"]]</field>
+        <field name="sequence">20</field>
+        <field name="has_comment" eval="True" />
+        <field name="notify_on_create" eval="True" />
+    </record>
+    <!-- Invoice: Manager tier -->
+    <record id="tier_def_invoice_discount_manager" model="tier.definition">
+        <field name="name">Invoice discount approval - Manager</field>
+        <field name="model_id" ref="account.model_account_move" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_manager"
+    />
+        <field
+      name="definition_domain"
+    >[["discount_approval_level", "=", "manager"]]</field>
+        <field name="sequence">10</field>
+        <field name="has_comment" eval="True" />
+        <field name="notify_on_create" eval="True" />
+    </record>
+
+    <!-- Invoice: Director tier -->
+    <record id="tier_def_invoice_discount_director" model="tier.definition">
+        <field name="name">Invoice discount approval - Director</field>
+        <field name="model_id" ref="account.model_account_move" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_director"
+    />
+        <field
+      name="definition_domain"
+    >[["discount_approval_level", "=", "director"]]</field>
+        <field name="sequence">20</field>
+        <field name="has_comment" eval="True" />
+        <field name="notify_on_create" eval="True" />
+    </record>
+</odoo>

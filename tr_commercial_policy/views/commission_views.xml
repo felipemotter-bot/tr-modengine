@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Commission form: readonly fields when managed by commercial policy -->
+    <record id="commission_form_tr_managed" model="ir.ui.view">
+        <field name="name">commission.form.tr.managed</field>
+        <field name="model">commission</field>
+        <field name="inherit_id" ref="commission.commission_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//widget[@name='web_ribbon']" position="after">
+                <widget
+          name="web_ribbon"
+          title="Managed by Commercial Policy"
+          bg_color="bg-info"
+          attrs="{'invisible': [('tr_managed', '=', False)]}"
+        />
+            </xpath>
+            <field name="name" position="attributes">
+                <attribute name="attrs">
+                    {'readonly': [('tr_managed', '=', True)]}
+                </attribute>
+            </field>
+            <field name="commission_type" position="attributes">
+                <attribute name="attrs">
+                    {'readonly': [('tr_managed', '=', True)]}
+                </attribute>
+            </field>
+            <field name="amount_base_type" position="attributes">
+                <attribute name="attrs">
+                    {'readonly': [('tr_managed', '=', True)]}
+                </attribute>
+            </field>
+            <field name="active" position="after">
+                <field name="tr_managed" invisible="1" />
+                <field
+          name="tr_rate"
+          attrs="{'invisible': [('tr_managed', '=', False)], 'readonly': True}"
+        />
+            </field>
+        </field>
+    </record>
+
+    <!-- Commission form: formula readonly when managed -->
+    <record id="commission_form_formula_readonly" model="ir.ui.view">
+        <field name="name">commission.form.formula.readonly</field>
+        <field name="model">commission</field>
+        <field name="inherit_id" ref="commission_formula.commission_form" />
+        <field name="arch" type="xml">
+            <field name="formula" position="attributes">
+                <attribute name="attrs">
+                    {'invisible': [('commission_type', '!=', 'formula')],
+                     'readonly': [('tr_managed', '=', True)]}
+                </attribute>
+            </field>
+        </field>
+    </record>
+
+    <!-- Commission tree: show tr_rate column -->
+    <record id="commission_tree_tr_managed" model="ir.ui.view">
+        <field name="name">commission.tree.tr.managed</field>
+        <field name="model">commission</field>
+        <field name="inherit_id" ref="commission.commission_tree" />
+        <field name="arch" type="xml">
+            <field name="amount_base_type" position="after">
+                <field name="tr_managed" optional="hide" />
+                <field name="tr_rate" optional="hide" />
+            </field>
+        </field>
+    </record>
+</odoo>

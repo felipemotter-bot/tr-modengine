@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="product_category_form_inherit" model="ir.ui.view">
+        <field name="name">product.category.form.inherit.commercial.policy</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="after">
+                <group
+          string="Commercial Policy"
+          groups="tr_commercial_policy.group_sales_director"
+        >
+                    <field name="allow_manual_price_edit" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

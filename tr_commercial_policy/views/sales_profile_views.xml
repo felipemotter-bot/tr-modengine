@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Sales Profile Form -->
+    <record id="tr_sales_profile_form" model="ir.ui.view">
+        <field name="name">tr.sales.profile.form</field>
+        <field name="model">tr.sales.profile</field>
+        <field name="arch" type="xml">
+            <form string="Sales Profile">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Profile Name" />
+                        </h1>
+                    </div>
+                    <field name="company_id" invisible="1" />
+                    <group>
+                        <group string="General">
+                            <field name="profile_type" />
+                            <field name="pricelist_ids" widget="many2many_tags" />
+                            <field name="active" />
+                            <field
+                name="company_id"
+                groups="base.group_multi_company"
+              />
+                        </group>
+                        <group string="Discount Limits">
+                            <separator string="FOB Discount" />
+                            <field name="fob_discount_max" />
+                            <separator string="Cash Discount" />
+                            <field name="cash_discount_max" />
+                            <field name="cash_term_avg_days_max" />
+                            <field name="payment_mode_ids" widget="many2many_tags" />
+                            <separator string="Extra Discount Approval" />
+                            <field name="manager_extra_limit" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Rules" name="rules">
+                            <field name="rule_ids">
+                                <tree>
+                                    <field name="sequence" widget="handle" />
+                                    <field name="applied_on" />
+                                    <field
+                    name="product_id"
+                    attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+                  />
+                                    <field
+                    name="product_tmpl_id"
+                    attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+                  />
+                                    <field
+                    name="categ_id"
+                    attrs="{'invisible': [('applied_on', '!=', 'category')]}"
+                  />
+                                    <field name="seller_discount_max" />
+                                    <field name="bands_summary" />
+                                </tree>
+                                <form string="Rule">
+                                    <group>
+                                        <group>
+                                            <field name="applied_on" />
+                                            <field
+                        name="product_id"
+                        attrs="{'invisible': [('applied_on', '!=', 'product')], 'required': [('applied_on', '=', 'product')]}"
+                      />
+                                            <field
+                        name="product_tmpl_id"
+                        attrs="{'invisible': [('applied_on', '!=', 'product_template')], 'required': [('applied_on', '=', 'product_template')]}"
+                      />
+                                            <field
+                        name="categ_id"
+                        attrs="{'invisible': [('applied_on', '!=', 'category')], 'required': [('applied_on', '=', 'category')]}"
+                      />
+                                            <field name="seller_discount_max" />
+                                        </group>
+                                    </group>
+                                    <notebook>
+                                        <page
+                      string="Commission Bands"
+                      name="commission_bands"
+                      attrs="{'invisible': [('parent.profile_type', '!=', 'agent')]}"
+                    >
+                                            <field name="commission_band_ids">
+                                                <tree editable="bottom">
+                                                    <field name="discount_up_to" />
+                                                    <field name="commission_rate" />
+                                                </tree>
+                                            </field>
+                                        </page>
+                                        <page
+                      string="Order Value Bands"
+                      name="order_bands"
+                      attrs="{'invisible': [('parent.profile_type', '!=', 'internal')]}"
+                    >
+                                            <field name="order_value_band_ids">
+                                                <tree editable="bottom">
+                                                    <field name="order_min_amount" />
+                                                    <field name="seller_discount_max" />
+                                                </tree>
+                                            </field>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Sales Profile Tree -->
+    <record id="tr_sales_profile_tree" model="ir.ui.view">
+        <field name="name">tr.sales.profile.tree</field>
+        <field name="model">tr.sales.profile</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="profile_type" />
+                <field name="pricelist_ids" widget="many2many_tags" optional="show" />
+                <field name="cash_discount_max" />
+                <field name="fob_discount_max" />
+                <field name="manager_extra_limit" />
+                <field name="active" invisible="1" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Sales Profile Search -->
+    <record id="tr_sales_profile_search" model="ir.ui.view">
+        <field name="name">tr.sales.profile.search</field>
+        <field name="model">tr.sales.profile</field>
+        <field name="arch" type="xml">
+            <search string="Sales Profiles">
+                <field name="name" />
+                <field name="profile_type" />
+                <filter
+          name="agent"
+          string="Agent"
+          domain="[('profile_type', '=', 'agent')]"
+        />
+                <filter
+          name="internal"
+          string="Internal"
+          domain="[('profile_type', '=', 'internal')]"
+        />
+                <separator />
+                <filter
+          name="inactive"
+          string="Archived"
+          domain="[('active', '=', False)]"
+        />
+            </search>
+        </field>
+    </record>
+
+    <!-- Sales Profile Action -->
+    <record id="tr_sales_profile_action" model="ir.actions.act_window">
+        <field name="name">Sales Profiles</field>
+        <field name="res_model">tr.sales.profile</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a sales profile
+            </p>
+            <p>
+                Sales profiles define discount limits, commission bands
+                and approval thresholds for salespeople and agents.
+            </p>
+        </field>
+    </record>
+</odoo>

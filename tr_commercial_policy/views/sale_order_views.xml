@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Sale Order Form: add commercial policy fields -->
+    <record id="sale_order_form_commercial_policy" model="ir.ui.view">
+        <field name="name">sale.order.form.commercial.policy</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="priority">110</field>
+        <field name="arch" type="xml">
+            <!-- Warning banner when partner has no commercial condition -->
+            <xpath expr="//div[hasclass('alert-warning')]" position="after">
+                <div
+          class="alert alert-danger mb-1"
+          role="alert"
+          attrs="{'invisible': [('commercial_condition_warning', '=', False)]}"
+        >
+                    <field name="commercial_condition_warning" />
+                </div>
+                <div
+          class="alert alert-warning mb-1"
+          role="alert"
+          attrs="{'invisible': [('pricelist_warning', '=', False)]}"
+        >
+                    <field name="pricelist_warning" />
+                </div>
+                <div
+          class="alert alert-warning mb-1"
+          role="alert"
+          attrs="{'invisible': [('unmanaged_commission_warning', '=', False)]}"
+        >
+                    <field name="unmanaged_commission_warning" />
+                </div>
+                <field name="validation_status" invisible="1" />
+                <div
+          class="alert alert-secondary mb-1"
+          role="alert"
+          attrs="{'invisible': ['|', ('discount_approval_snapshot', '=', False), ('validation_status', '=', 'validated')]}"
+        >
+                    <strong>Discount approval required:</strong>
+                    <field name="discount_approval_snapshot" widget="text" />
+                </div>
+            </xpath>
+
+            <!-- === Hidden fields for attrs access (before payment_term to not
+                 break payment_term → payment_mode adjacency) === -->
+            <xpath expr="//field[@name='payment_term_id']" position="before">
+                <field
+          name="sales_profile_id"
+          groups="tr_commercial_policy.group_sales_manager,tr_commercial_policy.group_sales_director"
+        />
+                <field name="commercial_condition_id" invisible="1" />
+            </xpath>
+
+            <!-- Commercial condition stat button in button_box (before Preview) -->
+            <xpath
+        expr="//div[@name='button_box']/button[@name='action_preview_sale_order']"
+        position="before"
+      >
+                <button
+          name="action_view_commercial_condition"
+          type="object"
+          class="oe_stat_button"
+          icon="fa-file-text-o"
+          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+        >
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Commercial</span>
+                        <span class="o_stat_text">Condition</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Hide usability's pricelist field, replace with pricelist + reload button -->
+            <xpath
+        expr="//group[@name='order_details']/field[@name='pricelist_id'][@groups='product.group_product_pricelist'][@readonly='1']"
+        position="replace"
+      >
+                <label for="pricelist_id" groups="product.group_product_pricelist" />
+                <div class="o_row" groups="product.group_product_pricelist">
+                    <field
+            name="pricelist_id"
+            readonly="1"
+            options="{'no_open': True, 'no_create': True}"
+          />
+                    <button
+            name="action_reload_conditions"
+            string="Reload Commercial Conditions"
+            type="object"
+            class="btn-link py-0 my-0"
+            icon="fa-refresh"
+            attrs="{'invisible': [('state', 'not in', ['draft', 'sent'])]}"
+          />
+                </div>
+            </xpath>
+
+            <!-- Contractual return after pricelist row (visible when > 0) -->
+            <xpath
+        expr="//group[@name='order_details']/div[hasclass('o_row')][@groups='product.group_product_pricelist']"
+        position="after"
+      >
+                <field name="punctuality_discount" invisible="1" />
+                <label
+          for="contractual_return"
+          string="Contractual Return"
+          attrs="{'invisible': [('contractual_return', '=', 0)]}"
+        />
+                <div
+          class="d-flex align-items-center gap-1"
+          attrs="{'invisible': [('contractual_return', '=', 0)]}"
+        >
+                    <field name="contractual_return" class="oe_inline" readonly="1" /> %
+                    <span class="text-muted">
+                        (+<field
+              name="adjustment_factor"
+              class="oe_inline"
+              readonly="1"
+            />% on base price)
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Cash/FOB discounts in partner details -->
+            <xpath expr="//group[@name='partner_details']" position="inside">
+                <field name="amount_financial_total" invisible="1" />
+                <field
+          name="cash_discount"
+          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+          widget="order_discount_calculator"
+        />
+                <field
+          name="fob_discount"
+          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+        />
+            </xpath>
+
+            <!-- Save Condition and Request Approval buttons -->
+            <xpath expr="//button[@name='action_confirm']" position="before">
+                <button
+          name="action_open_save_condition_wizard"
+          string="Save Conditions"
+          type="object"
+          class="btn-secondary"
+          attrs="{'invisible': [('state', '!=', 'draft')]}"
+        />
+            </xpath>
+
+            <!-- price_unit and discount are always computed — never editable (policy 4.1) -->
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='price_unit']"
+        position="attributes"
+      >
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='discount']"
+        position="attributes"
+      >
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <!-- Add discount fields to order line tree (optional hide) -->
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='price_unit']"
+        position="before"
+      >
+                <field name="base_price" optional="hide" />
+                <field name="reference_price" optional="hide" />
+            </xpath>
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='discount']"
+        position="before"
+      >
+                <field name="seller_discount" optional="hide" />
+                <field name="extra_discount" optional="hide" />
+                <field name="seller_discount_max" invisible="True" />
+                <field name="commission_rate" optional="hide" />
+            </xpath>
+
+            <!-- Save condition button in tree (after price_unit) -->
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='price_unit']"
+        position="after"
+      >
+                <field name="discount_changed" invisible="1" />
+                <button
+          name="action_open_save_condition_line_wizard"
+          type="object"
+          icon="fa-save"
+          title="Save condition to customer"
+          class="btn-link btn-sm p-0"
+          attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+        />
+            </xpath>
+
+            <!-- Hide original price_unit (shown inside our custom price row) -->
+            <xpath
+        expr="//field[@name='order_line']/form//field[@name='price_unit']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Pricing and discount fields before discount label (outside div) -->
+            <xpath
+        expr="//field[@name='order_line']/form//label[@for='discount']"
+        position="before"
+      >
+                <!-- Hidden field for attrs access (no group restriction) -->
+                <field name="contractual_return" invisible="1" />
+
+                <!-- Base price (managers/directors only, when contractual return exists) -->
+                <field
+          name="base_price"
+          readonly="1"
+          groups="tr_commercial_policy.group_sales_manager"
+          attrs="{'invisible': [('contractual_return', '=', 0)]}"
+        />
+                <label
+          for="contractual_return"
+          string="Contractual Return"
+          groups="tr_commercial_policy.group_sales_director"
+          attrs="{'invisible': [('contractual_return', '=', 0)]}"
+        />
+                <div
+          class="o_row"
+          groups="tr_commercial_policy.group_sales_director"
+          attrs="{'invisible': [('contractual_return', '=', 0)]}"
+        >
+                    <field name="contractual_return" class="oe_inline" readonly="1" /> %
+                    <span class="text-muted">
+                        (+<field
+              name="adjustment_factor"
+              class="oe_inline"
+              readonly="1"
+            />% on base price)
+                    </span>
+                </div>
+
+                <!-- Reference price → Unit price (everyone) -->
+                <label for="price_unit" string="Unit Price" />
+                <div class="o_row">
+                    <span class="text-muted small">
+                        <field name="reference_price" class="oe_inline" readonly="1" />
+                        →
+                    </span>
+                    <span class="tr_price_actions">
+                        <field
+              name="price_unit"
+              class="oe_inline fw-bold"
+              readonly="1"
+            />
+                        <field
+              name="reference_price"
+              widget="price_calculator_button"
+              attrs="{'invisible': [('parent.state', 'not in', ['draft', 'sent'])]}"
+            />
+                        <button
+              name="action_open_save_condition_line_wizard"
+              string="Save"
+              type="object"
+              class="btn-link btn-sm p-0 text-nowrap"
+              icon="fa-save"
+              title="Save condition to customer"
+              attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+            />
+                    </span>
+                </div>
+
+                <!-- Seller discount + extra discount button -->
+                <field name="extra_discount_reason" invisible="1" />
+                <field name="discount_changed" invisible="1" />
+                <label for="seller_discount" string="Seller Discount" />
+                <div name="seller_discount" class="o_row">
+                    <field name="seller_discount_max" invisible="1" />
+                    <field
+            name="seller_discount"
+            class="oe_inline"
+            style="max-width: 60px;"
+          /> %
+                    <span
+            class="text-muted"
+            attrs="{'invisible': [('seller_discount_max', '=', 0)]}"
+          >
+                        (max: <field
+              name="seller_discount_max"
+              class="oe_inline"
+              readonly="1"
+            /> %)
+                    </span>
+                    <span class="tr_discount_actions">
+                        <field
+              name="extra_discount"
+              widget="extra_discount_popover"
+              attrs="{'invisible': [('parent.state', 'not in', ['draft', 'sent'])]}"
+            />
+                    </span>
+                </div>
+
+                <!-- Extra discount details (visible only when > 0) -->
+                <label
+          for="total_seller_extra_discount"
+          string="Total Discount"
+          style="white-space: nowrap;"
+          attrs="{'invisible': [('extra_discount', '=', 0)]}"
+        />
+                <div class="o_row" attrs="{'invisible': [('extra_discount', '=', 0)]}">
+                    <field
+            name="total_seller_extra_discount"
+            class="oe_inline"
+            readonly="1"
+            style="max-width: 60px;"
+          /> %
+                    <button
+            name="action_clear_extra_discount"
+            type="object"
+            class="btn-link btn-sm text-danger"
+            icon="fa-times"
+            title="Remove extra discount"
+            attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('id', '=', False)]}"
+          />
+                </div>
+            </xpath>
+
+            <!-- Commission rate in right column (visible for agent profiles) -->
+            <xpath
+        expr="//field[@name='order_line']/form//field[@name='cfop_id']"
+        position="after"
+      >
+                <field name="profile_type" invisible="1" />
+                <field
+          name="commission_rate"
+          readonly="1"
+          attrs="{'invisible': [('profile_type', '!=', 'agent')]}"
+        />
+            </xpath>
+
+            <!-- Hide original discount fields (managed by seller/extra discount) -->
+            <xpath
+        expr="//field[@name='order_line']/form//label[@for='discount']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='order_line']/form//div[@name='discount']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Hide discount_fixed checkbox (l10n_br_sale) -->
+            <xpath
+        expr="//field[@name='order_line']/form//field[@name='discount_fixed'][@groups='l10n_br_sale.group_total_discount']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Hide discount_value label and div (l10n_br_sale) -->
+            <xpath
+        expr="//field[@name='order_line']/form//label[@for='discount_value']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='order_line']/form//div[@name='discount_value']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Hide original discount_rate group from l10n_br_sale (field + %% text) -->
+            <xpath expr="//label[@for='discount_rate']/.." position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Show discount_rate as Order Discount after cash/fob -->
+            <xpath
+        expr="//group[@name='partner_details']//field[@name='fob_discount']"
+        position="after"
+      >
+                <field
+          name="discount_rate"
+          readonly="1"
+          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+        />
+            </xpath>
+
+            <!-- Replace commission module buttons with policy-aware recalculate -->
+            <xpath
+        expr="//group[@name='group_recompute_commission']"
+        position="replace"
+      >
+                <group name="group_recompute_commission">
+                    <button
+            name="action_recalculate_commissions"
+            type="object"
+            string="Recalculate Commissions"
+            states="draft,sent"
+          />
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

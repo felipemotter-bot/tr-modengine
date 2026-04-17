@@ -1,0 +1,20 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sales_profile_user,tr.sales.profile user,model_tr_sales_profile,base.group_user,1,0,0,0
+access_sales_profile_director,tr.sales.profile director,model_tr_sales_profile,group_sales_director,1,1,1,1
+access_sales_profile_rule_user,tr.sales.profile.rule user,model_tr_sales_profile_rule,base.group_user,1,0,0,0
+access_sales_profile_rule_director,tr.sales.profile.rule director,model_tr_sales_profile_rule,group_sales_director,1,1,1,1
+access_commission_band_user,tr.sales.profile.commission.band user,model_tr_sales_profile_commission_band,base.group_user,1,0,0,0
+access_commission_band_director,tr.sales.profile.commission.band director,model_tr_sales_profile_commission_band,group_sales_director,1,1,1,1
+access_order_band_user,tr.sales.profile.order.band user,model_tr_sales_profile_order_band,base.group_user,1,0,0,0
+access_order_band_director,tr.sales.profile.order.band director,model_tr_sales_profile_order_band,group_sales_director,1,1,1,1
+access_commercial_condition_user,partner.commercial.condition user,model_partner_commercial_condition,base.group_user,1,1,1,0
+access_commercial_condition_manager,partner.commercial.condition manager,model_partner_commercial_condition,group_sales_manager,1,1,1,1
+access_commercial_condition_line_user,partner.commercial.condition.line user,model_partner_commercial_condition_line,base.group_user,1,1,1,1
+access_commercial_condition_line_manager,partner.commercial.condition.line manager,model_partner_commercial_condition_line,group_sales_manager,1,1,1,1
+access_save_condition_wizard,tr.save.condition.wizard,model_tr_save_condition_wizard,base.group_user,1,1,1,1
+access_save_condition_wizard_line,tr.save.condition.wizard.line,model_tr_save_condition_wizard_line,base.group_user,1,1,1,1
+access_save_condition_line_wizard,tr.save.condition.line.wizard,model_tr_save_condition_line_wizard,base.group_user,1,1,1,1
+access_extra_discount_wizard,tr.extra.discount.wizard,model_tr_extra_discount_wizard,base.group_user,1,1,1,1
+access_group_condition_wizard,tr.group.condition.wizard,model_tr_group_condition_wizard,base.group_user,1,1,1,1
+access_reload_condition_wizard,tr.reload.condition.wizard,model_tr_reload_condition_wizard,base.group_user,1,1,1,1
+access_reload_condition_wizard_line,tr.reload.condition.wizard.line,model_tr_reload_condition_wizard_line,base.group_user,1,1,1,1

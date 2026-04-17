@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field
+      name="name"
+    >res.config.settings.view.form.inherit.tr.commercial.policy</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='pricing_setting_container']" position="before">
+                <h2>Commercial Policy</h2>
+                <div
+          class="row mt16 o_settings_container"
+          id="tr_commercial_policy_settings"
+        >
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="company_default_sales_profile_id" />
+                            <div class="text-muted">
+                                Default sales profile used as fallback when no
+                                agent, salesperson, or team profile is found.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="company_default_sales_profile_id" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="company_invoice_validity_days" />
+                            <div class="text-muted">
+                                Maximum days after sale order confirmation for
+                                invoice to retain parity. 0 = disabled.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="company_invoice_validity_days" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_policy_tax_rate" />
+                            <div class="text-muted">
+                                Composite tax rate used to compute the
+                                contractual return adjustment factor.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="tr_policy_tax_rate" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_policy_freight_rate" />
+                            <div class="text-muted">
+                                Freight rate used to compute the
+                                contractual return adjustment factor.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="tr_policy_freight_rate" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_policy_admin_rate" />
+                            <div class="text-muted">
+                                Administrative expense rate. Composes
+                                additively with tax and freight as a deduction
+                                from the gross price in the adjustment factor.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="tr_policy_admin_rate" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

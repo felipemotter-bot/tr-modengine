@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <menuitem
+    id="menu_commercial_policy_config"
+    name="Commercial Policy"
+    parent="sale.menu_sale_config"
+    sequence="50"
+  />
+
+    <menuitem
+    id="menu_sales_profiles"
+    name="Sales Profiles"
+    parent="menu_commercial_policy_config"
+    action="tr_sales_profile_action"
+    sequence="10"
+  />
+
+    <menuitem
+    id="menu_commercial_conditions"
+    name="Commercial Conditions"
+    parent="menu_commercial_policy_config"
+    action="partner_commercial_condition_action"
+    sequence="20"
+  />
+
+
+</odoo>

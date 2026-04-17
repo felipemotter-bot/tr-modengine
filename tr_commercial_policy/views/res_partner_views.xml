@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Sales Profile on agent information tab -->
+    <record id="res_partner_form_sales_profile" model="ir.ui.view">
+        <field name="name">res.partner.form.sales.profile</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="commission.view_partner_form_agent" />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//page[@name='agent_information']//field[@name='agent_type']"
+        position="before"
+      >
+                <field name="is_sales_director" invisible="1" />
+                <field
+          name="sales_profile_id"
+          groups="tr_commercial_policy.group_sales_manager"
+          attrs="{'readonly': [('is_sales_director', '=', False)]}"
+        />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide property_product_pricelist (managed by commercial condition) -->
+    <record id="res_partner_form_hide_pricelist" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.pricelist</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="product.view_partner_property_form" />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='property_product_pricelist']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide payment terms (managed by commercial condition) -->
+    <record id="res_partner_form_hide_payment_term" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.payment.term</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.view_partner_property_form" />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='property_payment_term_id']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide customer payment mode (managed by commercial condition) -->
+    <record id="res_partner_form_hide_payment_mode" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.payment.mode</field>
+        <field name="model">res.partner</field>
+        <field
+      name="inherit_id"
+      ref="account_payment_partner.view_partner_property_form"
+    />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='customer_payment_mode_id']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide delivery carrier (managed by commercial condition) -->
+    <record id="res_partner_form_hide_delivery_carrier" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.delivery.carrier</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="delivery.view_partner_property_form" />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='property_delivery_carrier_id']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide sale incoterm (managed by commercial condition) -->
+    <record id="res_partner_form_hide_incoterm" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.incoterm</field>
+        <field name="model">res.partner</field>
+        <field
+      name="inherit_id"
+      ref="sale_partner_incoterm.view_partner_property_form"
+    />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='sale_incoterm_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='sale_incoterm_address_id']"
+        position="attributes"
+      >
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Hide punctuality discount (managed by commercial condition) -->
+    <record id="res_partner_form_hide_punctuality" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.punctuality</field>
+        <field name="model">res.partner</field>
+        <field
+      name="inherit_id"
+      ref="eng_punctuality_discount.eng_punctuality_discount_partner_form"
+    />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='punctuality_discount']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Commercial Condition on partner form (Sales & Purchase tab) -->
+    <record id="res_partner_form_commercial_condition" model="ir.ui.view">
+        <field name="name">res.partner.form.commercial.condition</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <!-- Hidden fields for compute access -->
+            <xpath expr="//page[@name='sales_purchases']" position="before">
+                <field name="company_group_id" invisible="1" />
+                <field name="condition_inherited" invisible="1" />
+                <field name="condition_is_override" invisible="1" />
+                <field name="effective_condition_id" invisible="1" />
+                <field name="is_group_head" invisible="1" />
+                <field name="group_member_count" invisible="1" />
+            </xpath>
+
+            <!-- Commercial condition section at top of Sales group -->
+            <xpath
+        expr="//page[@name='sales_purchases']//group[@name='sale']/field[@name='user_id']"
+        position="before"
+      >
+                <!-- Override warning -->
+                <div
+          class="alert alert-warning mb-2 py-1"
+          role="alert"
+          colspan="2"
+          attrs="{'invisible': [('condition_is_override', '=', False)]}"
+        >
+                    <i class="fa fa-exclamation-triangle" title="Override" />
+                    <strong> Override:</strong>
+                    Specific condition that differs from group
+                    <field name="condition_inherited_from" class="oe_inline fw-bold" />
+                    <button
+            name="action_remove_override_condition"
+            type="object"
+            class="btn btn-sm btn-outline-danger ms-2"
+            confirm="This will remove the specific condition and inherit from the group. Continue?"
+          >
+                        <i class="fa fa-undo me-1" />Remove Override
+                    </button>
+                </div>
+
+                <!-- Inherited info -->
+                <div
+          class="alert alert-info mb-2 py-1"
+          role="alert"
+          colspan="2"
+          attrs="{'invisible': [('condition_inherited', '=', False)]}"
+        >
+                    <i class="fa fa-info-circle" title="Inherited" />
+                    Inherited from group
+                    <field name="condition_inherited_from" class="oe_inline fw-bold" />
+                    <button
+            name="action_create_override_condition"
+            type="object"
+            class="btn btn-sm btn-outline-primary ms-2"
+            attrs="{'invisible': [('condition_is_override', '=', True)]}"
+          >
+                        <i class="fa fa-code-fork me-1" />Create Specific
+                    </button>
+                </div>
+
+                <!-- Group head warning -->
+                <div
+          class="alert alert-success mb-2 py-1"
+          role="alert"
+          colspan="2"
+          attrs="{'invisible': ['|', ('is_group_head', '=', False), ('effective_condition_id', '=', False)]}"
+        >
+                    <i class="fa fa-users" title="Group Head" />
+                    <strong> Group Head:</strong>
+                    This condition is shared with
+                    <field name="group_member_count" class="oe_inline fw-bold" />
+                    group members. Changes will affect all of them.
+                </div>
+
+                <!-- Buttons -->
+                <div colspan="2" class="text-center mb-2">
+                    <button
+            name="action_create_commercial_condition"
+            type="object"
+            class="btn btn-primary"
+            attrs="{'invisible': [('effective_condition_id', '!=', False)]}"
+          >
+                        <i class="fa fa-plus me-1" />
+                        Create Commercial Condition
+                    </button>
+                    <button
+            name="action_view_commercial_condition"
+            type="object"
+            class="btn btn-primary"
+            attrs="{'invisible': [('effective_condition_id', '=', False)]}"
+          >
+                        <i class="fa fa-file-text-o me-1" />
+                        View Commercial Condition
+                    </button>
+                </div>
+
+            </xpath>
+        </field>
+    </record>
+</odoo>

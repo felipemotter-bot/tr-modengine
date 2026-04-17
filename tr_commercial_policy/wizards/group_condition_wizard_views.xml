@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="group_condition_wizard_form" model="ir.ui.view">
+        <field name="name">tr.group.condition.wizard.form</field>
+        <field name="model">tr.group.condition.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Commercial Condition Conflict">
+                <group>
+                    <p class="text-muted">
+                        The customer <field
+              name="partner_id"
+              class="oe_inline"
+              readonly="1"
+            />
+                        already has a commercial condition. The group
+                        <field name="group_id" class="oe_inline" readonly="1" />
+                        also has one. What would you like to do?
+                    </p>
+                </group>
+                <group>
+                    <group>
+                        <field name="own_condition_id" />
+                    </group>
+                    <group>
+                        <field name="group_condition_id" />
+                    </group>
+                </group>
+                <group>
+                    <field name="action" widget="radio" />
+                </group>
+                <footer>
+                    <button
+            name="action_confirm"
+            type="object"
+            string="Confirm"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

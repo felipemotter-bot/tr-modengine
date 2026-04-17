@@ -1,0 +1,53 @@
+// Keep price actions (calculator + save) aligned in the unit price row
+.tr_price_actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+  vertical-align: middle;
+
+  .o_field_widget {
+    margin: 0;
+    padding: 0;
+    line-height: inherit;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  button,
+  .btn {
+    line-height: 1.5;
+    font-size: inherit;
+    vertical-align: middle;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+// Keep Extra and Save buttons together and vertically aligned
+.tr_discount_actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  vertical-align: middle;
+
+  // Remove any padding/margin from the OWL widget wrapper
+  .o_field_widget {
+    margin: 0;
+    padding: 0;
+    line-height: inherit;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // Ensure both buttons have the same size/alignment
+  button,
+  .btn {
+    line-height: 1.5;
+    font-size: inherit;
+    vertical-align: middle;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <!-- Popover content: order discount calculator -->
+    <t t-name="tr_commercial_policy.OrderDiscountPopoverContent" owl="1">
+        <div class="p-3" style="min-width: 300px;">
+            <div t-if="props.fobDiscount" class="small text-muted mb-2">
+                <i class="fa fa-info-circle" />
+                Considering FOB discount of <t
+          t-esc="formatDiscount(props.fobDiscount)"
+        />%
+            </div>
+            <div class="mb-3">
+                <label class="fw-bold small">Target Financial Total</label>
+                <input
+          type="text"
+          inputmode="decimal"
+          class="form-control form-control-sm"
+          t-att-value="state.desiredAmount"
+          t-on-input="onAmountInput"
+          t-on-focus="onAmountFocus"
+          placeholder="0,00"
+          autofocus="autofocus"
+        />
+            </div>
+
+            <t t-if="preview">
+                <div t-if="preview.error" class="text-danger small mb-2">
+                    <i class="fa fa-exclamation-triangle" />
+                    <t t-esc="preview.error" />
+                </div>
+
+                <t t-if="!preview.error">
+                    <div class="small mb-1">
+                        <span class="text-muted">Cash discount:</span>
+                        <span class="fw-bold ms-1">
+                            <t t-esc="formatDiscount(preview.cashDiscount)" />%
+                        </span>
+                    </div>
+                    <div class="small mb-2">
+                        <span class="text-muted">Resulting financial total:</span>
+                        <span class="fw-bold ms-1">
+                            R$ <t t-esc="formatPrice(preview.resultingTotal)" />
+                        </span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" t-on-click="onApply">
+                        Apply
+                    </button>
+                </t>
+            </t>
+        </div>
+    </t>
+
+    <!-- Field widget: editable value + calculator button -->
+    <t t-name="tr_commercial_policy.OrderDiscountCalculator" owl="1">
+        <span class="d-inline-flex align-items-center gap-1">
+            <input
+        type="text"
+        inputmode="decimal"
+        class="o_input"
+        style="width: 80px;"
+        t-att-value="formattedValue"
+        t-att-readonly="props.readonly ? 'readonly' : undefined"
+        t-on-change="onInputChange"
+      />
+            <button
+        t-if="isVisible"
+        class="btn btn-link btn-sm p-0 text-nowrap"
+        t-on-click="onButtonClick"
+        title="Calculate cash discount for a target subtotal"
+      >
+                <i class="fa fa-calculator" />
+            </button>
+        </span>
+    </t>
+
+</templates>

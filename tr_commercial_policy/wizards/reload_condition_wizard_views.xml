@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="reload_condition_wizard_form" model="ir.ui.view">
+        <field name="name">tr.reload.condition.wizard.form</field>
+        <field name="model">tr.reload.condition.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reload Commercial Conditions">
+                <field name="has_changes" invisible="1" />
+                <field name="lines_changed_count" invisible="1" />
+                <div
+          class="alert alert-info"
+          role="alert"
+          attrs="{'invisible': [('has_changes', '=', True)]}"
+        >
+                    No differences found between the order and the
+                    customer's commercial condition. Everything is up to date.
+                </div>
+                <div
+          class="alert alert-warning"
+          role="alert"
+          attrs="{'invisible': [('has_changes', '=', False)]}"
+        >
+                    The following changes will be applied. Any manual
+                    discount adjustments on the order lines will be
+                    overwritten.
+                </div>
+                <group
+          string="Order Changes"
+          attrs="{'invisible': ['&amp;', '&amp;', '&amp;', ('pricelist_change', '=', False), ('cash_discount_change', '=', False), ('fob_discount_change', '=', False), ('contractual_return_change', '=', False)]}"
+        >
+                    <field
+            name="pricelist_change"
+            attrs="{'invisible': [('pricelist_change', '=', False)]}"
+          />
+                    <field
+            name="cash_discount_change"
+            attrs="{'invisible': [('cash_discount_change', '=', False)]}"
+          />
+                    <field
+            name="fob_discount_change"
+            attrs="{'invisible': [('fob_discount_change', '=', False)]}"
+          />
+                    <field
+            name="contractual_return_change"
+            attrs="{'invisible': [('contractual_return_change', '=', False)]}"
+          />
+                </group>
+                <separator
+          string="Line Changes"
+          attrs="{'invisible': [('lines_changed_count', '=', 0)]}"
+        />
+                <field
+          name="line_ids"
+          nolabel="1"
+          attrs="{'invisible': [('lines_changed_count', '=', 0)]}"
+        >
+                    <tree>
+                        <field name="line_description" string="Line" />
+                        <field name="change_description" string="Changes" />
+                    </tree>
+                </field>
+                <footer>
+                    <button
+            name="action_apply"
+            string="Apply"
+            type="object"
+            class="btn-primary"
+            attrs="{'invisible': [('has_changes', '=', False)]}"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
