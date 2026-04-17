@@ -53,12 +53,8 @@ class TestInvoicePolicyFromSale(CommercialPolicyTestCommon):
     def test_prepare_invoice_propagates_header(self):
         """Smoke: _prepare_invoice copies header discount fields."""
         order, invoice = self._create_confirmed_order_with_invoice()
-        self.assertAlmostEqual(
-            invoice.tr_cash_discount, order.cash_discount, places=2
-        )
-        self.assertAlmostEqual(
-            invoice.tr_fob_discount, order.fob_discount, places=2
-        )
+        self.assertAlmostEqual(invoice.tr_cash_discount, order.cash_discount, places=2)
+        self.assertAlmostEqual(invoice.tr_fob_discount, order.fob_discount, places=2)
         self.assertAlmostEqual(
             invoice.tr_contractual_return,
             order.contractual_return,
@@ -563,12 +559,8 @@ class TestInvoicePolicyFromSale(CommercialPolicyTestCommon):
             }
         )
         invoice.action_resync_from_sale_order()
-        self.assertAlmostEqual(
-            invoice.tr_cash_discount, order.cash_discount, places=2
-        )
-        self.assertAlmostEqual(
-            invoice.tr_fob_discount, order.fob_discount, places=2
-        )
+        self.assertAlmostEqual(invoice.tr_cash_discount, order.cash_discount, places=2)
+        self.assertAlmostEqual(invoice.tr_fob_discount, order.fob_discount, places=2)
         self.assertAlmostEqual(
             invoice.tr_contractual_return,
             order.contractual_return,
@@ -755,9 +747,7 @@ class TestInvoicePolicyFromSale(CommercialPolicyTestCommon):
         if not profile.cash_term_avg_days_max:  # pragma: no cover
             return  # pragma: no cover
         # Set cash_discount > 0 to activate payment term check
-        invoice.with_context(check_move_validity=False).write(
-            {"tr_cash_discount": 1.0}
-        )
+        invoice.with_context(check_move_validity=False).write({"tr_cash_discount": 1.0})
         # Create a long payment term
         long_term = self.env["account.payment.term"].create(
             {

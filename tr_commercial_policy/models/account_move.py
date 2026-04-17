@@ -319,9 +319,7 @@ class AccountMove(models.Model):
 
         Same behavior as sale.order._onchange_cash_fob_discount.
         """
-        new_discount = (self.tr_cash_discount or 0.0) + (
-            self.tr_fob_discount or 0.0
-        )
+        new_discount = (self.tr_cash_discount or 0.0) + (self.tr_fob_discount or 0.0)
         for line in self._get_policy_invoice_lines():
             line.discount = new_discount
 
@@ -1253,9 +1251,7 @@ class AccountMove(models.Model):
         def fmt(val):
             return formatLang(self.env, val, digits=2)
 
-        if check_cash_discount_limit(
-            self.tr_cash_discount, profile.cash_discount_max
-        ):
+        if check_cash_discount_limit(self.tr_cash_discount, profile.cash_discount_max):
             issues.append(
                 {
                     "type": "cash_discount_limit",

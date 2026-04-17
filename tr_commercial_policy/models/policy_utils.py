@@ -40,8 +40,7 @@ def get_policy_rates(env):
     icp = env["ir.config_parameter"].sudo()
     return (
         float(icp.get_param("tr_commercial_policy.tax_rate_pct", "0.0")) / 100.0,
-        float(icp.get_param("tr_commercial_policy.freight_rate_pct", "0.0"))
-        / 100.0,
+        float(icp.get_param("tr_commercial_policy.freight_rate_pct", "0.0")) / 100.0,
         float(icp.get_param("tr_commercial_policy.admin_rate_pct", "0.0")) / 100.0,
     )
 
