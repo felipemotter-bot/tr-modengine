@@ -76,6 +76,7 @@ class TestLayoutHistorico(PricelistReportTestCommon):
         """Draft/sent/cancel orders stay out; sale/done stay in."""
         today = fields.Date.today()
         self._place_confirmed_order(self.product_a, 5, today, state="sale")
+        self._place_confirmed_order(self.product_b, 3, today, state="done")
         self._place_confirmed_order(self.product_a, 99, today, state="cancel")
         # Extra draft order (no state transition) — should be ignored.
         self.env["sale.order"].create(
@@ -100,6 +101,8 @@ class TestLayoutHistorico(PricelistReportTestCommon):
         totals = wizard._resolve_history_quantities()
         self.assertIn(self.product_a, totals)
         self.assertAlmostEqual(totals[self.product_a], 5.0)
+        self.assertIn(self.product_b, totals)
+        self.assertAlmostEqual(totals[self.product_b], 3.0)
 
     def test_orders_outside_window_are_ignored(self):
         """Sales older than ``history_months_back`` don't count."""
