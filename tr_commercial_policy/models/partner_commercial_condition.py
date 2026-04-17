@@ -530,10 +530,7 @@ class PartnerCommercialConditionLine(models.Model):
         if condition:
             return condition._get_applicable_profile()
         # No condition context — use env.company as last resort
-        return (
-            self.env.company.default_sales_profile_id
-            or self.env["tr.sales.profile"]
-        )
+        return self.env.company.default_sales_profile_id or self.env["tr.sales.profile"]
 
     def _validate_line_discount_limits(self, vals, condition=None):
         """Validate line-level discounts against user profile.
@@ -556,9 +553,7 @@ class PartnerCommercialConditionLine(models.Model):
         # Extra discount requires manager/director
         extra_discount = vals.get("extra_discount", 0.0)
         if extra_discount and extra_discount > 0:
-            if not self.env.user.has_group(
-                "tr_commercial_policy.group_sales_manager"
-            ):
+            if not self.env.user.has_group("tr_commercial_policy.group_sales_manager"):
                 raise AccessError(
                     _(
                         "Extra discount on commercial conditions requires "

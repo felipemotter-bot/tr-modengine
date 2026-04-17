@@ -9,12 +9,8 @@
         <field name="name">Price List</field>
         <field name="model">tr.pricelist.report.wizard</field>
         <field name="report_type">qweb-pdf</field>
-        <field
-      name="report_name"
-    >tr_pricelist_report.report_pricelist_document</field>
-        <field
-      name="report_file"
-    >tr_pricelist_report.report_pricelist_document</field>
+        <field name="report_name">tr_pricelist_report.report_pricelist_document</field>
+        <field name="report_file">tr_pricelist_report.report_pricelist_document</field>
         <field
       name="print_report_name"
     >'Pricelist - %s' % (object.condition_id.display_name)</field>

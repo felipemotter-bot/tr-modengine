@@ -850,9 +850,7 @@ class TestHookHelpers(CommercialPolicyTestCommon):
         # Delete existing profiles
         self.env["tr.sales.profile"].search([]).unlink()
         _ensure_default_profiles(self.env)
-        agent = self.env["tr.sales.profile"].search(
-            [("profile_type", "=", "agent")]
-        )
+        agent = self.env["tr.sales.profile"].search([("profile_type", "=", "agent")])
         internal = self.env["tr.sales.profile"].search(
             [("profile_type", "=", "internal")]
         )

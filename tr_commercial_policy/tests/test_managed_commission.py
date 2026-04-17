@@ -61,9 +61,7 @@ class TestManagedCommission(CommercialPolicyTestCommon):
             .search([("key", "=", "tr.commission_formula_template")], limit=1)
         )
         if param:
-            param.with_context(
-                tr_skip_propagation=True
-            ).value = "no_rate_placeholder"
+            param.with_context(tr_skip_propagation=True).value = "no_rate_placeholder"
         Commission = self.env["commission"]
         with self.assertRaises(UserError):
             Commission._ensure_managed_commission("open", 5.0)

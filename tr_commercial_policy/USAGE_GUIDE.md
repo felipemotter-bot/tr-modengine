@@ -330,16 +330,16 @@ Ao criar fatura a partir do pedido de venda, os seguintes campos são propagados
 
 ### No cabeçalho (`account.move`)
 
-| Campo                       | Origem                         |
-| --------------------------- | ------------------------------ |
+| Campo                   | Origem                         |
+| ----------------------- | ------------------------------ |
 | `tr_cash_discount`      | `cash_discount` do pedido      |
 | `tr_fob_discount`       | `fob_discount` do pedido       |
 | `tr_contractual_return` | `contractual_return` do pedido |
 
 ### Nas linhas (`account.move.line`)
 
-| Campo                    | Origem                               |
-| ------------------------ | ------------------------------------ |
+| Campo                | Origem                               |
+| -------------------- | ------------------------------------ |
 | `tr_commission_rate` | `commission_rate` da linha do pedido |
 
 ### Comissão na Fatura
@@ -353,12 +353,12 @@ maior que zero, ele substitui a taxa fixa da comissão padrão.
 
 Configuráveis em Definições > Técnico > Parâmetros > Parâmetros do Sistema:
 
-| Parâmetro                                           | Padrão  | Descrição                                               |
-| --------------------------------------------------- | ------- | ------------------------------------------------------- |
-| `tr_commercial_policy.default_sales_profile_id` | `0`     | ID do perfil de vendas padrão global                    |
+| Parâmetro                                       | Padrão | Descrição                                               |
+| ----------------------------------------------- | ------ | ------------------------------------------------------- |
+| `tr_commercial_policy.default_sales_profile_id` | `0`    | ID do perfil de vendas padrão global                    |
 | `tr_commercial_policy.tax_rate_pct`             | `10.0` | Taxa de imposto (%) p/ cálculo do preço de referência   |
-| `tr_commercial_policy.freight_rate_pct`         | `5.0`   | Taxa de frete (%) p/ cálculo do preço de referência     |
-| `tr_commercial_policy.admin_rate_pct`           | `2.0`   | Taxa de despesa administrativa (%) p/ fator de correção |
+| `tr_commercial_policy.freight_rate_pct`         | `5.0`  | Taxa de frete (%) p/ cálculo do preço de referência     |
+| `tr_commercial_policy.admin_rate_pct`           | `2.0`  | Taxa de despesa administrativa (%) p/ fator de correção |
 
 Os três últimos são configurados via `Configuração → Vendas → Commercial Policy` e
 armazenados em **percentual** (não decimal). As chaves antigas sem sufixo (`tax_rate`,

@@ -237,9 +237,7 @@ class TestCommercialCondition(CommercialPolicyTestCommon):
         # additively: ref = base * (1 - total) / (1 - cr - total)
         # total = 0.10 + 0.05 + 0.02 = 0.17
         # ref = 100 * 0.83 / 0.80
-        expected = (
-            100.0 * (1 - 0.10 - 0.05 - 0.02) / (1 - 0.03 - 0.10 - 0.05 - 0.02)
-        )
+        expected = 100.0 * (1 - 0.10 - 0.05 - 0.02) / (1 - 0.03 - 0.10 - 0.05 - 0.02)
         self.assertAlmostEqual(line.reference_price, expected, places=2)
 
     def test_sales_profile_company_dependent(self):

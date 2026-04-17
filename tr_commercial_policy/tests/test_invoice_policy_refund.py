@@ -195,9 +195,7 @@ class TestInvoicePolicyRefund(CommercialPolicyTestCommon):
             refund.commercial_condition_id, invoice.commercial_condition_id
         )
         self.assertEqual(refund.sales_profile_id, invoice.sales_profile_id)
-        self.assertAlmostEqual(
-            refund.tr_cash_discount, invoice.tr_cash_discount
-        )
+        self.assertAlmostEqual(refund.tr_cash_discount, invoice.tr_cash_discount)
         self.assertAlmostEqual(refund.tr_fob_discount, invoice.tr_fob_discount)
         self.assertAlmostEqual(
             refund.tr_contractual_return, invoice.tr_contractual_return
