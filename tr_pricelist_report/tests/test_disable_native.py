@@ -24,10 +24,13 @@ class TestDisableNative(TransactionCase):
             )
 
     def test_config_parameters_created(self):
-        """``validity_days`` and ``category_depth`` config params exist."""
+        """Config params created on install with the documented defaults."""
         icp = self.env["ir.config_parameter"].sudo()
         self.assertEqual(icp.get_param("tr_pricelist_report.validity_days"), "30")
-        self.assertEqual(icp.get_param("tr_pricelist_report.category_depth"), "-1")
+        self.assertEqual(icp.get_param("tr_pricelist_report.category_depth"), "-2")
+        self.assertEqual(
+            icp.get_param("tr_pricelist_report.group_attribute_name"), "MARCA"
+        )
 
     def test_post_init_hook_noop_when_oca_absent(self):
         """``post_init_hook`` is a no-op when the OCA module is absent."""

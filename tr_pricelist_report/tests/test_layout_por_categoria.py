@@ -6,11 +6,34 @@ from .common import PricelistReportTestCommon
 
 class TestLayoutPorCategoria(PricelistReportTestCommon):
     def test_sections_by_category_recursive(self):
-        """Picking a parent category returns products of its children too."""
+        """Picking a parent category returns products of its children too.
+
+        With default ``category_depth=-2`` (parent of leaf), both
+        ``product_a`` (categ_id = Chemicals, a root) and ``product_b``
+        (categ_id = Solvents, child of Chemicals) end up under
+        ``Chemicals`` — the clamping rule resolves Chemicals itself as
+        the closest available ancestor for both.
+        """
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         values = wizard._get_report_values(wizard.ids)
         section_titles = [s["title"] for s in values["sections"]]
-        # Both chemicals (product A) and solvents (product B, child) present
+        self.assertIn(self.categ_chemicals.name, section_titles)
+        # Both templates end up under the same section with depth=-2.
+        chemicals_section = next(
+            s for s in values["sections"] if s["title"] == self.categ_chemicals.name
+        )
+        row_templates = {row["template"].id for row in chemicals_section["rows"]}
+        self.assertIn(self.product_template_a.id, row_templates)
+        self.assertIn(self.product_template_b.id, row_templates)
+
+    def test_sections_split_when_depth_is_leaf(self):
+        """Setting ``category_depth=-1`` puts each categ_id in its own bucket."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.category_depth", "-1"
+        )
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        values = wizard._get_report_values(wizard.ids)
+        section_titles = [s["title"] for s in values["sections"]]
         self.assertIn(self.categ_chemicals.name, section_titles)
         self.assertIn(self.categ_solvents.name, section_titles)
 

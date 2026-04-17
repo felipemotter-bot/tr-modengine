@@ -26,15 +26,23 @@ class PricelistReportWizard(models.TransientModel):
         default=lambda self: self._default_condition_id(),
     )
     layout = fields.Selection(
-        [("por_categoria", "By Category")],
+        [
+            ("por_categoria", "By Category"),
+            ("geralzao", "Full Catalog"),
+        ],
         required=True,
         default="por_categoria",
+    )
+    group_axis = fields.Selection(
+        [("marca", "By Brand"), ("categoria", "By Category")],
+        default="marca",
+        help="Grouping axis for the Full Catalog layout.",
     )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
         help="Pick one or more product categories. Sub-categories are included "
-        "automatically.",
+        "automatically. Optional when layout is Full Catalog.",
     )
     date_end = fields.Date(
         string="Valid Until",
@@ -87,7 +95,7 @@ class PricelistReportWizard(models.TransientModel):
 
     def action_generate(self):
         self.ensure_one()
-        if not self.category_ids:
+        if self.layout == "por_categoria" and not self.category_ids:
             raise UserError(_("Pick at least one product category."))
         # ``config=False`` skips the "configure external layout" wizard that
         # Odoo prompts admins with on first use (returns ir.actions.act_window
@@ -110,14 +118,60 @@ class PricelistReportWizard(models.TransientModel):
         )
 
     def _resolve_products(self):
-        categories = self._expand_categories()
-        return self.env["product.product"].search(
-            [
-                ("active", "=", True),
-                ("sale_ok", "=", True),
-                ("categ_id", "in", categories.ids),
-            ]
+        domain = [("active", "=", True), ("sale_ok", "=", True)]
+        if self.category_ids:
+            categories = self._expand_categories()
+            domain.append(("categ_id", "in", categories.ids))
+        return self.env["product.product"].search(domain)
+
+    # ------------------------------------------------------------------
+    # Grouping resolvers (shared between layouts)
+    # ------------------------------------------------------------------
+
+    def _get_category_depth(self):
+        return int(
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("tr_pricelist_report.category_depth", "-2")
         )
+
+    def _get_group_attribute(self):
+        """Return the ``product.attribute`` used as the MARCA axis, or empty.
+
+        Resolved at install by the ``post_init_hook`` and cached in
+        ``tr_pricelist_report.group_attribute_id``. Empty recordset when
+        no attribute with the configured name exists.
+        """
+        param = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("tr_pricelist_report.group_attribute_id", "")
+        )
+        if not param or not param.isdigit():
+            return self.env["product.attribute"]
+        return self.env["product.attribute"].browse(int(param)).exists()
+
+    def _resolve_grouping_category(self, product, depth):
+        """Return the category used to bucket ``product`` at ``depth``.
+
+        Clamping is silent (plan §7): if ``depth`` falls outside the
+        product's own category trail, we return the closest available
+        ancestor. ``-N`` above the root becomes the root; positive level
+        above the tree depth becomes the leaf.
+        """
+        trail = []
+        category = product.categ_id
+        while category:
+            trail.append(category)
+            category = category.parent_id
+        if not trail:
+            return self.env["product.category"]
+        # ``trail`` is leaf-first: [leaf, parent, ..., root].
+        if depth >= 0:
+            root_first = list(reversed(trail))
+            return root_first[min(depth, len(root_first) - 1)]
+        # Negative: -1 leaf, -2 parent of leaf, ...
+        return trail[min(abs(depth) - 1, len(trail) - 1)]
 
     def _get_fiscal_position(self, partner, company):
         """Resolve the fiscal position the same way ``sale.order`` does.
@@ -375,22 +429,74 @@ class PricelistReportWizard(models.TransientModel):
         return rows
 
     def _build_sections(self, products, rates):
-        """Partition products into sections by category."""
+        """Route products into sections per layout / group_axis.
+
+        - ``geralzao`` + ``marca`` → partition by MARCA attribute, products
+          without MARCA fall back to the category partition at the end.
+        - ``geralzao`` + ``categoria`` or ``por_categoria`` → partition by
+          the category at ``category_depth`` (shared resolver).
+        """
+        if self.layout == "geralzao" and self.group_axis == "marca":
+            return self._build_sections_by_marca(products, rates)
+        return self._build_sections_by_category(products, rates)
+
+    def _build_sections_by_category(self, products, rates):
+        depth = self._get_category_depth()
         by_category = defaultdict(lambda: self.env["product.product"])
         for product in products:
-            by_category[product.categ_id] |= product
+            by_category[self._resolve_grouping_category(product, depth)] |= product
         sections = []
-        for category in sorted(by_category, key=lambda cat: cat.complete_name):
+        for category in sorted(
+            by_category, key=lambda cat: cat.complete_name if cat else ""
+        ):
             rows, variant_exceptions = self._consolidate_templates(
                 by_category[category], rates
             )
             sections.append(
                 {
-                    "title": category.name,
+                    "title": category.name if category else "",
                     "rows": rows,
                     "variant_exceptions": variant_exceptions,
                 }
             )
+        return sections
+
+    def _build_sections_by_marca(self, products, rates):
+        """Mode A: group by MARCA attribute value, fallback by category.
+
+        Products with a MARCA value form one section per value. Products
+        without the attribute (or when the attribute itself is unresolved)
+        fall back to the category resolver used by Mode B — we don't
+        introduce a second notion of "category" in the module.
+        """
+        attribute = self._get_group_attribute()
+        by_marca = defaultdict(lambda: self.env["product.product"])
+        no_marca = self.env["product.product"]
+        if attribute:
+            for product in products:
+                ptav = product.product_template_attribute_value_ids.filtered(
+                    lambda v, attr=attribute: v.attribute_id == attr
+                )
+                if ptav:
+                    by_marca[ptav[0].product_attribute_value_id] |= product
+                else:
+                    no_marca |= product
+        else:
+            no_marca = products
+        sections = []
+        for marca in sorted(by_marca, key=lambda value: value.name or ""):
+            rows, variant_exceptions = self._consolidate_templates(
+                by_marca[marca], rates
+            )
+            sections.append(
+                {
+                    "title": marca.name,
+                    "rows": rows,
+                    "variant_exceptions": variant_exceptions,
+                }
+            )
+        if no_marca:
+            sections.extend(self._build_sections_by_category(no_marca, rates))
         return sections
 
     @api.model

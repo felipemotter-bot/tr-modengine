@@ -34,13 +34,48 @@ def _is_oca_installed(env):
     )
 
 
-def post_init_hook(cr, registry):
-    """Soft-disable the OCA ``product_pricelist_direct_print`` bindings.
+def _resolve_group_attribute(env):
+    """Cache the id of the ``product.attribute`` used as the MARCA axis.
 
-    We only touch these records when the OCA module is installed — otherwise
-    the XML ids don't exist and there's nothing to do.
+    The attribute is configurable by name via
+    ``tr_pricelist_report.group_attribute_name`` (default ``"MARCA"``).
+    Resolved once at install and cached in
+    ``tr_pricelist_report.group_attribute_id`` so the report doesn't
+    search by name on every render. If no attribute matches, the id is
+    left empty and the Modo A falls back to "no MARCA" (all products
+    routed through the category fallback resolver).
+    """
+    icp = env["ir.config_parameter"].sudo()
+    name = icp.get_param("tr_pricelist_report.group_attribute_name", "MARCA")
+    attribute = env["product.attribute"].search([("name", "=", name)], limit=1)
+    icp.set_param(
+        "tr_pricelist_report.group_attribute_id", str(attribute.id) if attribute else ""
+    )
+    if attribute:
+        _logger.info(
+            "tr_pricelist_report: resolved group attribute %r to id %s",
+            name,
+            attribute.id,
+        )
+    else:
+        _logger.info(
+            "tr_pricelist_report: no product.attribute named %r, Modo A will "
+            "treat every product as having no MARCA",
+            name,
+        )
+
+
+def post_init_hook(cr, registry):
+    """Post-install setup.
+
+    Two responsibilities:
+
+    1. Resolve the ``group_attribute_id`` from the configured name.
+    2. Soft-disable the OCA ``product_pricelist_direct_print`` bindings
+       when that module is installed.
     """
     env = api.Environment(cr, SUPERUSER_ID, {})
+    _resolve_group_attribute(env)
     if not _is_oca_installed(env):
         return
     for xml_id in _OCA_BINDINGS:
