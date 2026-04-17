@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record id="product_category_form_view_exclude_flag" model="ir.ui.view">
+        <field name="name">product.category.form.tr_pricelist_report</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view" />
+        <field name="arch" type="xml">
+            <field name="parent_id" position="after">
+                <field name="tr_exclude_from_general_pricelist" />
+            </field>
+        </field>
+    </record>
+
+</odoo>

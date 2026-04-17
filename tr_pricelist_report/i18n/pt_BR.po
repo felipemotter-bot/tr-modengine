@@ -1,0 +1,341 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* tr_pricelist_report
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-17 17:20+0000\n"
+"PO-Revision-Date: 2026-04-17 17:20+0000\n"
+"Last-Translator: \n"
+"Language-Team: Portuguese (Brazil)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "% do total."
+msgstr "% do total."
+
+#. module: tr_pricelist_report
+#: model:ir.actions.report,print_report_name:tr_pricelist_report.action_report_pricelist
+msgid "'Pricelist - %s' % (object.condition_id.display_name)"
+msgstr "'Lista de Preços - %s' % (object.condition_id.display_name)"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid ""
+"<em>\n"
+"                                Preços não incluem tributos, calculados conforme\n"
+"                                legislação e operação.\n"
+"                            </em>"
+msgstr ""
+"<em>\n"
+"                                Preços não incluem tributos, calculados conforme\n"
+"                                legislação e operação.\n"
+"                            </em>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Cliente:</strong>"
+msgstr "<strong>Cliente:</strong>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Emissão:</strong>"
+msgstr "<strong>Emissão:</strong>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Incoterm:</strong>"
+msgstr "<strong>Incoterm:</strong>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Modo de pagamento:</strong>"
+msgstr "<strong>Modo de pagamento:</strong>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Prazo de pagamento:</strong>"
+msgstr "<strong>Prazo de pagamento:</strong>"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Válida até:</strong>"
+msgstr "<strong>Válida até:</strong>"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__group_axis__marca
+msgid "By Brand"
+msgstr "Por Marca"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__group_axis__categoria
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__layout__por_categoria
+msgid "By Category"
+msgstr "Por Categoria"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_pricelist_report_wizard_form
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__category_ids
+msgid "Categories"
+msgstr "Categorias"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__condition_id
+msgid "Commercial Condition"
+msgstr "Condição Comercial"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Condições Comerciais"
+msgstr "Condições Comerciais"
+
+#. module: tr_pricelist_report
+#: model:ir.model,name:tr_pricelist_report.model_res_partner
+msgid "Contact"
+msgstr "Contato"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__create_uid
+msgid "Created by"
+msgstr "Criado por"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__create_date
+msgid "Created on"
+msgstr "Criado em"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Código"
+msgstr "Código"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Desc. %"
+msgstr "Desc. %"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Descrição"
+msgstr "Descrição"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__display_name
+msgid "Display Name"
+msgstr "Nome Exibido"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_product_category__tr_exclude_from_general_pricelist
+msgid "Exclude from general pricelists"
+msgstr "Excluir das listas gerais de preços"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__layout__geralzao
+msgid "Full Catalog"
+msgstr "Catálogo Completo"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_pricelist_report_wizard_form
+msgid "Generate PDF"
+msgstr "Gerar PDF"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__group_axis
+msgid "Group Axis"
+msgstr "Eixo de Agrupamento"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__group_axis
+msgid "Grouping axis for the Full Catalog layout."
+msgstr "Eixo de agrupamento para o layout Catálogo Completo."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__id
+msgid "ID"
+msgstr "ID"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard____last_update
+msgid "Last Modified on"
+msgstr "Última modificação em"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__write_uid
+msgid "Last Updated by"
+msgstr "Última atualização por"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__write_date
+msgid "Last Updated on"
+msgstr "Última atualização em"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__layout
+msgid "Layout"
+msgstr "Layout"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__net_price
+msgid "Net price only"
+msgstr "Somente preço líquido"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Para pagamento à vista, abater"
+msgstr "Para pagamento à vista, abater"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Para retirada FOB, abater"
+msgstr "Para retirada FOB, abater"
+
+#. module: tr_pricelist_report
+#. odoo-python
+#: code:addons/tr_pricelist_report/models/res_partner.py:0
+#, python-format
+msgid "Partner %s has no commercial condition."
+msgstr "Parceiro %s não tem condição comercial."
+
+#. module: tr_pricelist_report
+#: model:ir.model,name:tr_pricelist_report.model_partner_commercial_condition
+msgid "Partner Commercial Condition"
+msgstr "Condição Comercial do Parceiro"
+
+#. module: tr_pricelist_report
+#. odoo-python
+#: code:addons/tr_pricelist_report/wizards/pricelist_report_wizard.py:0
+#, python-format
+msgid "Pick at least one product category."
+msgstr "Selecione ao menos uma categoria de produto."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__category_ids
+msgid ""
+"Pick one or more product categories. Sub-categories are included "
+"automatically. Optional when layout is Full Catalog."
+msgstr ""
+"Selecione uma ou mais categorias de produto. Subcategorias são incluídas "
+"automaticamente. Opcional quando o layout é Catálogo Completo."
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Preço"
+msgstr "Preço"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Preço Ref."
+msgstr "Preço Ref."
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Preços Especiais por Variante"
+msgstr "Preços Especiais por Variante"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Preços por Quantidade"
+msgstr "Preços por Quantidade"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__discount_display
+msgid "Price Display"
+msgstr "Exibição de Preço"
+
+#. module: tr_pricelist_report
+#: model:ir.actions.report,name:tr_pricelist_report.action_report_pricelist
+msgid "Price List"
+msgstr "Lista de Preços"
+
+#. module: tr_pricelist_report
+#: model:ir.model,name:tr_pricelist_report.model_report_tr_pricelist_report_report_pricelist_document
+msgid "Pricelist Report"
+msgstr "Relatório de Lista de Preços"
+
+#. module: tr_pricelist_report
+#: model:ir.model,name:tr_pricelist_report.model_tr_pricelist_report_wizard
+msgid "Pricelist Report Wizard"
+msgstr "Assistente de Relatório de Lista de Preços"
+
+#. module: tr_pricelist_report
+#. odoo-python
+#: code:addons/tr_pricelist_report/models/partner_commercial_condition.py:0
+#: code:addons/tr_pricelist_report/models/res_partner.py:0
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_partner_commercial_condition_form_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_partner_form_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_pricelist_report_wizard_form
+#, python-format
+msgid "Print Price List"
+msgstr "Imprimir Lista de Preços"
+
+#. module: tr_pricelist_report
+#: model:ir.model,name:tr_pricelist_report.model_product_category
+msgid "Product Category"
+msgstr "Categoria de Produto"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Produto"
+msgstr "Produto"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "Qtd. Mín."
+msgstr "Qtd. Mín."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__show_discounts
+msgid "Show reference and discounts"
+msgstr "Mostrar referência e descontos"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_partner_commercial_condition__smart_search
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_product_category__smart_search
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_report_tr_pricelist_report_report_pricelist_document__smart_search
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_res_partner__smart_search
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__smart_search
+msgid "Smart Search"
+msgstr "Busca Inteligente"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "TABELA DE PREÇOS —"
+msgstr "TABELA DE PREÇOS —"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__date_end
+msgid "Valid Until"
+msgstr "Válida Até"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_product_category__tr_exclude_from_general_pricelist
+msgid ""
+"When checked, products in this category and ALL its descendants are excluded"
+" from the general pricelist report layouts (By Category and Full Catalog). "
+"The effect cascades rigidly — a descendant category cannot override the "
+"exclusion. Products in excluded categories still appear in the customer "
+"history layout, so clients who already bought them can see the price for "
+"reorders."
+msgstr ""
+"Quando marcado, produtos desta categoria e TODAS as descendentes são "
+"excluídos dos layouts de lista geral do relatório (Por Categoria e Catálogo"
+" Completo). O efeito cascateia rigidamente — uma categoria descendente não "
+"pode sobrescrever a exclusão. Produtos em categorias excluídas continuam "
+"aparecendo no layout de histórico do cliente, para que clientes que já os "
+"compraram possam ver o preço em recompras."
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "— CNPJ"
+msgstr "— CNPJ"

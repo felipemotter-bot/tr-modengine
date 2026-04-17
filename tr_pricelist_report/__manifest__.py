@@ -21,6 +21,7 @@
         "data/disable_native_pricelist_reports.xml",
         "wizards/pricelist_report_wizard_views.xml",
         "views/partner_commercial_condition_views.xml",
+        "views/product_category_views.xml",
         "views/res_partner_views.xml",
         "report/pricelist_report.xml",
         "report/pricelist_report_templates.xml",
