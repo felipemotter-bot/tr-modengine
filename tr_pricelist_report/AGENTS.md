@@ -67,7 +67,7 @@ que chamam o action por código continuam funcionando.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
-PRs futuras adicionam: `historico` (PR4) e `send_by_email` (PR5).
+PRs futuras adicionam: `send_by_email` (PR5).
 
 ## Layouts
 
@@ -89,6 +89,28 @@ se preenchido). Dois sub-modos via `group_axis`:
   não criar duas noções de categoria.
 - **Modo B — `categoria`**: particiona pela categoria no nível configurado por
   `category_depth`.
+
+### `historico`
+
+Layout "lista de recompra" pro cliente: produtos que o parceiro comprou nos últimos N
+meses, agrupados pelo mesmo resolvedor de categoria do geralzão Modo B.
+
+- Escopo: `sale.order.line` com `order_id.partner_id = condition.partner_id`,
+  `order_id.state in ('sale','done')` e
+  `order_id.date_order >= today - history_months_back`.
+- Produto precisa estar `active=True` **e** `sale_ok=True` — arquivado ou não-vendável
+  hoje sai do relatório mesmo que o cliente tenha comprado.
+- **Ignora** a flag `tr_exclude_from_general_pricelist` — produto customizado que o
+  cliente comprou aparece pra ele poder recomprar.
+- **Variante por variante**, sem consolidação template-first — o histórico reflete
+  exatamente o que o cliente comprou.
+- Colunas do PDF: `Código | Descrição | [Preço Ref. | Desc. % |] Qtd. comprada | Preço`
+  (as duas colunas intermediárias só aparecem em `show_discounts`).
+- Coluna `Qtd. comprada` mostra valor agregado na UoM default do produto, acompanhado do
+  label da UoM (ex.: `"120 un"`). Linhas em UoMs diferentes são convertidas via
+  `product_uom._compute_quantity(qty, product.uom_id)` antes de somar.
+- Quando o histórico é vazio na janela configurada, `action_generate` levanta
+  `UserError` com mensagem clara — evita PDF em branco que parece bug.
 
 ## Exclusão de categorias customizadas das listas gerais
 
@@ -190,7 +212,9 @@ conversar com o Felipe antes.
 - `tr_pricelist_report.group_attribute_id` — cache do id do atributo, resolvido pelo
   `post_init_hook` a partir do nome configurado. Vazio quando nenhum atributo bate (Modo
   A cai pro fallback por categoria).
-- `tr_pricelist_report.history_months_back` — PR4.
+- `tr_pricelist_report.history_months_back` (default 6) — janela em meses usada pelo
+  layout `historico` pra varrer `sale.order.line`. Valor `0` desliga o layout
+  (resolvedor curto-circuita e retorna vazio).
 
 ## Upgrades em devel (nota de operação)
 

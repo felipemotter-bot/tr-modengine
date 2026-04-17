@@ -61,6 +61,11 @@
                       style="width: 8%;"
                     >Desc. %</th>
                                     </t>
+                                    <th
+                    t-if="layout == 'historico'"
+                    class="text-end"
+                    style="width: 14%;"
+                  >Qtd. comprada</th>
                                     <th class="text-end" style="width: 12%;">Preço</th>
                                 </tr>
                             </thead>
@@ -69,11 +74,23 @@
                                     <tr style="border-bottom: 1px solid #ddd;">
                                         <td>
                                             <t
+                        t-if="layout == 'historico'"
+                        t-esc="row['product'].default_code or ''"
+                      />
+                                            <t
+                        t-if="layout != 'historico'"
                         t-esc="row['template'].default_code or ''"
                       />
                                         </td>
                                         <td>
-                                            <strong t-esc="row['template'].name" />
+                                            <strong
+                        t-if="layout == 'historico'"
+                        t-esc="row['product'].display_name"
+                      />
+                                            <strong
+                        t-if="layout != 'historico'"
+                        t-esc="row['template'].name"
+                      />
                                         </td>
                                         <t t-if="discount_display == 'show_discounts'">
                                             <td class="text-end">
@@ -89,6 +106,15 @@
                         />
                                             </td>
                                         </t>
+                                        <td
+                      t-if="layout == 'historico'"
+                      class="text-end"
+                    >
+                                            <span
+                        t-esc="row['qty']"
+                        t-options="{'widget': 'float', 'precision': 2}"
+                      /> <t t-esc="row['uom_label']" />
+                                        </td>
                                         <td class="text-end">
                                             <strong>
                                                 <span
@@ -99,7 +125,7 @@
                                         </td>
                                     </tr>
                                     <tr
-                    t-if="len(row['variants']) &gt; 1 or (row['variants'] and row['variants'][0]['code'] != (row['template'].default_code or ''))"
+                    t-if="layout != 'historico' and (len(row['variants']) &gt; 1 or (row['variants'] and row['variants'][0]['code'] != (row['template'].default_code or '')))"
                   >
                                         <td />
                                         <td

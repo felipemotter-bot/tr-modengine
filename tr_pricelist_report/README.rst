@@ -33,6 +33,24 @@ System parameters (``Settings > Technical > Parameters > System Parameters``):
 - ``tr_pricelist_report.group_attribute_name`` (default ``MARCA``) —
   name of the ``product.attribute`` used as the grouping axis in Mode
   A of the Full Catalog layout.
+- ``tr_pricelist_report.history_months_back`` (default ``6``) — window
+  in months the Customer History layout walks back on
+  ``sale.order.line``. Set to ``0`` to disable the layout (the
+  resolver short-circuits and the wizard raises a UserError on
+  empty history).
+
+Customer History layout
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Picking ``Customer History`` as layout prints products the partner
+actually bought in the ``history_months_back`` window, grouped by
+category and listed variant by variant with the aggregated quantity
+(in the product's default UoM) and the current price the condition
+resolves today. Products archived or flagged ``sale_ok=False`` are
+left out — the report is a reorder tool, not an audit log. Products
+sitting under a category that was flagged with
+**Exclude from general pricelists** still show up here: the customer
+already paid for it once, so they must see the price for reorders.
 
 Exclude custom categories
 ~~~~~~~~~~~~~~~~~~~~~~~~~
