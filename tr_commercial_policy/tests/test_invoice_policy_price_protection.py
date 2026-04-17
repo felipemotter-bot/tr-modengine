@@ -141,9 +141,7 @@ class TestInvoicePolicyPriceProtection(CommercialPolicyTestCommon):
             admin_rate,
         )
         price_unit = calc_price_unit(ref_price, seller_disc, extra_disc)
-        discount = (invoice.tr_cash_discount or 0) + (
-            invoice.tr_fob_discount or 0
-        )
+        discount = (invoice.tr_cash_discount or 0) + (invoice.tr_fob_discount or 0)
         line_vals = {
             "product_id": product.id,
             "quantity": 1,

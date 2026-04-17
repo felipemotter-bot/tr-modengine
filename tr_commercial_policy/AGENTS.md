@@ -80,9 +80,12 @@ Configurados via `Configuração → Vendas → Commercial Policy`. Valores arma
 **percentual** (ex.: `10.0`, não `0.10`); `get_policy_rates` divide por 100 antes de
 devolver.
 
-- `tr_commercial_policy.tax_rate_pct` — imposto composto (default `0.0`, configurar por empresa)
-- `tr_commercial_policy.freight_rate_pct` — frete (default `0.0`, configurar por empresa)
-- `tr_commercial_policy.admin_rate_pct` — despesa administrativa (default `0.0`, configurar por empresa)
+- `tr_commercial_policy.tax_rate_pct` — imposto composto (default `0.0`, configurar por
+  empresa)
+- `tr_commercial_policy.freight_rate_pct` — frete (default `0.0`, configurar por
+  empresa)
+- `tr_commercial_policy.admin_rate_pct` — despesa administrativa (default `0.0`,
+  configurar por empresa)
 
 As chaves antigas sem sufixo (`tax_rate`, `freight_rate`) **foram descontinuadas** —
 módulo não as lê mais. Se sobrar valor nelas no banco, é órfão inofensivo.
@@ -257,8 +260,7 @@ Post-time fallback (`_check_manual_price_integrity`) respeita a mesma exceção 
 categoria. `discount` protegido só no write (não no post) para evitar conflito com
 módulos que recalculam (`l10n_br`, `engenere_account_invoice_br_discount`).
 
-Override de `import_fiscal_document` adiciona `tr_skip_price_protection` no
-contexto.
+Override de `import_fiscal_document` adiciona `tr_skip_price_protection` no contexto.
 
 ### Refund (`out_refund`)
 
