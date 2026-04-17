@@ -128,15 +128,21 @@ class PricelistReportWizard(models.TransientModel):
         ).report_action(self, config=False)
 
     def _open_mail_composer(self):
-        """Render the PDF, attach it to the condition, open mail composer.
+        """Render the PDF, open mail composer with a transient attachment.
 
-        The email "belongs" to the ``partner.commercial.condition`` so it
-        gets logged in the condition's chatter (persistent history).
-        The PDF itself is rendered by an ``ir.actions.report`` whose
-        ``model`` is the transient wizard — ``report_template_ids`` on the
-        mail template doesn't fit that shape, so we render the bytes
-        here, create an ``ir.attachment`` linked to the condition, and
-        hand the attachment id to the composer via context.
+        The email "belongs" to the ``partner.commercial.condition`` so
+        when actually sent it gets logged in the condition's chatter
+        (persistent history). The PDF itself is rendered by an
+        ``ir.actions.report`` whose ``model`` is the transient wizard —
+        ``report_template_ids`` on the mail template doesn't fit that
+        shape, so we render the bytes here and hand them off to the
+        composer as a **temporary** attachment (``res_model
+        ='mail.compose.message'``, ``res_id=0``). When
+        ``mail.compose.message._action_send_mail`` actually posts the
+        message, ``message_post`` re-parents the attachment to the
+        condition. If the user cancels the composer the attachment
+        stays temporary and Odoo's built-in garbage collector reclaims
+        it later — nothing pollutes the condition's attachment tree.
         """
         self.ensure_one()
         condition = self.condition_id
@@ -149,8 +155,8 @@ class PricelistReportWizard(models.TransientModel):
                 "name": "%s.pdf" % condition.display_name,
                 "type": "binary",
                 "datas": base64.b64encode(pdf_content),
-                "res_model": "partner.commercial.condition",
-                "res_id": condition.id,
+                "res_model": "mail.compose.message",
+                "res_id": 0,
                 "mimetype": "application/pdf",
             }
         )

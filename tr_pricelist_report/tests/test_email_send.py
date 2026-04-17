@@ -44,15 +44,23 @@ class TestEmailSend(PricelistReportTestCommon, MailCommon):
         template = self.env.ref("tr_pricelist_report.email_template_pricelist")
         self.assertEqual(ctx["default_template_id"], template.id)
 
-    def test_attachment_is_created_and_bound_to_condition(self):
-        """PDF attachment exists on the condition and is passed as raw ids."""
+    def test_attachment_is_created_as_temporary_for_composer(self):
+        """PDF attachment nasce temporário no composer, não na condição.
+
+        Codex 2026-04-17: se o vendedor abrir o composer e cancelar, o
+        anexo não pode sobrar colado à condição. Padrão do core mail é
+        criar attachment com ``res_model='mail.compose.message'`` e
+        ``res_id=0``; na hora que o email sai, ``message_post`` re-
+        parenta o anexo pro doc. Cancelar deixa o anexo órfão e o GC
+        built-in do Odoo limpa.
+        """
         wizard = self._open_email_wizard()
         action = wizard.action_generate()
         attachment_ids = action["context"]["default_attachment_ids"]
         self.assertEqual(len(attachment_ids), 1)
         attachment = self.env["ir.attachment"].browse(attachment_ids[0])
-        self.assertEqual(attachment.res_model, "partner.commercial.condition")
-        self.assertEqual(attachment.res_id, self.condition.id)
+        self.assertEqual(attachment.res_model, "mail.compose.message")
+        self.assertEqual(attachment.res_id, 0)
         self.assertEqual(attachment.mimetype, "application/pdf")
         # default_attachment_ids must be a list of raw ids, not an M2M command.
         for value in attachment_ids:
@@ -81,16 +89,23 @@ class TestEmailSend(PricelistReportTestCommon, MailCommon):
         """End-to-end: submitting the composer posts on the condition.
 
         We create the composer with the same context the wizard passes
-        on the UI, then force-apply the template (``_onchange_template_id_wrapper``)
-        to reproduce the Odoo UI flow — the onchange is what fills
-        partner_ids, subject and body when the template field is
-        populated via default. Finally ``_action_send_mail()`` sends
-        and we check that a message landed on the condition with the
-        PDF attached.
+        on the UI, then force-apply the template
+        (``_onchange_template_id_wrapper``) to reproduce the Odoo UI
+        flow — the onchange is what fills partner_ids, subject and
+        body when the template field is populated via default. Finally
+        ``_action_send_mail()`` sends and we check:
+
+        - a ``mail.message`` landed on the condition's chatter;
+        - the PDF attachment is tied to it;
+        - the attachment was re-parented from the temporary
+          ``mail.compose.message`` bucket to the condition (Codex
+          2026-04-17).
         """
         wizard = self._open_email_wizard()
         action = wizard.action_generate()
         ctx = action["context"]
+        attachment = self.env["ir.attachment"].browse(ctx["default_attachment_ids"][0])
+        self.assertEqual(attachment.res_model, "mail.compose.message")
         messages_before = self.condition.message_ids
         with self.mock_mail_gateway():
             composer = self.env["mail.compose.message"].with_context(**ctx).create({})
@@ -102,3 +117,6 @@ class TestEmailSend(PricelistReportTestCommon, MailCommon):
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments.mimetype, "application/pdf")
         self.assertIn(self.customer, new_messages.partner_ids)
+        attachment.invalidate_recordset()
+        self.assertEqual(attachment.res_model, "partner.commercial.condition")
+        self.assertEqual(attachment.res_id, self.condition.id)
