@@ -122,7 +122,30 @@ class PricelistReportWizard(models.TransientModel):
         if self.category_ids:
             categories = self._expand_categories()
             domain.append(("categ_id", "in", categories.ids))
+        excluded_ids = self._resolve_excluded_category_ids()
+        if excluded_ids:
+            domain.append(("categ_id", "not in", excluded_ids))
         return self.env["product.product"].search(domain)
+
+    def _resolve_excluded_category_ids(self):
+        """Expand the ``tr_exclude_from_general_pricelist`` cascade in one shot.
+
+        Rigid cascade rule (§4.5): any ``product.category`` with the flag
+        set, PLUS every descendant of those, is out of scope for the
+        general-pricelist layouts (``por_categoria`` and ``geralzao``
+        Modes A and B). The customer-history layout (PR4) bypasses this
+        by resolving products through a different code path.
+
+        The batch expansion uses ``child_of``, which relies on
+        ``parent_path`` and runs in a single SQL. ``child_of`` with an
+        empty list returns an empty recordset, so the call is safe when
+        no category is flagged.
+        """
+        Category = self.env["product.category"]
+        flagged = Category.search([("tr_exclude_from_general_pricelist", "=", True)])
+        if not flagged:
+            return []
+        return Category.search([("id", "child_of", flagged.ids)]).ids
 
     # ------------------------------------------------------------------
     # Grouping resolvers (shared between layouts)

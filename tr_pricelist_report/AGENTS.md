@@ -67,7 +67,7 @@ que chamam o action por código continuam funcionando.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
-PRs futuras adicionam: `historico` (PR3) e `send_by_email` (PR4).
+PRs futuras adicionam: `historico` (PR4) e `send_by_email` (PR5).
 
 ## Layouts
 
@@ -89,6 +89,46 @@ se preenchido). Dois sub-modos via `group_axis`:
   não criar duas noções de categoria.
 - **Modo B — `categoria`**: particiona pela categoria no nível configurado por
   `category_depth`.
+
+## Exclusão de categorias customizadas das listas gerais
+
+Flag `tr_exclude_from_general_pricelist` em `product.category` (herdada pelo
+`tr_pricelist_report` via `models/product_category.py`). Comportamento:
+
+- Quando a flag está True numa categoria, produtos dessa categoria **e todas as
+  descendentes** ficam fora das listagens gerais do relatório (`por_categoria` e
+  `geralzao` Modo A/B).
+- **Cascata rígida**: uma categoria filha não pode "desligar" o efeito herdado do pai.
+  Solução operacional se precisar voltar: mover a filha pra outra árvore não flagada.
+- O **layout histórico** (PR4) **ignora** a flag — cliente que comprou o produto
+  customizado continua vendo o preço no histórico pra reorders.
+
+### Implementação
+
+`_resolve_products` monta o domain base (`active`, `sale_ok`, opcional filtro por
+`category_ids`) e acrescenta `("categ_id", "not in", excluded_ids)` quando existem
+categorias flagadas. A expansão é feita em lote em `_resolve_excluded_category_ids()`:
+
+```python
+flagged = env["product.category"].search([
+    ("tr_exclude_from_general_pricelist", "=", True)
+])
+excluded = env["product.category"].search([
+    ("id", "child_of", flagged.ids)
+])
+```
+
+Duas queries, usa `parent_path` do Odoo (O(1)). `child_of` com lista vazia devolve
+recordset vazio, então o helper é seguro quando nenhuma categoria está marcada.
+
+### Cuidado operacional
+
+A cascata é silenciosa: marcar na raiz "Produção Sob Encomenda" some com todos os
+produtos descendentes das listas gerais sem UI específico indicando produto-por-produto.
+O `help` do campo explica o efeito e o PDF do layout histórico continua mostrando os
+produtos pra clientes que compraram — safety net. Se no futuro admins começarem a se
+queixar de "sumiu produto", considerar um badge/flag read-only na form do produto
+sinalizando a herança ("excluído via categoria X").
 
 ## Resolvedor de categoria
 
@@ -150,7 +190,15 @@ conversar com o Felipe antes.
 - `tr_pricelist_report.group_attribute_id` — cache do id do atributo, resolvido pelo
   `post_init_hook` a partir do nome configurado. Vazio quando nenhum atributo bate (Modo
   A cai pro fallback por categoria).
-- `tr_pricelist_report.history_months_back` — PR3.
+- `tr_pricelist_report.history_months_back` — PR4.
+
+## Upgrades em devel (nota de operação)
+
+Enquanto o stack de política comercial rodar só em `devel`, as mudanças de default via
+`noupdate="1"` e a cache do `post_init_hook` não se propagam em `-u`. Pra aplicar
+defaults novos (ex.: `category_depth` mudou de `-1` pra `-2` na PR2), **reinstalar o
+módulo** (`-i tr_pricelist_report`) em vez de atualizar. Quando/se a família for pra
+produção, migrations entram em cena e essa regra deixa de valer.
 
 ## Invariante
 

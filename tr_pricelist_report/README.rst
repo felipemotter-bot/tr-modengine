@@ -26,8 +26,32 @@ System parameters (``Settings > Technical > Parameters > System Parameters``):
 
 - ``tr_pricelist_report.validity_days`` (default ``30``) — default days
   added to the issue date to build the report validity ``date_end``.
-- ``tr_pricelist_report.category_depth`` (default ``-1``) — depth used
-  when grouping by ``product.category``. ``-1`` means the leaf category.
+- ``tr_pricelist_report.category_depth`` (default ``-2``, parent of
+  the leaf) — depth used when grouping by ``product.category``.
+  Accepts ``-1`` (leaf), ``-N`` (N-th ancestor, clamps to root),
+  ``N >= 0`` (absolute level from root, clamps to leaf).
+- ``tr_pricelist_report.group_attribute_name`` (default ``MARCA``) —
+  name of the ``product.attribute`` used as the grouping axis in Mode
+  A of the Full Catalog layout.
+
+Exclude custom categories
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each ``product.category`` gets the flag **Exclude from general
+pricelists**. Flag a category (or any ancestor of it — the cascade is
+rigid) and every product underneath is hidden from ``By Category``
+and ``Full Catalog`` layouts. The flag is ignored by the customer
+history layout, so buyers who already ordered the product still see
+the price for reorders.
+
+Upgrade in devel
+~~~~~~~~~~~~~~~~
+
+While the commercial-policy stack only runs in the ``devel`` database,
+apply new defaults by **reinstalling** the module (``-i
+tr_pricelist_report``) rather than ``-u``. ``noupdate="1"`` on the XML
+config records and the ``post_init_hook`` that resolves
+``group_attribute_id`` don't fire on plain updates.
 
 Usage
 =====
