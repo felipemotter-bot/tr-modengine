@@ -39,6 +39,17 @@ System parameters (``Settings > Technical > Parameters > System Parameters``):
   resolver short-circuits and the wizard raises a UserError on
   empty history).
 
+Send by email
+~~~~~~~~~~~~~
+
+Ticking **Send by email** on the wizard renders the PDF, attaches it
+to the commercial condition, and opens a mail composer pre-filled from
+the ``Pricelist Report: Send to Customer`` mail template. You can
+edit recipients, subject and body before sending; the message is
+logged on the condition's chatter with the attachment. Partners
+without an email address don't block — fill the email directly in the
+composer.
+
 Customer History layout
 ~~~~~~~~~~~~~~~~~~~~~~~
 

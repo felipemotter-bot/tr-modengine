@@ -4,6 +4,7 @@
 from . import test_category_depth
 from . import test_category_exclusion
 from . import test_disable_native
+from . import test_email_send
 from . import test_exceptions_section
 from . import test_layout_geralzao
 from . import test_layout_historico

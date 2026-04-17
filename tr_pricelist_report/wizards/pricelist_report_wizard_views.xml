@@ -21,6 +21,7 @@
               />
                             <field name="date_end" />
                             <field name="discount_display" />
+                            <field name="send_by_email" />
                         </group>
                         <group>
                             <field

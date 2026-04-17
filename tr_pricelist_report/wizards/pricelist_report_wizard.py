@@ -1,6 +1,7 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import base64
 from collections import defaultdict
 from datetime import timedelta
 
@@ -61,6 +62,15 @@ class PricelistReportWizard(models.TransientModel):
         required=True,
         default=lambda self: self._default_discount_display(),
     )
+    send_by_email = fields.Boolean(
+        string="Send by email",
+        default=False,
+        help=(
+            "When checked, the generated PDF is attached to a mail composer "
+            "pre-filled for the partner's email; you can review and edit "
+            "before sending. When unchecked, the PDF downloads directly."
+        ),
+    )
 
     # ------------------------------------------------------------------
     # Defaults
@@ -107,6 +117,8 @@ class PricelistReportWizard(models.TransientModel):
                     "configured period."
                 )
             )
+        if self.send_by_email:
+            return self._open_mail_composer()
         # ``config=False`` skips the "configure external layout" wizard that
         # Odoo prompts admins with on first use (returns ir.actions.act_window
         # instead of the report). Pricelist printing shouldn't derail on the
@@ -114,6 +126,61 @@ class PricelistReportWizard(models.TransientModel):
         return self.env.ref(
             "tr_pricelist_report.action_report_pricelist"
         ).report_action(self, config=False)
+
+    def _open_mail_composer(self):
+        """Render the PDF, open mail composer with a transient attachment.
+
+        The email "belongs" to the ``partner.commercial.condition`` so
+        when actually sent it gets logged in the condition's chatter
+        (persistent history). The PDF itself is rendered by an
+        ``ir.actions.report`` whose ``model`` is the transient wizard —
+        ``report_template_ids`` on the mail template doesn't fit that
+        shape, so we render the bytes here and hand them off to the
+        composer as a **temporary** attachment (``res_model
+        ='mail.compose.message'``, ``res_id=0``). When
+        ``mail.compose.message._action_send_mail`` actually posts the
+        message, ``message_post`` re-parents the attachment to the
+        condition. If the user cancels the composer the attachment
+        stays temporary and Odoo's built-in garbage collector reclaims
+        it later — nothing pollutes the condition's attachment tree.
+        """
+        self.ensure_one()
+        condition = self.condition_id
+        report = self.env.ref("tr_pricelist_report.action_report_pricelist")
+        pdf_content, _content_type = report._render_qweb_pdf(
+            report.report_name, self.ids
+        )
+        attachment = self.env["ir.attachment"].create(
+            {
+                "name": "%s.pdf" % condition.display_name,
+                "type": "binary",
+                "datas": base64.b64encode(pdf_content),
+                "res_model": "mail.compose.message",
+                "res_id": 0,
+                "mimetype": "application/pdf",
+            }
+        )
+        template = self.env.ref(
+            "tr_pricelist_report.email_template_pricelist",
+            raise_if_not_found=False,
+        )
+        compose_ctx = {
+            "default_model": "partner.commercial.condition",
+            "default_res_id": condition.id,
+            "default_composition_mode": "comment",
+            "default_attachment_ids": [attachment.id],
+        }
+        if template:
+            compose_ctx["default_use_template"] = True
+            compose_ctx["default_template_id"] = template.id
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Send Price List"),
+            "res_model": "mail.compose.message",
+            "view_mode": "form",
+            "target": "new",
+            "context": compose_ctx,
+        }
 
     # ------------------------------------------------------------------
     # Report values

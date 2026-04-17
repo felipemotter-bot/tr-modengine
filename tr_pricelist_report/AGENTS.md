@@ -67,7 +67,7 @@ que chamam o action por código continuam funcionando.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
-PRs futuras adicionam: `send_by_email` (PR5).
+Todas as capacidades planejadas entregues (PR1–PR5).
 
 ## Layouts
 
@@ -111,6 +111,32 @@ meses, agrupados pelo mesmo resolvedor de categoria do geralzão Modo B.
   `product_uom._compute_quantity(qty, product.uom_id)` antes de somar.
 - Quando o histórico é vazio na janela configurada, `action_generate` levanta
   `UserError` com mensagem clara — evita PDF em branco que parece bug.
+
+## Envio por email
+
+O wizard tem o Boolean `send_by_email`. Sem marcar, `action_generate` retorna o
+`ir.actions.report` (download direto — comportamento das PRs anteriores). Quando
+marcado:
+
+1. `_render_qweb_pdf(report_name, wizard.ids)` gera os bytes do PDF do layout atual.
+2. `ir.attachment.create` persiste o PDF ligado à `partner.commercial.condition`
+   (`res_model='partner.commercial.condition'`, `res_id=condition.id`).
+3. `mail.compose.message` é aberto via `ir.actions.act_window` com contexto:
+   - `default_model='partner.commercial.condition'`, `default_res_id=condition.id` —
+     email fica no chatter da condição.
+   - `default_composition_mode='comment'`.
+   - `default_template_id` + `default_use_template=True` — carrega o
+     `email_template_pricelist`.
+   - `default_attachment_ids=[attachment.id]` — lista de ids crus, não `[(4, id)]`
+     (idiomático de defaults de contexto Odoo).
+
+O template `mail.template` mora em `data/mail_template.xml` com `model_id` =
+`partner.commercial.condition`. Não usa `report_template_ids` porque o report é
+renderizado a partir do wizard transient — a anexação manual pelo `action_generate`
+cobre isso sem gambiarra.
+
+Partner sem email **não bloqueia**: o composer padrão do Odoo é a UI de revisão, e o
+vendedor preenche/edita lá.
 
 ## Exclusão de categorias customizadas das listas gerais
 
