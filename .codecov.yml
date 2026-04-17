@@ -7,3 +7,8 @@ coverage:
     patch:
       default:
         target: 98%
+
+comment:
+  layout: "header, reach, diff, flags, files, footer"
+  behavior: default
+  require_changes: false
