@@ -14,6 +14,11 @@
         "tr_commercial_policy",
         "product",
         "sale_management",
+        # partner_stage (OCA/partner-contact) adds the <header> with the
+        # statusbar on res.partner.form. We target ``//header`` to drop
+        # the Print Price List button next to the status, so the stage
+        # module must be present for our view xpath to match.
+        "partner_stage",
     ],
     "data": [
         "security/ir.model.access.csv",
