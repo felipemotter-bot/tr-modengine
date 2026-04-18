@@ -216,18 +216,26 @@ class PricelistReportWizard(models.TransientModel):
     # ------------------------------------------------------------------
 
     def _get_category_depth(self):
-        return int(
+        value = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("tr_pricelist_report.category_depth", "-2")
         )
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return -2
 
     def _get_history_months_back(self):
-        return int(
+        value = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("tr_pricelist_report.history_months_back", "6")
         )
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 6
 
     def _get_invalid_price_threshold(self):
         value = (

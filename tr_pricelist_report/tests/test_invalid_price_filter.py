@@ -147,6 +147,27 @@ class TestInvalidPriceFilter(PricelistReportTestCommon):
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         self.assertEqual(wizard._get_invalid_price_threshold(), 99999.0)
 
+    def test_category_depth_getter_falls_back_on_invalid_param(self):
+        """Non-integer param value falls back to -2.
+
+        The settings layer writes valid integers, but a direct edit of
+        ``ir.config_parameter`` (ex.: scripts, tests) could leave a
+        broken value there. The getter must not crash.
+        """
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.category_depth", "not_a_number"
+        )
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        self.assertEqual(wizard._get_category_depth(), -2)
+
+    def test_history_months_getter_falls_back_on_invalid_param(self):
+        """Empty / non-integer history_months_back param falls back to 6."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "not_a_number"
+        )
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        self.assertEqual(wizard._get_history_months_back(), 6)
+
     def test_template_tier_all_variants_invalid_is_dropped(self):
         """Qty tier at the template level is dropped when every variant
         prices invalidly at that quantity.

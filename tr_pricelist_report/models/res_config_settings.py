@@ -52,11 +52,16 @@ class ResConfigSettings(models.TransientModel):
         res = super().set_values()
         # Odoo quirk: `0` on Integer/Float ``config_parameter`` fields is
         # collapsed into an empty string by ``set_values`` because
-        # ``0 in (None, False)`` evaluates True. That breaks the meaningful
-        # zero cases for us: ``history_months_back=0`` disables the history
-        # layout and ``invalid_price_threshold=0`` disables the filter.
-        # Force the literal value so it survives the round-trip.
+        # ``0 in (None, False)`` evaluates True. All three numeric knobs
+        # here accept 0 as a meaningful value (``history_months_back=0``
+        # disables the history layout, ``invalid_price_threshold=0``
+        # disables the filter, ``category_depth=0`` selects the root
+        # category level). Force the literal value so it survives.
         icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param(
+            "tr_pricelist_report.category_depth",
+            str(int(self.tr_pricelist_report_category_depth)),
+        )
         icp.set_param(
             "tr_pricelist_report.history_months_back",
             str(int(self.tr_pricelist_report_history_months_back)),

@@ -29,6 +29,20 @@ class TestConfigSettings(PricelistReportTestCommon):
             "BRAND",
         )
 
+    def test_round_trip_category_depth_zero(self):
+        """Zero boundary: category_depth=0 saves and reads back literally.
+
+        Covers the workaround that bypasses Odoo's 0-to-empty quirk for
+        this specific field. Without the workaround, saving 0 would
+        collapse to '' and then the wizard's ``_get_category_depth``
+        int-cast would crash.
+        """
+        settings = self.env["res.config.settings"].create(
+            {"tr_pricelist_report_category_depth": 0}
+        )
+        settings.execute()
+        self.assertEqual(self._get_param("tr_pricelist_report.category_depth"), "0")
+
     def test_round_trip_history_months_back_zero(self):
         """Zero boundary: history_months_back=0 saves and reads back."""
         settings = self.env["res.config.settings"].create(
