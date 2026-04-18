@@ -205,25 +205,21 @@
                 />% do total.
                             </li>
                         </ul>
-                        <p
-              style="font-size: 9pt; color: #666; margin-top: 6pt; margin-bottom: 0;"
-            >
-                            <em
-              >Preços não incluem tributos, calculados conforme legislação e operação.</em>
-                        </p>
-                    </div>
-
-                    <!-- History-layout footer note -->
-                    <t t-if="layout == 'historico'">
-                        <div class="pricelist-history-note">
+                        <!--
+                            History-layout note anchored inline at the end
+                            of "Condições Comerciais". Pinning it here (vs.
+                            a floating footer) also avoids pagination
+                            pitfalls with ``web.external_layout``.
+                        -->
+                        <p t-if="layout == 'historico'" class="pricelist-history-note">
                             Qtd. considera pedidos de venda confirmados nos
                             últimos <t t-esc="history_months_back" /> meses
                             (desde <span
                 t-esc="date_history_threshold"
                 t-options="{'widget': 'date'}"
               />). Devoluções não são descontadas.
-                        </div>
-                    </t>
+                        </p>
+                    </div>
 
                 </div>
             </t>

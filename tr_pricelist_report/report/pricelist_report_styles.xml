@@ -60,6 +60,14 @@
                 border-collapse: collapse;
                 margin-top: 6pt;
             }
+            /* Zero every inherited border first (Odoo/wkhtmltopdf defaults
+               tend to draw full cell borders). We add the specific
+               bottom borders right below. */
+            .pricelist-table,
+            .pricelist-table th,
+            .pricelist-table td {
+                border: 0;
+            }
             .pricelist-table thead th {
                 font-size: 8.5pt;
                 font-weight: 600;
@@ -94,14 +102,13 @@
                 text-align: right;
             }
 
-            /* ---------- Historico footer note --------------------------- */
+            /* ---------- Historico explanatory note (inline after
+                           the Condições Comerciais block) ----------------- */
             .pricelist-history-note {
-                margin-top: 14pt;
-                padding-top: 6pt;
-                border-top: 1px solid #eee;
-                font-size: 7.5pt;
-                color: #999;
-                text-align: center;
+                font-size: 9pt;
+                color: #666;
+                font-style: italic;
+                margin: 6pt 0 0 0;
             }
         </style>
     </template>
