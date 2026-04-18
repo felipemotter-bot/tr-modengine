@@ -17,7 +17,7 @@
                             <field name="layout" />
                             <field
                 name="group_axis"
-                attrs="{'invisible': [('layout', '!=', 'geralzao')], 'required': [('layout', '=', 'geralzao')]}"
+                attrs="{'invisible': [('layout', '!=', 'completa')], 'required': [('layout', '=', 'completa')]}"
               />
                             <field name="date_end" />
                             <field name="discount_display" />

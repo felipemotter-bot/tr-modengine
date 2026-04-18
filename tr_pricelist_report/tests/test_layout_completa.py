@@ -4,8 +4,8 @@
 from .common import PricelistReportTestCommon
 
 
-class TestLayoutGeralzao(PricelistReportTestCommon):
-    """Cover the geralzão layout in both axes (MARCA and category)."""
+class TestLayoutCompleta(PricelistReportTestCommon):
+    """Cover the Complete Pricelist layout in both axes (MARCA and category)."""
 
     @classmethod
     def setUpClass(cls):
@@ -55,18 +55,18 @@ class TestLayoutGeralzao(PricelistReportTestCommon):
             "tr_pricelist_report.group_attribute_id", str(cls.attr_marca.id)
         )
 
-    def _open_geralzao(self, group_axis="marca"):
+    def _open_completa(self, group_axis="marca"):
         return self.env["tr.pricelist.report.wizard"].create(
             {
                 "condition_id": self.condition.id,
-                "layout": "geralzao",
+                "layout": "completa",
                 "group_axis": group_axis,
             }
         )
 
     def test_mode_a_partitions_by_marca_value(self):
         """Each MARCA value becomes its own section."""
-        wizard = self._open_geralzao(group_axis="marca")
+        wizard = self._open_completa(group_axis="marca")
         values = wizard._get_report_values(wizard.ids)
         titles = [s["title"] for s in values["sections"]]
         self.assertIn("Alpha Brand", titles)
@@ -74,7 +74,7 @@ class TestLayoutGeralzao(PricelistReportTestCommon):
 
     def test_mode_a_products_without_marca_fallback_to_category(self):
         """``product_a`` has no MARCA attribute — falls back by category."""
-        wizard = self._open_geralzao(group_axis="marca")
+        wizard = self._open_completa(group_axis="marca")
         values = wizard._get_report_values(wizard.ids)
         titles = [s["title"] for s in values["sections"]]
         # product_a is in categ_chemicals (root, default depth=-2 clamps
@@ -97,7 +97,7 @@ class TestLayoutGeralzao(PricelistReportTestCommon):
 
     def test_mode_b_partitions_by_category(self):
         """``group_axis='categoria'`` groups every product by category depth."""
-        wizard = self._open_geralzao(group_axis="categoria")
+        wizard = self._open_completa(group_axis="categoria")
         values = wizard._get_report_values(wizard.ids)
         titles = [s["title"] for s in values["sections"]]
         # Branded product's categ_id is Chemicals (root). Default depth=-2
@@ -113,16 +113,16 @@ class TestLayoutGeralzao(PricelistReportTestCommon):
         self.env["ir.config_parameter"].sudo().set_param(
             "tr_pricelist_report.group_attribute_id", ""
         )
-        wizard = self._open_geralzao(group_axis="marca")
+        wizard = self._open_completa(group_axis="marca")
         values = wizard._get_report_values(wizard.ids)
         titles = [s["title"] for s in values["sections"]]
         self.assertNotIn("Alpha Brand", titles)
         self.assertNotIn("Beta Brand", titles)
         self.assertIn(self.categ_chemicals.name, titles)
 
-    def test_action_generate_no_categories_ok_for_geralzao(self):
-        """``category_ids`` is optional when layout is geralzão."""
-        wizard = self._open_geralzao(group_axis="marca")
+    def test_action_generate_no_categories_ok_for_completa(self):
+        """``category_ids`` is optional when layout is Complete Pricelist."""
+        wizard = self._open_completa(group_axis="marca")
         # Must not raise despite empty category_ids.
         action = wizard.action_generate()
         self.assertEqual(action["type"], "ir.actions.report")

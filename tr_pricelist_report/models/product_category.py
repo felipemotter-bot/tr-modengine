@@ -12,7 +12,7 @@ class ProductCategory(models.Model):
         help=(
             "When checked, products in this category and ALL its "
             "descendants are excluded from the general pricelist "
-            "report layouts (By Category and Full Catalog). The effect "
+            "report layouts (By Category and Complete Pricelist). The effect "
             "cascades rigidly — a descendant category cannot override "
             "the exclusion. Products in excluded categories still "
             "appear in the customer history layout, so clients who "

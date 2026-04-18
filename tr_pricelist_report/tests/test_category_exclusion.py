@@ -10,7 +10,7 @@ class TestCategoryExclusion(PricelistReportTestCommon):
 
     The cascade is rigid: a category with the flag set excludes itself and
     every descendant from the general-pricelist layouts (``por_categoria``
-    and ``geralzao`` Modes A / B). A descendant cannot turn the exclusion
+    and ``completa`` Modes A / B). A descendant cannot turn the exclusion
     off. The customer-history layout (PR4) ignores this flag; that
     guarantee is covered on the PR4 test suite.
     """
@@ -101,13 +101,13 @@ class TestCategoryExclusion(PricelistReportTestCommon):
         # Unrelated products in Chemicals still pass through.
         self.assertIn(self.product_a, products)
 
-    def test_flagged_category_excluded_from_geralzao(self):
-        """Modes A and B of ``geralzao`` also drop flagged products."""
+    def test_flagged_category_excluded_from_completa(self):
+        """Modes A and B of ``completa`` also drop flagged products."""
         self.categ_custom.tr_exclude_from_general_pricelist = True
         wizard_b = self.env["tr.pricelist.report.wizard"].create(
             {
                 "condition_id": self.condition.id,
-                "layout": "geralzao",
+                "layout": "completa",
                 "group_axis": "categoria",
             }
         )
@@ -115,7 +115,7 @@ class TestCategoryExclusion(PricelistReportTestCommon):
         wizard_a = self.env["tr.pricelist.report.wizard"].create(
             {
                 "condition_id": self.condition.id,
-                "layout": "geralzao",
+                "layout": "completa",
                 "group_axis": "marca",
             }
         )

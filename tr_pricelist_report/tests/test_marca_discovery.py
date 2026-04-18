@@ -25,7 +25,7 @@ class TestMarcaDiscovery(PricelistReportTestCommon):
     def test_hook_leaves_id_empty_when_attribute_missing(self):
         """When no attribute matches the name, the id stays empty.
 
-        The Modo A of the geralzão layout must then treat every product
+        Mode A of the Complete Pricelist layout must then treat every product
         as having no MARCA — all routed to the category fallback.
         """
         from .. import hooks
@@ -45,7 +45,7 @@ class TestMarcaDiscovery(PricelistReportTestCommon):
             "tr_pricelist_report.group_attribute_id", str(attr.id)
         )
         wizard = self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id, "layout": "geralzao"}
+            {"condition_id": self.condition.id, "layout": "completa"}
         )
         self.assertEqual(wizard._get_group_attribute(), attr)
 
@@ -54,7 +54,7 @@ class TestMarcaDiscovery(PricelistReportTestCommon):
         icp = self.env["ir.config_parameter"].sudo()
         icp.set_param("tr_pricelist_report.group_attribute_id", "")
         wizard = self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id, "layout": "geralzao"}
+            {"condition_id": self.condition.id, "layout": "completa"}
         )
         self.assertFalse(wizard._get_group_attribute())
 
@@ -63,6 +63,6 @@ class TestMarcaDiscovery(PricelistReportTestCommon):
         icp = self.env["ir.config_parameter"].sudo()
         icp.set_param("tr_pricelist_report.group_attribute_id", "999999")
         wizard = self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id, "layout": "geralzao"}
+            {"condition_id": self.condition.id, "layout": "completa"}
         )
         self.assertFalse(wizard._get_group_attribute())
