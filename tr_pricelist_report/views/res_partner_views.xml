@@ -9,16 +9,18 @@
         <field name="name">res.partner.form.pricelist.report</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="priority" eval="1" />
         <field name="arch" type="xml">
-            <xpath expr="//div[@name='button_box']" position="inside">
-                <button
-          name="action_print_pricelist"
-          string="Print Price List"
-          type="object"
-          class="oe_stat_button"
-          icon="fa-print"
-          attrs="{'invisible': [('effective_condition_id', '=', False)]}"
-        />
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button
+            name="action_print_pricelist"
+            string="Print Price List"
+            type="object"
+            class="btn-secondary"
+            attrs="{'invisible': [('effective_condition_id', '=', False)]}"
+          />
+                </header>
             </xpath>
         </field>
     </record>

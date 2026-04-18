@@ -19,8 +19,8 @@
             <div>
                 <p t-out="object.partner_id.name or ''" />
                 <p>
-                    Please find attached the up-to-date price list for the
-                    period configured on your commercial condition.
+                    Please find attached the up-to-date price list for
+                    your commercial condition.
                 </p>
                 <p>
                     Let us know if you have any question.

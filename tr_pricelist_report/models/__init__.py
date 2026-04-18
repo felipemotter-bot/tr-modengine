@@ -4,4 +4,5 @@
 from . import partner_commercial_condition
 from . import pricelist_report
 from . import product_category
+from . import res_config_settings
 from . import res_partner

@@ -63,7 +63,6 @@ que chamam o action por código continuam funcionando.
 - `group_axis` — selection `marca` / `categoria`. Exigido quando `layout=completa`.
 - `category_ids` — M2M `product.category`. Obrigatório quando `layout=por_categoria`;
   opcional em `completa` (vazio = todo catálogo vendável).
-- `date_end` — validade do PDF; default = hoje + `validity_days`.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
@@ -229,7 +228,11 @@ conversar com o Felipe antes.
 
 ## `ir.config_parameter`
 
-- `tr_pricelist_report.validity_days` (default 30).
+Todos os parâmetros também estão expostos em **Configurações > Vendas > Pricelist
+Report** (`res.config.settings`). O `set_values()` do settings chama
+`hooks._resolve_group_attribute(env)` sem condição depois do `super()`, pra manter o
+cache em sync com o nome corrente.
+
 - `tr_pricelist_report.category_depth` (default `-2`, pai da folha). Aceita `-1`
   (folha), `-N` (N-ésimo ancestral, clampa à raiz), `N >= 0` (nível absoluto a partir da
   raiz, clampa à folha).
@@ -241,6 +244,10 @@ conversar com o Felipe antes.
 - `tr_pricelist_report.history_months_back` (default 6) — janela em meses usada pelo
   layout `historico` pra varrer `sale.order.line`. Valor `0` desliga o layout
   (resolvedor curto-circuita e retorna vazio).
+- `tr_pricelist_report.invalid_price_threshold` (default `99999.0`) — produtos cujo
+  `price_unit` computado seja `>=` esse valor são dropados (corpo + exceções +
+  histórico). `0` desliga o filtro. Se o filtro zerar o escopo, `_get_report_values`
+  levanta `UserError` pra não gerar PDF vazio.
 
 ## Upgrades em devel (nota de operação)
 

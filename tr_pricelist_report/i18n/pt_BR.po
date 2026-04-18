@@ -23,8 +23,8 @@ msgstr "% do total."
 
 #. module: tr_pricelist_report
 #: model:ir.actions.report,print_report_name:tr_pricelist_report.action_report_pricelist
-msgid "'Pricelist - %s' % (object.condition_id.display_name)"
-msgstr "'Lista de Preços - %s' % (object.condition_id.display_name)"
+msgid "'Price List - %s' % (object.condition_id.partner_id.name or '')"
+msgstr "'Lista de Preços - %s' % (object.condition_id.partner_id.name or '')"
 
 #. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
@@ -90,11 +90,6 @@ msgstr "<strong>Modo de pagamento:</strong>"
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "<strong>Prazo de pagamento:</strong>"
 msgstr "<strong>Prazo de pagamento:</strong>"
-
-#. module: tr_pricelist_report
-#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
-msgid "<strong>Válida até:</strong>"
-msgstr "<strong>Válida até:</strong>"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__group_axis__marca
@@ -373,13 +368,9 @@ msgstr "Busca Inteligente"
 
 #. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
-msgid "TABELA DE PREÇOS —"
-msgstr "TABELA DE PREÇOS —"
+msgid "TABELA DE PREÇOS"
+msgstr "TABELA DE PREÇOS"
 
-#. module: tr_pricelist_report
-#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__date_end
-msgid "Valid Until"
-msgstr "Válida Até"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields,help:tr_pricelist_report.field_product_category__tr_exclude_from_general_pricelist
@@ -397,11 +388,6 @@ msgstr ""
 "pode sobrescrever a exclusão. Produtos em categorias excluídas continuam "
 "aparecendo no layout de histórico do cliente, para que clientes que já os "
 "compraram possam ver o preço em recompras."
-
-#. module: tr_pricelist_report
-#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
-msgid "— CNPJ"
-msgstr "— CNPJ"
 
 #. module: tr_pricelist_report
 #: model:mail.template,subject:tr_pricelist_report.email_template_pricelist

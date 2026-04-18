@@ -22,10 +22,9 @@ order and invoice actually compute.
 Configuration
 =============
 
-System parameters (``Settings > Technical > Parameters > System Parameters``):
+All knobs are exposed on **Settings > Sales > Pricelist Report**
+(and mirrored as ``ir.config_parameter``):
 
-- ``tr_pricelist_report.validity_days`` (default ``30``) — default days
-  added to the issue date to build the report validity ``date_end``.
 - ``tr_pricelist_report.category_depth`` (default ``-2``, parent of
   the leaf) — depth used when grouping by ``product.category``.
   Accepts ``-1`` (leaf), ``-N`` (N-th ancestor, clamps to root),
@@ -35,9 +34,12 @@ System parameters (``Settings > Technical > Parameters > System Parameters``):
   A of the Complete Pricelist layout.
 - ``tr_pricelist_report.history_months_back`` (default ``6``) — window
   in months the Customer History layout walks back on
-  ``sale.order.line``. Set to ``0`` to disable the layout (the
-  resolver short-circuits and the wizard raises a UserError on
-  empty history).
+  ``sale.order.line``. Set to ``0`` to disable the layout.
+- ``tr_pricelist_report.invalid_price_threshold`` (default ``99999.0``)
+  — products whose computed price reaches or exceeds this threshold
+  are dropped from the report. Hides placeholders (e.g. ``999999``)
+  for products without a proper pricelist entry. Set to ``0`` to
+  disable the filter.
 
 Send by email
 ~~~~~~~~~~~~~

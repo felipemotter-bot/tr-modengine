@@ -27,3 +27,15 @@ class ResPartner(models.Model):
                 "default_condition_id": condition.id,
             },
         }
+
+    def action_print_pricelist_from_menu(self):
+        """Entry point used by the Action menu server action.
+
+        The menu is exposed on ``form`` and ``list`` view types — when the
+        user selects multiple partners on the list, we surface a friendly
+        UserError instead of the generic ``ensure_one()`` singleton
+        traceback raised by :meth:`action_print_pricelist`.
+        """
+        if len(self) != 1:
+            raise UserError(_("Select a single partner to print the price list."))
+        return self.action_print_pricelist()

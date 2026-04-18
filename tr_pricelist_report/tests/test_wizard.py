@@ -1,28 +1,12 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from datetime import timedelta
-
-from odoo import fields
 from odoo.exceptions import UserError
 
 from .common import PricelistReportTestCommon
 
 
 class TestWizard(PricelistReportTestCommon):
-    def test_default_date_end_uses_validity_days(self):
-        """``date_end`` defaults to today + validity_days param."""
-        self.env["ir.config_parameter"].sudo().set_param(
-            "tr_pricelist_report.validity_days", "15"
-        )
-        wizard = self.env["tr.pricelist.report.wizard"].create(
-            {
-                "condition_id": self.condition.id,
-                "category_ids": [(6, 0, [self.categ_chemicals.id])],
-            }
-        )
-        self.assertEqual(wizard.date_end, fields.Date.today() + timedelta(days=15))
-
     def test_default_discount_display_from_condition(self):
         """``discount_display`` defaults to condition's value."""
         self.condition.discount_display = "show_discounts"

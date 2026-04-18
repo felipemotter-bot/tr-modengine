@@ -14,16 +14,10 @@
                     <!-- Header -->
                     <div class="row mb-3">
                         <div class="col-8">
-                            <h2>
-                                TABELA DE PREÇOS —
-                                <span t-esc="condition.display_name" />
-                            </h2>
+                            <h2>TABELA DE PREÇOS</h2>
                             <p>
                                 <strong>Cliente:</strong>
                                 <span t-esc="partner.display_name" />
-                                <t t-if="partner.vat"> — CNPJ
-                                    <span t-esc="partner.vat" />
-                                </t>
                             </p>
                         </div>
                         <div class="col-4 text-end">
@@ -33,10 +27,6 @@
                   t-esc="date_issued"
                   t-options="{'widget': 'date'}"
                 />
-                            </p>
-                            <p>
-                                <strong>Válida até:</strong>
-                                <span t-esc="date_end" t-options="{'widget': 'date'}" />
                             </p>
                         </div>
                     </div>
@@ -122,22 +112,6 @@
                           t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                         />
                                             </strong>
-                                        </td>
-                                    </tr>
-                                    <tr
-                    t-if="layout != 'historico' and (len(row['variants']) &gt; 1 or (row['variants'] and row['variants'][0]['code'] != (row['template'].default_code or '')))"
-                  >
-                                        <td />
-                                        <td
-                      t-att-colspan="3 if discount_display == 'show_discounts' else 1"
-                      style="font-size: 0.85em; color: #555;"
-                    >
-                                            <t
-                        t-foreach="row['variants']"
-                        t-as="variant"
-                      ><t t-if="not variant_first">, </t>[<t
-                          t-esc="variant['code']"
-                        />] <t t-esc="variant['label']" /></t>
                                         </td>
                                     </tr>
                                 </t>
