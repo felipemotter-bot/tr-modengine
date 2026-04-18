@@ -702,7 +702,12 @@ class PricelistReportWizard(models.TransientModel):
                     "product": product,
                     "pricing": pricing,
                     "qty": qty,
-                    "uom_label": product.uom_id.name or "",
+                    # "CAIXA" is the common pt_BR uom name; Felipe prefers
+                    # the shorter "CX" form used on the product labels and
+                    # physical stock. One-liner replace covers every
+                    # variation ("CAIXA", "CAIXA COM 10 UNIDADES",
+                    # "CAIXA/1000UN", ...).
+                    "uom_label": (product.uom_id.name or "").replace("CAIXA", "CX"),
                     # Consolidation doesn't apply here — no inline variants.
                     "variants": [],
                 }
@@ -759,6 +764,15 @@ class PricelistReportWizard(models.TransientModel):
             )
         condition = wizard.condition_id
         partner = condition.partner_id
+        # Starting point of the historico window. Computed once here so the
+        # template (which renders a footer note citing this date) can't
+        # drift from the resolver above.
+        history_months_back = wizard._get_history_months_back()
+        date_history_threshold = (
+            fields.Date.today() - relativedelta(months=history_months_back)
+            if history_months_back > 0
+            else fields.Date.today()
+        )
         return {
             "doc_ids": docids,
             "doc_model": "tr.pricelist.report.wizard",
@@ -768,6 +782,8 @@ class PricelistReportWizard(models.TransientModel):
             "partner": partner,
             "company": condition.company_id or self.env.company,
             "date_issued": fields.Date.today(),
+            "date_history_threshold": date_history_threshold,
+            "history_months_back": history_months_back,
             "discount_display": wizard.discount_display,
             "layout": wizard.layout,
             "sections": sections,

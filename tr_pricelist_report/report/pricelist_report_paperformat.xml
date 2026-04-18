@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <!--
+        Dedicated paperformat for the pricelist report. Margins are kept
+        tight on the sides/bottom (4mm) to maximize content area; the top
+        is a bit more generous (8mm) because ``web.external_layout``
+        injects the company header there and a too-aggressive top margin
+        would make it collide with the report title.
+    -->
+    <record id="paperformat_pricelist" model="report.paperformat">
+        <field name="name">Pricelist Report (tight margins)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">4</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+</odoo>

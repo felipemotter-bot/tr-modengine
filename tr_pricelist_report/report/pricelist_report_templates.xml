@@ -9,191 +9,175 @@
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <div class="page">
-                    <div class="oe_structure" />
 
-                    <!-- Header -->
-                    <div class="row mb-3">
-                        <div class="col-8">
-                            <h2>TABELA DE PREÇOS</h2>
-                            <p>
+                    <t t-call="tr_pricelist_report.report_pricelist_styles" />
+
+                    <!-- Header: title + client + emission -->
+                    <div class="pricelist-header">
+                        <h2 class="pricelist-header-title">TABELA DE PREÇOS</h2>
+                        <div class="pricelist-header-meta">
+                            <div>
                                 <strong>Cliente:</strong>
                                 <span t-esc="partner.display_name" />
-                            </p>
-                        </div>
-                        <div class="col-4 text-end">
-                            <p>
+                            </div>
+                            <div>
                                 <strong>Emissão:</strong>
                                 <span
                   t-esc="date_issued"
                   t-options="{'widget': 'date'}"
                 />
-                            </p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Sections -->
+                    <!-- Main sections (categoria/marca depending on layout) -->
                     <t t-foreach="sections" t-as="section">
-                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
-                            <t t-esc="section['title']" />
-                        </h3>
-                        <table class="table table-sm table-borderless">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #444;">
-                                    <th style="width: 12%;">Código</th>
-                                    <th>Descrição</th>
-                                    <t t-if="discount_display == 'show_discounts'">
+                        <div class="pricelist-section">
+                            <h3 class="pricelist-section-title">
+                                <t t-esc="section['title']" />
+                            </h3>
+                            <table class="pricelist-table">
+                                <thead>
+                                    <tr>
                                         <th
-                      class="text-end"
-                      style="width: 12%;"
-                    >Preço Ref.</th>
+                      class="pricelist-cell-description"
+                    >Descrição</th>
                                         <th
-                      class="text-end"
-                      style="width: 8%;"
-                    >Desc. %</th>
-                                    </t>
-                                    <th
-                    t-if="layout == 'historico'"
-                    class="text-end"
-                    style="width: 14%;"
-                  >Qtd. comprada</th>
-                                    <th class="text-end" style="width: 12%;">Preço</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-foreach="section['rows']" t-as="row">
-                                    <tr style="border-bottom: 1px solid #ddd;">
-                                        <td>
-                                            <t
-                        t-if="layout == 'historico'"
-                        t-esc="row['product'].default_code or ''"
-                      />
-                                            <t
-                        t-if="layout != 'historico'"
-                        t-esc="row['template'].default_code or ''"
-                      />
-                                        </td>
-                                        <td>
-                                            <strong
-                        t-if="layout == 'historico'"
-                        t-esc="row['product'].display_name"
-                      />
-                                            <strong
-                        t-if="layout != 'historico'"
-                        t-esc="row['template'].name"
-                      />
-                                        </td>
-                                        <t t-if="discount_display == 'show_discounts'">
-                                            <td class="text-end">
-                                                <span
-                          t-esc="row['pricing']['reference']"
-                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
-                        />
-                                            </td>
-                                            <td class="text-end">
-                                                <span
-                          t-esc="row['pricing']['seller_discount']"
-                          t-options="{'widget': 'float', 'precision': 2}"
-                        />
-                                            </td>
-                                        </t>
-                                        <td
                       t-if="layout == 'historico'"
-                      class="text-end"
-                    >
-                                            <span
-                        t-esc="row['qty']"
-                        t-options="{'widget': 'float', 'precision': 2}"
-                      /> <t t-esc="row['uom_label']" />
-                                        </td>
-                                        <td class="text-end">
-                                            <strong>
+                      style="width: 12%;"
+                    >Qtd.</th>
+                                        <t t-if="discount_display == 'show_discounts'">
+                                            <th style="width: 14%;">Preço Ref.</th>
+                                            <th style="width: 9%;">Desc. %</th>
+                                        </t>
+                                        <th style="width: 14%;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="section['rows']" t-as="row">
+                                        <tr>
+                                            <td class="pricelist-cell-description">
+                                                <t
+                          t-if="layout == 'historico'"
+                          t-esc="row['product'].display_name"
+                        />
+                                                <t
+                          t-if="layout != 'historico'"
+                          t-esc="row['template'].display_name"
+                        />
+                                            </td>
+                                            <td t-if="layout == 'historico'">
+                                                <span
+                          t-esc="row['qty']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        /> <t t-esc="row['uom_label']" />
+                                            </td>
+                                            <t
+                        t-if="discount_display == 'show_discounts'"
+                      >
+                                                <td>
+                                                    <span
+                            t-esc="row['pricing']['reference']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                </td>
+                                                <td>
+                                                    <span
+                            t-esc="row['pricing']['seller_discount']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          />
+                                                </td>
+                                            </t>
+                                            <td class="pricelist-cell-price">
                                                 <span
                           t-esc="row['pricing']['price_unit']"
                           t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                         />
-                                            </strong>
-                                        </td>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
                     </t>
 
-                    <!-- Variant exceptions -->
+                    <!-- Variant-level exceptions -->
                     <t t-if="variant_exceptions">
-                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
-                            Preços Especiais por Variante
-                        </h3>
-                        <table class="table table-sm table-borderless">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #444;">
-                                    <th style="width: 12%;">Código</th>
-                                    <th>Descrição</th>
-                                    <th class="text-end" style="width: 12%;">Preço</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                  t-foreach="variant_exceptions"
-                  t-as="exc"
-                  style="border-bottom: 1px solid #ddd;"
-                >
-                                    <td t-esc="exc['product'].default_code or ''" />
-                                    <td t-esc="exc['product'].display_name" />
-                                    <td class="text-end">
-                                        <span
-                      t-esc="exc['price_unit']"
-                      t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        <div class="pricelist-section">
+                            <h3
+                class="pricelist-section-title"
+              >Preços Especiais por Variante</h3>
+                            <table class="pricelist-table">
+                                <thead>
+                                    <tr>
+                                        <th
+                      class="pricelist-cell-description"
+                    >Descrição</th>
+                                        <th style="width: 14%;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="variant_exceptions" t-as="exc">
+                                        <td
+                      class="pricelist-cell-description"
+                      t-esc="exc['product'].display_name"
                     />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        <td class="pricelist-cell-price">
+                                            <span
+                        t-esc="exc['price_unit']"
+                        t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                      />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </t>
 
                     <!-- Quantity-tier exceptions -->
                     <t t-if="qty_exceptions">
-                        <h3 class="mt-4 mb-2 p-2" style="background-color: #f2f2f2;">
-                            Preços por Quantidade
-                        </h3>
-                        <table class="table table-sm table-borderless">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #444;">
-                                    <th>Produto</th>
-                                    <th
-                    class="text-end"
-                    style="width: 15%;"
-                  >Qtd. Mín.</th>
-                                    <th class="text-end" style="width: 15%;">Preço</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                  t-foreach="qty_exceptions"
-                  t-as="qex"
-                  style="border-bottom: 1px solid #ddd;"
-                >
-                                    <td t-esc="qex['target'].display_name" />
-                                    <td
-                    class="text-end"
-                    t-esc="qex['min_qty']"
-                    t-options="{'widget': 'float', 'precision': 2}"
-                  />
-                                    <td class="text-end">
-                                        <span
-                      t-esc="qex['pricing']['price_unit']"
-                      t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        <div class="pricelist-section">
+                            <h3
+                class="pricelist-section-title"
+              >Preços por Quantidade</h3>
+                            <table class="pricelist-table">
+                                <thead>
+                                    <tr>
+                                        <th
+                      class="pricelist-cell-description"
+                    >Descrição</th>
+                                        <th style="width: 14%;">Qtd. Mín.</th>
+                                        <th style="width: 14%;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="qty_exceptions" t-as="qex">
+                                        <td
+                      class="pricelist-cell-description"
+                      t-esc="qex['target'].display_name"
                     />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        <td>
+                                            <span
+                        t-esc="qex['min_qty']"
+                        t-options="{'widget': 'float', 'precision': 2}"
+                      />
+                                        </td>
+                                        <td class="pricelist-cell-price">
+                                            <span
+                        t-esc="qex['pricing']['price_unit']"
+                        t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                      />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </t>
 
-                    <!-- Footer: conditions -->
-                    <div class="mt-4">
-                        <h4>Condições Comerciais</h4>
-                        <ul>
+                    <!-- Commercial conditions block -->
+                    <div class="pricelist-section">
+                        <h3 class="pricelist-section-title">Condições Comerciais</h3>
+                        <ul style="margin: 6pt 0 0 16pt; font-size: 10pt; color: #333;">
                             <li t-if="condition.payment_term_id">
                                 <strong>Prazo de pagamento:</strong>
                                 <span t-esc="condition.payment_term_id.name" />
@@ -221,13 +205,26 @@
                 />% do total.
                             </li>
                         </ul>
-                        <p class="text-muted mt-3">
-                            <em>
-                                Preços não incluem tributos, calculados conforme
-                                legislação e operação.
-                            </em>
+                        <p
+              style="font-size: 9pt; color: #666; margin-top: 6pt; margin-bottom: 0;"
+            >
+                            <em
+              >Preços não incluem tributos, calculados conforme legislação e operação.</em>
                         </p>
                     </div>
+
+                    <!-- History-layout footer note -->
+                    <t t-if="layout == 'historico'">
+                        <div class="pricelist-history-note">
+                            Qtd. considera pedidos de venda confirmados nos
+                            últimos <t t-esc="history_months_back" /> meses
+                            (desde <span
+                t-esc="date_history_threshold"
+                t-options="{'widget': 'date'}"
+              />). Devoluções não são descontadas.
+                        </div>
+                    </t>
+
                 </div>
             </t>
         </t>
