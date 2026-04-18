@@ -7,7 +7,7 @@
 
     <template id="report_pricelist_document">
         <t t-call="web.html_container">
-            <t t-call="web.external_layout">
+            <t t-call="trento_report_utils.external_layout_boxed_compact">
                 <div class="page">
 
                     <t t-call="tr_pricelist_report.report_pricelist_styles" />
@@ -18,7 +18,9 @@
                         <div class="pricelist-header-meta">
                             <div>
                                 <strong>Cliente:</strong>
-                                <span t-esc="partner.display_name" />
+                                <span
+                  t-esc="partner.legal_name or partner.display_name"
+                />
                             </div>
                             <div>
                                 <strong>Emissão:</strong>

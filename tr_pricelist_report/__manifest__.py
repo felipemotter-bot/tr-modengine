@@ -19,6 +19,12 @@
         # the Print Price List button next to the status, so the stage
         # module must be present for our view xpath to match.
         "partner_stage",
+        # trento_report_utils provides the compact boxed layout
+        # (`external_layout_boxed_compact`) + the low-margin A4
+        # paperformat used across Trento reports. Our PDF template
+        # t-calls that layout so it renders with the same company
+        # header box as the rest of the stack.
+        "trento_report_utils",
     ],
     "data": [
         "security/ir.model.access.csv",
@@ -31,7 +37,6 @@
         "views/res_config_settings_views.xml",
         "views/res_partner_views.xml",
         "views/res_partner_server_action.xml",
-        "report/pricelist_report_paperformat.xml",
         "report/pricelist_report.xml",
         "report/pricelist_report_styles.xml",
         "report/pricelist_report_templates.xml",

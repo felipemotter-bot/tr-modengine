@@ -588,6 +588,11 @@ class PricelistReportWizard(models.TransientModel):
             rows, variant_exceptions = self._consolidate_templates(
                 by_category[category], rates
             )
+            # Skip sections that ended up empty after the invalid-price
+            # filter. Otherwise the PDF renders a ghost section with only
+            # the title + empty table.
+            if not rows and not variant_exceptions:
+                continue
             sections.append(
                 {
                     "title": category.name if category else "",
@@ -624,6 +629,9 @@ class PricelistReportWizard(models.TransientModel):
             rows, variant_exceptions = self._consolidate_templates(
                 by_marca[marca], rates
             )
+            # Same empty-section guard as _build_sections_by_category.
+            if not rows and not variant_exceptions:
+                continue
             sections.append(
                 {
                     "title": marca.name,

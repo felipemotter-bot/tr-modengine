@@ -57,16 +57,25 @@
             /* ---------- Product table ----------------------------------- */
             .pricelist-table {
                 width: 100%;
-                border-collapse: collapse;
                 margin-top: 6pt;
             }
-            /* Zero every inherited border first (Odoo/wkhtmltopdf defaults
-               tend to draw full cell borders). We add the specific
-               bottom borders right below. */
+            /* Hard reset to outrun Bootstrap/Odoo table defaults. Same
+               pattern used by engenere_custom.css in the invoice report:
+               zero every border + box-shadow with !important, and force
+               border-collapse/border-spacing explicitly. Specific
+               bottom borders are re-applied below, also with !important. */
             .pricelist-table,
+            .pricelist-table thead,
+            .pricelist-table tbody,
+            .pricelist-table tr,
             .pricelist-table th,
             .pricelist-table td {
-                border: 0;
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            .pricelist-table {
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
             }
             .pricelist-table thead th {
                 font-size: 8.5pt;
@@ -74,7 +83,7 @@
                 text-transform: uppercase;
                 letter-spacing: 0.4px;
                 color: #666;
-                border-bottom: 1px solid #cfcfcf;
+                border-bottom: 1px solid #cfcfcf !important;
                 padding: 6pt 6pt;
                 text-align: center;
                 vertical-align: middle;
@@ -85,7 +94,7 @@
             }
             .pricelist-table tbody td {
                 padding: 6pt 8pt;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid #eee !important;
                 text-align: center;
                 vertical-align: middle;
                 font-size: 10pt;
@@ -99,7 +108,6 @@
             .pricelist-table .pricelist-cell-price {
                 font-weight: 600;
                 color: #111;
-                text-align: right;
             }
 
             /* ---------- Historico explanatory note (inline after
