@@ -59,10 +59,10 @@ que chamam o action por código continuam funcionando.
 `tr.pricelist.report.wizard` (`TransientModel`). Campos:
 
 - `condition_id` — `partner.commercial.condition`, obrigatório.
-- `layout` — selection `por_categoria` / `geralzao`.
-- `group_axis` — selection `marca` / `categoria`. Exigido quando `layout=geralzao`.
+- `layout` — selection `por_categoria` / `completa`.
+- `group_axis` — selection `marca` / `categoria`. Exigido quando `layout=completa`.
 - `category_ids` — M2M `product.category`. Obrigatório quando `layout=por_categoria`;
-  opcional em `geralzao` (vazio = todo catálogo vendável).
+  opcional em `completa` (vazio = todo catálogo vendável).
 - `date_end` — validade do PDF; default = hoje + `validity_days`.
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
@@ -76,7 +76,7 @@ Todas as capacidades planejadas entregues (PR1–PR5).
 - Filtro: vendedor seleciona uma ou mais `product.category` no wizard.
 - Agrupamento: resolvedor único de categoria (ver abaixo), respeita `category_depth`.
 
-### `geralzao`
+### `completa`
 
 Escopo: todos os produtos `active` + `sale_ok` da base (ou filtrado por `category_ids`
 se preenchido). Dois sub-modos via `group_axis`:
@@ -93,7 +93,7 @@ se preenchido). Dois sub-modos via `group_axis`:
 ### `historico`
 
 Layout "lista de recompra" pro cliente: produtos que o parceiro comprou nos últimos N
-meses, agrupados pelo mesmo resolvedor de categoria do geralzão Modo B.
+meses, agrupados pelo mesmo resolvedor de categoria do layout `completa` Modo B.
 
 - Escopo: `sale.order.line` com `order_id.partner_id = condition.partner_id`,
   `order_id.state in ('sale','done')` e
@@ -145,7 +145,7 @@ Flag `tr_exclude_from_general_pricelist` em `product.category` (herdada pelo
 
 - Quando a flag está True numa categoria, produtos dessa categoria **e todas as
   descendentes** ficam fora das listagens gerais do relatório (`por_categoria` e
-  `geralzao` Modo A/B).
+  `completa` Modo A/B).
 - **Cascata rígida**: uma categoria filha não pode "desligar" o efeito herdado do pai.
   Solução operacional se precisar voltar: mover a filha pra outra árvore não flagada.
 - O **layout histórico** (PR4) **ignora** a flag — cliente que comprou o produto

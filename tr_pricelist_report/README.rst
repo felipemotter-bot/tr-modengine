@@ -32,7 +32,7 @@ System parameters (``Settings > Technical > Parameters > System Parameters``):
   ``N >= 0`` (absolute level from root, clamps to leaf).
 - ``tr_pricelist_report.group_attribute_name`` (default ``MARCA``) —
   name of the ``product.attribute`` used as the grouping axis in Mode
-  A of the Full Catalog layout.
+  A of the Complete Pricelist layout.
 - ``tr_pricelist_report.history_months_back`` (default ``6``) — window
   in months the Customer History layout walks back on
   ``sale.order.line``. Set to ``0`` to disable the layout (the
@@ -69,7 +69,7 @@ Exclude custom categories
 Each ``product.category`` gets the flag **Exclude from general
 pricelists**. Flag a category (or any ancestor of it — the cascade is
 rigid) and every product underneath is hidden from ``By Category``
-and ``Full Catalog`` layouts. The flag is ignored by the customer
+and ``Complete Pricelist`` layouts. The flag is ignored by the customer
 history layout, so buyers who already ordered the product still see
 the price for reorders.
 

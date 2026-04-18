@@ -6,7 +6,7 @@ from . import test_category_exclusion
 from . import test_disable_native
 from . import test_email_send
 from . import test_exceptions_section
-from . import test_layout_geralzao
+from . import test_layout_completa
 from . import test_layout_historico
 from . import test_layout_por_categoria
 from . import test_marca_discovery

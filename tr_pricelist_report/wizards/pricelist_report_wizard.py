@@ -31,7 +31,7 @@ class PricelistReportWizard(models.TransientModel):
     layout = fields.Selection(
         [
             ("por_categoria", "By Category"),
-            ("geralzao", "Full Catalog"),
+            ("completa", "Complete Pricelist"),
             ("historico", "Customer History"),
         ],
         required=True,
@@ -40,13 +40,13 @@ class PricelistReportWizard(models.TransientModel):
     group_axis = fields.Selection(
         [("marca", "By Brand"), ("categoria", "By Category")],
         default="marca",
-        help="Grouping axis for the Full Catalog layout.",
+        help="Grouping axis for the Complete Pricelist layout.",
     )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
         help="Pick one or more product categories. Sub-categories are included "
-        "automatically. Optional when layout is Full Catalog.",
+        "automatically. Optional when layout is Complete Pricelist.",
     )
     date_end = fields.Date(
         string="Valid Until",
@@ -209,7 +209,7 @@ class PricelistReportWizard(models.TransientModel):
 
         Rigid cascade rule (§4.5): any ``product.category`` with the flag
         set, PLUS every descendant of those, is out of scope for the
-        general-pricelist layouts (``por_categoria`` and ``geralzao``
+        general-pricelist layouts (``por_categoria`` and ``completa``
         Modes A and B). The customer-history layout (PR4) bypasses this
         by resolving products through a different code path.
 
@@ -538,14 +538,14 @@ class PricelistReportWizard(models.TransientModel):
     def _build_sections(self, products, rates):
         """Route products into sections per layout / group_axis.
 
-        - ``geralzao`` + ``marca`` → partition by MARCA attribute, products
+        - ``completa`` + ``marca`` → partition by MARCA attribute, products
           without MARCA fall back to the category partition at the end.
-        - ``geralzao`` + ``categoria`` or ``por_categoria`` → partition by
+        - ``completa`` + ``categoria`` or ``por_categoria`` → partition by
           the category at ``category_depth`` (shared resolver).
         - ``historico`` uses its own resolver and bypasses this router
           (see ``_build_sections_from_history``).
         """
-        if self.layout == "geralzao" and self.group_axis == "marca":
+        if self.layout == "completa" and self.group_axis == "marca":
             return self._build_sections_by_marca(products, rates)
         return self._build_sections_by_category(products, rates)
 
