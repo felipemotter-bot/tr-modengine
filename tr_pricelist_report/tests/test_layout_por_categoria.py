@@ -1,6 +1,8 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from odoo.exceptions import UserError
+
 from .common import PricelistReportTestCommon
 
 
@@ -51,12 +53,12 @@ class TestLayoutPorCategoria(PricelistReportTestCommon):
             self.assertIn("reference", row["pricing"])
             self.assertIn("price_unit", row["pricing"])
 
-    def test_empty_category_produces_no_rows(self):
-        """Category without sale_ok products returns empty sections."""
+    def test_empty_category_raises_user_error(self):
+        """Empty scope bubbles up as a friendly UserError, not a blank PDF."""
         empty_categ = self.env["product.category"].create({"name": "Empty"})
         wizard = self._open_wizard(category_ids=[empty_categ.id])
-        values = wizard._get_report_values(wizard.ids)
-        self.assertEqual(values["sections"], [])
+        with self.assertRaises(UserError):
+            wizard._get_report_values(wizard.ids)
 
     def test_archived_products_excluded(self):
         """Archived products are not included."""

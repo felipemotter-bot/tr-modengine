@@ -5,18 +5,25 @@
 -->
 <odoo>
 
+    <!--
+        Higher priority so this inherit runs AFTER whichever module
+        introduces the partner statusbar — otherwise ``//header`` wouldn't
+        match at apply time (base partner form has no <header>), and we'd
+        either fail validation or end up adding a second header on its
+        own line.
+    -->
     <record id="view_partner_form_pricelist_report" model="ir.ui.view">
         <field name="name">res.partner.form.pricelist.report</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="priority" eval="50" />
         <field name="arch" type="xml">
-            <xpath expr="//div[@name='button_box']" position="inside">
+            <xpath expr="//header" position="inside">
                 <button
           name="action_print_pricelist"
           string="Print Price List"
           type="object"
-          class="oe_stat_button"
-          icon="fa-print"
+          class="btn-secondary"
           attrs="{'invisible': [('effective_condition_id', '=', False)]}"
         />
             </xpath>

@@ -19,7 +19,6 @@
                 name="group_axis"
                 attrs="{'invisible': [('layout', '!=', 'completa')], 'required': [('layout', '=', 'completa')]}"
               />
-                            <field name="date_end" />
                             <field name="discount_display" />
                             <field name="send_by_email" />
                         </group>

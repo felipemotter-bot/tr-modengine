@@ -3,7 +3,7 @@
 
 {
     "name": "Pricelist Report",
-    "version": "16.0.1.0.0",
+    "version": "16.0.1.1.0",
     "maintainers": ["felipemotter"],
     "author": "Engenere",
     "license": "AGPL-3",
@@ -14,6 +14,11 @@
         "tr_commercial_policy",
         "product",
         "sale_management",
+        # partner_stage (OCA/partner-contact) adds the <header> with the
+        # statusbar on res.partner.form. We target ``//header`` to drop
+        # the Print Price List button next to the status, so the stage
+        # module must be present for our view xpath to match.
+        "partner_stage",
     ],
     "data": [
         "security/ir.model.access.csv",
@@ -23,7 +28,9 @@
         "wizards/pricelist_report_wizard_views.xml",
         "views/partner_commercial_condition_views.xml",
         "views/product_category_views.xml",
+        "views/res_config_settings_views.xml",
         "views/res_partner_views.xml",
+        "views/res_partner_server_action.xml",
         "report/pricelist_report.xml",
         "report/pricelist_report_templates.xml",
     ],

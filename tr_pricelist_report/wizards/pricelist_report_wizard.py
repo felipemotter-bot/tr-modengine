@@ -3,7 +3,6 @@
 
 import base64
 from collections import defaultdict
-from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
 
@@ -48,11 +47,6 @@ class PricelistReportWizard(models.TransientModel):
         help="Pick one or more product categories. Sub-categories are included "
         "automatically. Optional when layout is Complete Pricelist.",
     )
-    date_end = fields.Date(
-        string="Valid Until",
-        required=True,
-        default=lambda self: self._default_date_end(),
-    )
     discount_display = fields.Selection(
         [
             ("show_discounts", "Show reference and discounts"),
@@ -86,14 +80,6 @@ class PricelistReportWizard(models.TransientModel):
             partner = self.env["res.partner"].browse(active_id)
             return partner.effective_condition_id.id or False
         return False
-
-    def _default_date_end(self):
-        days = int(
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("tr_pricelist_report.validity_days", "30")
-        )
-        return fields.Date.today() + timedelta(days=days)
 
     def _default_discount_display(self):
         condition_id = self._default_condition_id()
@@ -150,9 +136,10 @@ class PricelistReportWizard(models.TransientModel):
         pdf_content, _content_type = report._render_qweb_pdf(
             report.report_name, self.ids
         )
+        partner = condition.partner_id
         attachment = self.env["ir.attachment"].create(
             {
-                "name": "%s.pdf" % condition.display_name,
+                "name": "Price List - %s.pdf" % (partner.name or ""),
                 "type": "binary",
                 "datas": base64.b64encode(pdf_content),
                 "res_model": "mail.compose.message",
@@ -229,18 +216,43 @@ class PricelistReportWizard(models.TransientModel):
     # ------------------------------------------------------------------
 
     def _get_category_depth(self):
-        return int(
+        value = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("tr_pricelist_report.category_depth", "-2")
         )
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return -2
 
     def _get_history_months_back(self):
-        return int(
+        value = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("tr_pricelist_report.history_months_back", "6")
         )
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 6
+
+    def _get_invalid_price_threshold(self):
+        value = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("tr_pricelist_report.invalid_price_threshold", "99999.0")
+        )
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 99999.0
+
+    def _is_valid_price(self, price_unit):
+        threshold = self._get_invalid_price_threshold()
+        if threshold <= 0:
+            return True
+        return price_unit < threshold
 
     def _get_group_attribute(self):
         """Return the ``product.attribute`` used as the MARCA axis, or empty.
@@ -405,7 +417,13 @@ class PricelistReportWizard(models.TransientModel):
         rows = []
         variant_exceptions = []
         for template, variants in by_template.items():
-            pricings = [self._compute_pricing(v, rates) for v in variants]
+            pricings = [
+                p
+                for p in (self._compute_pricing(v, rates) for v in variants)
+                if self._is_valid_price(p["price_unit"])
+            ]
+            if not pricings:
+                continue
             # Bucket by the **three values the template shows in
             # show_discounts mode** — ``price_unit`` alone would collapse
             # variants that hit the same final price via different base /
@@ -488,6 +506,8 @@ class PricelistReportWizard(models.TransientModel):
                 pricing = self._compute_pricing(
                     item.product_id, rates, qty=item.min_quantity
                 )
+                if not self._is_valid_price(pricing["price_unit"]):
+                    continue
                 rows.append(
                     {
                         "target": item.product_id,
@@ -502,6 +522,13 @@ class PricelistReportWizard(models.TransientModel):
                 (v, self._compute_pricing(v, rates, qty=item.min_quantity))
                 for v in variants
             ]
+            variant_pricings = [
+                (v, p)
+                for (v, p) in variant_pricings
+                if self._is_valid_price(p["price_unit"])
+            ]
+            if not variant_pricings:
+                continue
             # Same three-field key used by ``_consolidate_templates`` so the
             # template-collapsed row is truthful in both display modes.
             unique_prices = {
@@ -665,8 +692,10 @@ class PricelistReportWizard(models.TransientModel):
         depth = self._get_category_depth()
         by_category = defaultdict(list)
         for product, qty in quantities.items():
-            grouping = self._resolve_grouping_category(product, depth)
             pricing = self._compute_pricing(product, rates)
+            if not self._is_valid_price(pricing["price_unit"]):
+                continue
+            grouping = self._resolve_grouping_category(product, depth)
             by_category[grouping].append(
                 {
                     "template": product.product_tmpl_id,
@@ -683,7 +712,13 @@ class PricelistReportWizard(models.TransientModel):
             by_category, key=lambda cat: cat.complete_name if cat else ""
         ):
             rows = sorted(
-                by_category[category], key=lambda row: row["product"].display_name
+                by_category[category],
+                key=lambda row: (
+                    row["template"].display_name,
+                    row["template"].id,
+                    row["product"].display_name,
+                    row["product"].id,
+                ),
             )
             sections.append(
                 {
@@ -713,6 +748,15 @@ class PricelistReportWizard(models.TransientModel):
                 exc for section in sections for exc in section["variant_exceptions"]
             ]
             qty_exceptions = wizard._resolve_qty_exceptions(products, rates)
+        has_body = any(section["rows"] for section in sections)
+        if not has_body and not variant_exceptions and not qty_exceptions:
+            raise UserError(
+                _(
+                    "No products with valid prices to generate the pricelist. "
+                    "Check the pricelist configuration or the invalid price "
+                    "threshold setting."
+                )
+            )
         condition = wizard.condition_id
         partner = condition.partner_id
         return {
@@ -724,7 +768,6 @@ class PricelistReportWizard(models.TransientModel):
             "partner": partner,
             "company": condition.company_id or self.env.company,
             "date_issued": fields.Date.today(),
-            "date_end": wizard.date_end,
             "discount_display": wizard.discount_display,
             "layout": wizard.layout,
             "sections": sections,

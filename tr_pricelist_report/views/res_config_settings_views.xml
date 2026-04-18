@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field
+      name="name"
+    >res.config.settings.view.form.inherit.tr.pricelist.report</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='pricing_setting_container']" position="before">
+                <h2>Pricelist Report</h2>
+                <div
+          class="row mt16 o_settings_container"
+          id="tr_pricelist_report_settings"
+        >
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_pricelist_report_category_depth" />
+                            <div class="text-muted">
+                                Depth used to bucket products by category.
+                                -1 = leaf, -N = Nth ancestor (clamps to root),
+                                N &gt;= 0 = absolute level from root.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="tr_pricelist_report_category_depth" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_pricelist_report_group_attribute_name" />
+                            <div class="text-muted">
+                                Name of the product.attribute used as the
+                                brand grouping axis in the Complete Pricelist
+                                layout (Mode A).
+                            </div>
+                            <div class="content-group mt16">
+                                <field
+                  name="tr_pricelist_report_group_attribute_name"
+                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_pricelist_report_history_months_back" />
+                            <div class="text-muted">
+                                Months back the Customer History layout walks
+                                over sale.order.line. Set to 0 to disable.
+                            </div>
+                            <div class="content-group mt16">
+                                <field name="tr_pricelist_report_history_months_back" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_pricelist_report_invalid_price_threshold" />
+                            <div class="text-muted">
+                                Products whose computed price reaches or
+                                exceeds this threshold are dropped. Used to
+                                hide 'price not configured' placeholders.
+                                Set to 0 to disable.
+                            </div>
+                            <div class="content-group mt16">
+                                <field
+                  name="tr_pricelist_report_invalid_price_threshold"
+                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

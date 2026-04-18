@@ -223,3 +223,76 @@ class TestLayoutHistorico(PricelistReportTestCommon):
         self.assertIn(b"Qtd. comprada", html)
         uom_label = self.product_a.uom_id.name.encode("utf-8")
         self.assertIn(uom_label, html)
+
+    def test_orders_variants_of_same_template_adjacent(self):
+        """Variants of the same template sit next to each other in the row list.
+
+        Exercises the tiebreaker by `template.id` explicitly: two templates
+        share the exact same `display_name` (same `name`, no default_code
+        on either), each has two variants, all purchased. The sort key
+        `(template.display_name, template.id, product.display_name,
+        product.id)` must still keep each template's variants in a
+        contiguous block.
+        """
+        attr = self.env["product.attribute"].create(
+            {"name": "Cor", "create_variant": "always"}
+        )
+        val_a = self.env["product.attribute.value"].create(
+            {"name": "Azul", "attribute_id": attr.id}
+        )
+        val_b = self.env["product.attribute.value"].create(
+            {"name": "Verde", "attribute_id": attr.id}
+        )
+
+        def _make_template():
+            return self.env["product.template"].create(
+                {
+                    "name": "Tinta",
+                    "type": "consu",
+                    "list_price": 10.0,
+                    "categ_id": self.categ_chemicals.id,
+                    "attribute_line_ids": [
+                        (
+                            0,
+                            0,
+                            {
+                                "attribute_id": attr.id,
+                                "value_ids": [(6, 0, [val_a.id, val_b.id])],
+                            },
+                        ),
+                    ],
+                }
+            )
+
+        tmpl_x = _make_template()
+        tmpl_y = _make_template()
+        # Assert the homonym fixture is actually what we think it is —
+        # otherwise the tiebreaker isn't being exercised.
+        self.assertEqual(tmpl_x.display_name, tmpl_y.display_name)
+        for tmpl in (tmpl_x, tmpl_y):
+            self.env["product.pricelist.item"].create(
+                {
+                    "pricelist_id": self.pricelist.id,
+                    "applied_on": "1_product",
+                    "product_tmpl_id": tmpl.id,
+                    "compute_price": "fixed",
+                    "fixed_price": 10.0,
+                }
+            )
+        today = fields.Date.today()
+        for tmpl in (tmpl_x, tmpl_y):
+            for variant in tmpl.product_variant_ids:
+                self._place_confirmed_order(variant, 1, today)
+
+        wizard = self._open_history_wizard()
+        values = wizard._get_report_values(wizard.ids)
+        all_rows = [row for section in values["sections"] for row in section["rows"]]
+        positions = {row["product"].id: idx for idx, row in enumerate(all_rows)}
+        for tmpl in (tmpl_x, tmpl_y):
+            pos_list = sorted(positions[v.id] for v in tmpl.product_variant_ids)
+            self.assertEqual(
+                pos_list[-1] - pos_list[0],
+                len(pos_list) - 1,
+                "Variants of template id=%s should be contiguous: %s"
+                % (tmpl.id, pos_list),
+            )
