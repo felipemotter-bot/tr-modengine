@@ -29,6 +29,13 @@ IMMUTABLE_FIELDS_AFTER_PENDING = frozenset(
     }
 )
 
+# Audit fields set at create; the per-group record rule relies on
+# ``sales_rep_partner_id`` and the audit trail relies on
+# ``requested_by``. Rewriting either via RPC would let a rep move a
+# request to another rep's scope or forge authorship, so both are
+# frozen after create — not even the module itself writes them again.
+IMMUTABLE_AUDIT_FIELDS = frozenset({"requested_by", "sales_rep_partner_id"})
+
 
 class TrPartnerChangeRequest(models.Model):
     _name = "tr.partner.change.request"
@@ -148,6 +155,26 @@ class TrPartnerChangeRequest(models.Model):
         return records
 
     def write(self, vals):
+        touched_audit = set(vals) & IMMUTABLE_AUDIT_FIELDS
+        if touched_audit:
+            raise AccessError(
+                _(
+                    "Cannot modify audit fields %(fields)s on a "
+                    "change request — they are set at create and "
+                    "pin the record to its author and scope."
+                )
+                % {"fields": ", ".join(sorted(touched_audit))}
+            )
+        if "processed_partner_id" in vals and not self.env.context.get(
+            INTERNAL_CTX_KEY
+        ):
+            raise AccessError(
+                _(
+                    "Cannot modify processed_partner_id — it is "
+                    "only written by action_approve when creating "
+                    "a new child contact."
+                )
+            )
         touches_payload = set(vals) & IMMUTABLE_FIELDS_AFTER_PENDING
         if touches_payload:
             for req in self:
@@ -411,7 +438,9 @@ class TrPartnerChangeRequest(models.Model):
         # validation" guard (tier_validation.py:394) — needed because
         # ``processed_partner_id`` is written while the record is
         # still in ``pending`` (state flips to ``approved`` right
-        # after, in ``action_approve``).
-        self.with_context(skip_validation_check=True).write(
-            {"processed_partner_id": child.id}
-        )
+        # after, in ``action_approve``). ``INTERNAL_CTX_KEY`` is
+        # required by the module's own write guard which keeps
+        # ``processed_partner_id`` read-only from RPC.
+        self.with_context(
+            **{INTERNAL_CTX_KEY: True, "skip_validation_check": True}
+        ).write({"processed_partner_id": child.id})

@@ -571,6 +571,44 @@ class TestChangeRequest(SalesRepAccessTestCommon):
         self.assertFalse(req.exists())
 
     # ------------------------------------------------------------------
+    # Audit field immutability after create (no RPC forge)
+    # ------------------------------------------------------------------
+
+    def test_cannot_rpc_write_requested_by(self):
+        req = self._create_field_update_request(
+            self.user_u1,
+            self.customer_c1,
+            [
+                (0, 0, {"field_id": self.phone_field.id, "new_value_char": "x"}),
+            ],
+        )
+        with self.assertRaises(AccessError):
+            req.sudo().write({"requested_by": self._admin().id})
+
+    def test_cannot_rpc_write_sales_rep_partner_id(self):
+        req = self._create_field_update_request(
+            self.user_u1,
+            self.customer_c1,
+            [
+                (0, 0, {"field_id": self.phone_field.id, "new_value_char": "x"}),
+            ],
+        )
+        with self.assertRaises(AccessError):
+            req.sudo().write({"sales_rep_partner_id": self.agent_a2.id})
+
+    def test_cannot_rpc_write_processed_partner_id(self):
+        req = self._create_field_update_request(
+            self.user_u1,
+            self.customer_c1,
+            [
+                (0, 0, {"field_id": self.phone_field.id, "new_value_char": "x"}),
+            ],
+        )
+        req.with_user(self._admin()).action_approve()
+        with self.assertRaises(AccessError):
+            req.sudo().write({"processed_partner_id": self.customer_c2.id})
+
+    # ------------------------------------------------------------------
     # Direct state write bypass (workflow-only transition)
     # ------------------------------------------------------------------
 
