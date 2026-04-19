@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!--
+        res.partner needs special handling: res_partner_rule_private_employee
+        is a rule on base.group_user (base_security.xml:78) that broadens
+        visibility to almost everything. Since our rep group implies
+        base.group_user, a simple per-group rule would be combined by OR
+        with that permissive rule and the scope narrowing would be lost.
+        The pattern below:
+          1. per-group OPEN rule that broadens the OR (covers cases where
+             base.group_user rules are restrictive),
+          2. GLOBAL rule with conditional `user.has_group(...)` that
+             applies AND to restrict scope when the user is a rep.
+        For sale/account models, the core "personal" rules belong to
+        sales_team.group_sale_salesman (not base.group_user) so a simple
+        per-group rule is sufficient. Write-after-draft enforcement for
+        sale.order / sale.order.line happens in Python overrides because
+        sale_stock performs legitimate internal writes on confirmed
+        orders (procurement_group_id, etc.) that a state-based rule
+        would incorrectly block.
+    -->
+
+    <!-- ============================================================ -->
+    <!-- res.partner — open broadener + global conditional scope     -->
+    <!-- ============================================================ -->
+
+    <record id="rule_res_partner_rep_open" model="ir.rule">
+        <field name="name">res.partner: sales rep open (group OR broadener)</field>
+        <field name="model_id" ref="base.model_res_partner" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="False" />
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_res_partner_rep_scope" model="ir.rule">
+        <field name="name">res.partner: sales rep scope (global AND)</field>
+        <field name="model_id" ref="base.model_res_partner" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field name="domain_force">[
+            '|',
+            ('id', '=', user.partner_id.id),
+            ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id])
+        ] if user.has_group('tr_sales_rep_access.group_sales_rep_external') else [(1, '=', 1)]</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- sale.order — simple per-group rule by snapshot              -->
+    <!-- ============================================================ -->
+
+    <record id="rule_sale_order_rep" model="ir.rule">
+        <field name="name">sale.order: sales rep scope</field>
+        <field name="model_id" ref="sale.model_sale_order" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="False" />
+        <field
+      name="domain_force"
+    >[('sales_rep_partner_id', '=', user.partner_id.id)]</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- sale.order.line — simple per-group rule by order snapshot   -->
+    <!-- ============================================================ -->
+
+    <record id="rule_sale_order_line_rep" model="ir.rule">
+        <field name="name">sale.order.line: sales rep scope</field>
+        <field name="model_id" ref="sale.model_sale_order_line" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field
+      name="domain_force"
+    >[('order_id.sales_rep_partner_id', '=', user.partner_id.id)]</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- account.move — read-only per-group rule by snapshot         -->
+    <!-- ============================================================ -->
+
+    <record id="rule_account_move_rep" model="ir.rule">
+        <field name="name">account.move: sales rep scope</field>
+        <field name="model_id" ref="account.model_account_move" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field
+      name="domain_force"
+    >[('sales_rep_partner_id', '=', user.partner_id.id)]</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- account.move.line — read-only per-group rule by move        -->
+    <!-- ============================================================ -->
+
+    <record id="rule_account_move_line_rep" model="ir.rule">
+        <field name="name">account.move.line: sales rep scope</field>
+        <field name="model_id" ref="account.model_account_move_line" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field
+      name="domain_force"
+    >[('move_id.sales_rep_partner_id', '=', user.partner_id.id)]</field>
+    </record>
+</odoo>

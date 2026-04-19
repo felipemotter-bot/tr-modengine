@@ -1,0 +1,168 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* tr_sales_rep_access
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-19 12:06+0000\n"
+"PO-Revision-Date: 2026-04-19 12:06+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: tr_sales_rep_access
+#: model:res.groups,comment:tr_sales_rep_access.group_sales_rep_external
+msgid ""
+"\n"
+"            External sales representative. Sees only the partners where they\n"
+"            are a commercial agent (via commercial_partner_id.agent_ids) and\n"
+"            the sale orders / invoices where they are the rep snapshot.\n"
+"            Does NOT extend Sales/Account stock groups — ACLs are declared\n"
+"            explicitly for this group.\n"
+"        "
+msgstr ""
+"\n"
+"            Representante comercial externo. Vê apenas os parceiros em que\n"
+"            é agente comercial (via commercial_partner_id.agent_ids) e os\n"
+"            pedidos de venda / faturas em que é o responsável registrado.\n"
+"            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são\n"
+"            declaradas explicitamente para este grupo.\n"
+"        "
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid "(empty)"
+msgstr "(vazio)"
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid "(unknown)"
+msgstr "(desconhecido)"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_base
+msgid "Base"
+msgstr "Base"
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid "Cannot change %(field)s on %(orders)s: order is no longer in draft."
+msgstr ""
+"Não é possível alterar %(field)s em %(orders)s: o pedido não está mais em "
+"rascunho."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_account_bank_statement_line__sales_rep_partner_id
+#: model:ir.model.fields,help:tr_sales_rep_access.field_account_move__sales_rep_partner_id
+#: model:ir.model.fields,help:tr_sales_rep_access.field_account_payment__sales_rep_partner_id
+msgid ""
+"Commercial agent responsible for this invoice, propagated from the "
+"originating sale order snapshot."
+msgstr ""
+"Agente comercial responsável por esta fatura, propagado do registro do "
+"pedido de venda de origem."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__sales_rep_partner_id
+msgid ""
+"Commercial agent responsible for this order, captured at creation from the "
+"customer's agent_ids. Re-synced if the customer changes while the order is "
+"in draft. Immutable after draft."
+msgstr ""
+"Agente comercial responsável por este pedido, capturado na criação a partir "
+"de agent_ids do cliente. Ressincronizado se o cliente mudar enquanto o "
+"pedido está em rascunho. Imutável depois de sair do rascunho."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid "Customer"
+msgstr "Cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_account_move
+msgid "Journal Entry"
+msgstr "Lançamento Contábil"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_sale_order
+msgid "Sales Order"
+msgstr "Pedido de Venda"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Linha do Pedido de Venda"
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_account_bank_statement_line__sales_rep_partner_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_account_move__sales_rep_partner_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_account_payment__sales_rep_partner_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__sales_rep_partner_id
+#, python-format
+msgid "Sales Rep"
+msgstr "Representante"
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid ""
+"Sales Rep %(rep)s does not match the commercial agent of customer "
+"%(customer)s."
+msgstr ""
+"O Representante %(rep)s não corresponde ao agente comercial do cliente "
+"%(customer)s."
+
+#. module: tr_sales_rep_access
+#: model:ir.module.category,name:tr_sales_rep_access.module_category_sales_rep_access
+msgid "Sales Rep Access"
+msgstr "Acesso de Representante"
+
+#. module: tr_sales_rep_access
+#: model:res.groups,name:tr_sales_rep_access.group_sales_rep_external
+msgid "Sales Rep External"
+msgstr "Representante Externo"
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/base.py:0
+#, python-format
+msgid "Sales rep users are not allowed to export data."
+msgstr "Usuários representantes não podem exportar dados."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order_line.py:0
+#, python-format
+msgid ""
+"Sales reps can only modify quotation lines in draft. Line(s) %s belong to an"
+" order past draft."
+msgstr ""
+"Representantes só podem modificar linhas de cotação em rascunho. A(s) linha("
+"s) %s pertence(m) a um pedido que não está mais em rascunho."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid ""
+"Sales reps can only modify quotations in draft. Order(s) %s are past draft."
+msgstr ""
+"Representantes só podem modificar cotações em rascunho. O(s) pedido(s) %s "
+"não está(ão) mais em rascunho."
