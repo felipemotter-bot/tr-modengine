@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-19 12:06+0000\n"
-"PO-Revision-Date: 2026-04-19 12:06+0000\n"
+"POT-Creation-Date: 2026-04-19 12:56+0000\n"
+"PO-Revision-Date: 2026-04-19 12:56+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt_BR\n"
@@ -50,6 +50,12 @@ msgid "(unknown)"
 msgstr "(desconhecido)"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__allowed_category_ids
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__allowed_category_ids
+msgid "Allowed Product Categories"
+msgstr "Categorias de Produto Permitidas"
+
+#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_base
 msgid "Base"
 msgstr "Base"
@@ -62,6 +68,40 @@ msgid "Cannot change %(field)s on %(orders)s: order is no longer in draft."
 msgstr ""
 "Não é possível alterar %(field)s em %(orders)s: o pedido não está mais em "
 "rascunho."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_config_settings__tr_sales_rep_default_category_ids
+msgid ""
+"Categories assigned to the Allowed Product Categories of every new agent "
+"partner (agent=True) created without an explicit value. Does not "
+"retroactively update existing agents."
+msgstr ""
+"Categorias atribuídas à Categorias de Produto Permitidas de todo novo "
+"parceiro agente (agent=True) criado sem um valor explícito. Não atualiza "
+"retroativamente agentes existentes."
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_config_settings_view_form
+msgid ""
+"Categories automatically assigned to the\n"
+"                                Allowed Product Categories of every new\n"
+"                                agent partner. Does not retroactively update\n"
+"                                existing agents."
+msgstr ""
+"Categorias atribuídas automaticamente à\n"
+"                                Categorias de Produto Permitidas de todo\n"
+"                                novo parceiro agente. Não atualiza\n"
+"                                retroativamente agentes existentes."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__excluded_category_ids
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__excluded_category_ids
+msgid ""
+"Categories explicitly excluded from the allowed scope, including their "
+"descendants. Use to carve out a subtree while keeping its parent in allowed."
+msgstr ""
+"Categorias explicitamente excluídas do escopo permitido, incluindo suas "
+"subcategorias. Use para recortar uma subárvore mantendo o pai em permitidas."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_account_bank_statement_line__sales_rep_partner_id
@@ -86,6 +126,16 @@ msgstr ""
 "pedido está em rascunho. Imutável depois de sair do rascunho."
 
 #. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_res_config_settings
+msgid "Config Settings"
+msgstr "Configurações"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_res_partner
+msgid "Contact"
+msgstr "Contato"
+
+#. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
@@ -93,9 +143,49 @@ msgid "Customer"
 msgstr "Cliente"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_config_settings__tr_sales_rep_default_category_ids
+msgid "Default Allowed Categories for New Agents"
+msgstr "Categorias Permitidas Padrão para Novos Agentes"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__excluded_category_ids
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__excluded_category_ids
+msgid "Excluded Product Categories"
+msgstr "Categorias de Produto Excluídas"
+
+#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_account_move
 msgid "Journal Entry"
 msgstr "Lançamento Contábil"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_product_template
+msgid "Product"
+msgstr "Produto"
+
+#. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_product_product
+msgid "Product Variant"
+msgstr "Variante do Produto"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__allowed_category_ids
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__allowed_category_ids
+msgid ""
+"Product categories the rep is allowed to sell from. Descendants are "
+"implicitly included; combined with excluded_category_ids to compute the "
+"effective scope."
+msgstr ""
+"Categorias de produto que o representante pode vender. Subcategorias são "
+"incluídas implicitamente; combinadas com excluded_category_ids para "
+"calcular o escopo efetivo."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order_line.py:0
+#, python-format
+msgid "Product(s) %s are outside your assigned catalog."
+msgstr "Produto(s) %s está(ão) fora do catálogo atribuído a você."
 
 #. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_sale_order
@@ -131,8 +221,14 @@ msgstr ""
 
 #. module: tr_sales_rep_access
 #: model:ir.module.category,name:tr_sales_rep_access.module_category_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_config_settings_view_form
 msgid "Sales Rep Access"
 msgstr "Acesso de Representante"
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_partner_form_sales_rep_catalog
+msgid "Sales Rep Catalog"
+msgstr "Catálogo do Representante"
 
 #. module: tr_sales_rep_access
 #: model:res.groups,name:tr_sales_rep_access.group_sales_rep_external
