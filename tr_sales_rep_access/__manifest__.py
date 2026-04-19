@@ -32,7 +32,6 @@
         "l10n_br_account_withholding",
         "l10n_br_hr",
         "partner_capital",
-        "partner_employee_quantity",
     ],
     "data": [
         "security/security.xml",

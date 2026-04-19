@@ -121,10 +121,13 @@ class ResPartner(models.Model):
     # declaration in each upstream module stays untouched (Odoo 16
     # merges the attributes). Fiscal operational fields
     # (``tax_framework``, ``fiscal_profile_id``, ``ind_ie_dest``,
-    # ``ind_final``, ``vat``, etc.) are NOT server-side hidden —
+    # ``ind_final``, ``vat``, etc.) are NOT touched by this PR —
     # they are read inside ``l10n_br_fiscal`` onchanges during order
-    # creation and blocking them would break the rep's sale flow.
-    # Those go view-only (see views/res_partner_views.xml).
+    # creation, so server-side hide would break the rep's sale flow.
+    # Hiding them is tracked for PR 5b (dedicated approach with
+    # targeted XPaths per subview or sudo-wrapped onchange
+    # overrides); see AGENTS.md "Server-side hide of non-operational
+    # sensitive fields (PR 5)" for the full deferral context.
 
     # ---- partner_capital ----
     capital_amount = fields.Monetary(
