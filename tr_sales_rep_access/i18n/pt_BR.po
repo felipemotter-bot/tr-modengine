@@ -56,6 +56,11 @@ msgid "Allowed Product Categories"
 msgstr "Categorias de Produto Permitidas"
 
 #. module: tr_sales_rep_access
+#: model:tier.definition,name:tr_sales_rep_access.tier_def_new_rep_customer
+msgid "Approve new customer from sales rep"
+msgstr "Aprovar cliente novo do representante"
+
+#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_base
 msgid "Base"
 msgstr "Base"
@@ -68,6 +73,25 @@ msgid "Cannot change %(field)s on %(orders)s: order is no longer in draft."
 msgstr ""
 "Não é possível alterar %(field)s em %(orders)s: o pedido não está mais em "
 "rascunho."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid "Cannot confirm order %(order)s: customer %(customer)s is not active."
+msgstr ""
+"Não é possível confirmar o pedido %(order)s: cliente %(customer)s "
+"não está ativo."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/sale_order.py:0
+#, python-format
+msgid ""
+"Customer %s is not active yet. It must be approved before placing orders."
+msgstr ""
+"Cliente %s ainda não está ativo. É preciso aprová-lo antes de lançar "
+"pedidos."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_config_settings__tr_sales_rep_default_category_ids

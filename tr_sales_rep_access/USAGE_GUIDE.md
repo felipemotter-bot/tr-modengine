@@ -4,7 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 2 — Catálogo por agente** (+ PR 1 fundação mergeada).
+Status atual: **PR 3 — Workflow Draft → Active de cliente novo** (+ PR 1 fundação e PR 2
+catálogo mergeadas).
 
 ---
 
@@ -19,8 +20,9 @@ Status atual: **PR 2 — Catálogo por agente** (+ PR 1 fundação mergeada).
 7. [Bloqueios server-side (PR 1)](#7-bloqueios-server-side-pr-1)
 8. [Troca de agente e histórico](#8-troca-de-agente-e-histórico)
 9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
-10. [Roadmap — o que vem nas próximas PRs](#10-roadmap)
-11. [Solução de problemas](#11-solução-de-problemas)
+10. [Workflow Draft → Active de cliente novo (PR 3)](#10-workflow-draft--active-de-cliente-novo-pr-3)
+11. [Roadmap — o que vem nas próximas PRs](#11-roadmap)
+12. [Solução de problemas](#12-solução-de-problemas)
 
 ---
 
@@ -303,7 +305,53 @@ está.
 
 ---
 
-## 10. Roadmap
+## 10. Workflow Draft → Active de cliente novo (PR 3)
+
+Quando um representante cria um cliente novo, o cadastro **nasce em Draft** e passa por
+validação de um conferente (Sales Manager) antes de virar Active. Só clientes Active
+podem ser usados em pedidos.
+
+### Quando o fluxo dispara
+
+- **Sempre que um usuário do grupo rep** criar um `res.partner` novo com `parent_id`
+  vazio (ou seja, um cliente comercial raiz, não um contato filho).
+- O stage do novo partner é **forçado** a Draft mesmo se o vals recebido trouxer
+  `stage_id=active` — proteção contra bypass via RPC/import.
+- Admin ou outros usuários internos **não** são afetados. Cliente criado por eles segue
+  o fluxo default do `partner_stage` (nasce Active).
+
+### Tier de validação
+
+Em **Discuss → Reviews** (ou na caixa do conferente), o Sales Manager vê os novos
+clientes pendentes. Ao clicar em **Validate**, a revisão é aprovada. Só depois disso o
+conferente (ou qualquer manager) pode promover `stage_id = Active` pelo cadastro do
+partner — o `base_tier_validation` bloqueia a transição enquanto houver revisões
+pendentes.
+
+### O que acontece com contatos filhos
+
+Contatos filhos (`parent_id` preenchido) **não** são forçados a Draft e **não** disparam
+tier. Eles nascem no stage default (Active). A proteção contra vender ao cliente
+não-aprovado vem do `sale.order`, que checa `partner_id.commercial_partner_id.state` —
+um filho Active de um commercial Draft continua bloqueado.
+
+### Guardas no pedido
+
+Tentar criar (ou redirecionar) pedido de venda para cliente cujo commercial está em
+Draft dispara `ValidationError`. O mesmo check roda também em `action_confirm()`,
+cobrindo o caso raro em que o cliente foi rebaixado a Draft depois de o pedido ter sido
+criado.
+
+### Clientes que já existiam
+
+Clientes criados antes da instalação deste módulo permanecem no stage que tinham
+(Active). Não há migração retroativa. Rep que precisar ver esses clientes encontra os da
+sua carteira normalmente — o workflow só se aplica a **novos** cadastros feitos pelo
+rep.
+
+---
+
+## 11. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
@@ -325,7 +373,7 @@ Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 11. Solução de problemas
+## 12. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 

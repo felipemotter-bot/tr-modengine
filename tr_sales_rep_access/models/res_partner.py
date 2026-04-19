@@ -4,7 +4,9 @@
 from odoo import api, fields, models
 
 MANAGER_GROUP_XMLID = "tr_commercial_policy.group_sales_manager"
+REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
 DEFAULT_CATALOG_PARAM = "tr_sales_rep_access.tr_sales_rep_default_category_ids"
+DRAFT_STAGE_XMLID = "partner_stage.partner_stage_draft"
 
 
 class ResPartner(models.Model):
@@ -40,11 +42,57 @@ class ResPartner(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         default_ids = self._sales_rep_default_catalog_ids()
-        if default_ids:
-            for vals in vals_list:
-                if vals.get("agent") and "allowed_category_ids" not in vals:
-                    vals["allowed_category_ids"] = [(6, 0, default_ids)]
-        return super().create(vals_list)
+        is_rep = self.env.user.has_group(REP_GROUP_XMLID)
+        draft_stage = (
+            self.env.ref(DRAFT_STAGE_XMLID, raise_if_not_found=False)
+            if is_rep
+            else None
+        )
+        rep_partner_id = self.env.user.partner_id.id if is_rep else None
+        for vals in vals_list:
+            # PR 2 — default catalog
+            if default_ids and vals.get("agent") and "allowed_category_ids" not in vals:
+                vals["allowed_category_ids"] = [(6, 0, default_ids)]
+            # PR 3 — auto-populate the acting rep as the customer's
+            # agent when missing. Required because the stack in
+            # this project does not install
+            # sale_commission_agent_restrict, so nothing else would
+            # set agent_ids and the tier_definition (which demands
+            # agent_ids != False) would never fire — leaving the
+            # customer stuck in Draft forever. Only applies to new
+            # commercial partners; child contacts inherit access
+            # through the commercial partner and do not need their
+            # own agent.
+            if (
+                is_rep
+                and rep_partner_id
+                and not vals.get("parent_id")
+                and "agent_ids" not in vals
+            ):
+                vals["agent_ids"] = [(4, rep_partner_id)]
+            # PR 3 — force Draft stage for new commercial partners
+            # created by a rep, overriding any value explicitly
+            # passed. RPC/import could otherwise send
+            # ``stage_id=active`` and, combined with the
+            # auto-populated ``agent_ids`` above, bypass the tier
+            # workflow. Child contacts (parent_id set) are not
+            # forced — protection against selling to an unapproved
+            # customer lives in sale.order's guard against
+            # ``commercial_partner_id.state``.
+            if is_rep and draft_stage and not vals.get("parent_id"):
+                vals["stage_id"] = draft_stage.id
+        records = super().create(vals_list)
+        # Fire tier reviews immediately for new commercial partners
+        # created by a rep that match the tier_definition domain,
+        # so the reviewer list shows up right after creation
+        # without requiring a manual "Request validation" click.
+        # Child contacts are excluded — the workflow applies only
+        # to new commercial partners.
+        if is_rep:
+            records.filtered(
+                lambda p: p.state == "draft" and p.agent_ids and not p.parent_id
+            ).request_validation()
+        return records
 
     @api.model
     def _sales_rep_default_catalog_ids(self):

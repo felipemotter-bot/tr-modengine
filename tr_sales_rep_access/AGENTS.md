@@ -94,10 +94,41 @@ block; the Python gate short-circuits only for rep users.
   product outside the rep's catalog. Catches RPC/import/load paths that bypass
   `_search`.
 
+## Draft → Active workflow for new customers (PR 3)
+
+- `res.partner.create` override extension: when the acting user is in the rep group and
+  the partner has no `parent_id` (i.e., it is a new commercial), the override first
+  **auto-populates `agent_ids`** with `env.user.partner_id` (if the caller did not
+  provide one), then forces `stage_id` to `partner_stage.partner_stage_draft`
+  **regardless of any explicit value** in `vals`. The auto-populate is required because
+  this project does not install `sale_commission_agent_restrict` or
+  `trento_commission_agent_restrict`; without it, `agent_ids` would stay empty and the
+  tier_definition (which demands `agent_ids != False`) would never fire, leaving the
+  customer stuck in Draft. Forcing Draft blocks bypass via RPC/import trying to send
+  `stage_id=active` alongside the auto-populated agent.
+- After the `super().create()` call, the override invokes `request_validation()` on
+  rep-created commercials that match the tier domain, so the reviewer queue shows the
+  new customer right away.
+- `data/tier_definition.xml` declares the tier:
+  - model `res.partner`
+  - `review_type = group`, `reviewer_group_id = group_sales_manager`
+  - `definition_type = domain`,
+    `definition_domain = [('state', '=', 'draft'), ('agent_ids', '!=', False), ('parent_id', '=', False)]`
+  - `notify_on_create = True`
+- `sale.order` is guarded in two places:
+  - `@api.constrains('partner_id')` rejects an order whose
+    `partner_id.commercial_partner_id.state != 'confirmed'`. The commercial-partner
+    check blocks a rep from selling through a child contact of a Draft customer.
+  - `action_confirm()` repeats the same check so a customer that was Active at create
+    time but was later demoted to Draft still blocks confirmation.
+- Child contacts are NOT forced to Draft and do NOT trigger the tier. They use the
+  system default stage (Active). Protection against selling to an unapproved commercial
+  comes from the `commercial_partner_id` check, not from their own stage.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
-- Partner Draft workflow → PR 3.
+- Partner Draft workflow → PR 3 (implemented, see above).
 - `tr.partner.change.request` model + wizard → PR 4.
 - Rep-facing partner views → PR 5.
 - Tier + `tr_rep_notes` + print block override on sale.order → PR 6.
@@ -109,10 +140,11 @@ block; the Python gate short-circuits only for rep users.
 
 ## Residual notes (tracked for later PRs)
 
-- `res.partner` still allows `create/write` via this module's rule. If a real rep is
-  ever added to the group before the workflow PR, writes into the partner need the
-  auto-populate of `agent_ids` at partner `create`, as implemented by
-  `sale_commission_agent_restrict`. Not blocking because PR 1 is staging.
+- `res.partner` still allows `create/write` via this module's rule. The auto-populate of
+  `agent_ids` at partner `create` for rep users is now handled by this module's own
+  override (see "Draft → Active workflow" above) — originally planned to come from
+  `sale_commission_agent_restrict`, but that module is not in the project's dependency
+  chain.
 - `server_action_mass_edit`: wizard ACL is at `base.group_user`, no guaranteed block by
   "not joining a group". Handled in a later PR once the real execution path is
   validated.

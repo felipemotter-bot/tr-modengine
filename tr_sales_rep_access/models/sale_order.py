@@ -40,6 +40,48 @@ class SaleOrder(models.Model):
         self._sales_rep_check_rep_can_edit(vals)
         return super().write(vals)
 
+    def action_confirm(self):
+        # PR 3 — a customer that was Active at order-create time
+        # but was demoted to Draft (or Inactive) before confirm
+        # would otherwise slip past the @api.constrains below,
+        # which only fires on partner_id change. Core
+        # sale.order.action_confirm only writes the order state,
+        # so we guard here explicitly. We check the commercial
+        # partner so a child contact of a Draft customer cannot
+        # be used as a backdoor.
+        for order in self:
+            commercial = order.partner_id.commercial_partner_id
+            if commercial.state != "confirmed":
+                raise ValidationError(
+                    _(
+                        "Cannot confirm order %(order)s: customer "
+                        "%(customer)s is not active."
+                    )
+                    % {
+                        "order": order.display_name,
+                        "customer": commercial.display_name,
+                    }
+                )
+        return super().action_confirm()
+
+    @api.constrains("partner_id")
+    def _sales_rep_check_partner_confirmed(self):
+        # PR 3 — block orders whose customer (or customer's
+        # commercial parent) is not yet approved by the tier
+        # workflow. The commercial-partner check prevents a rep
+        # from creating an Active child contact under a Draft
+        # customer and using the child to sell.
+        for order in self:
+            commercial = order.partner_id.commercial_partner_id
+            if commercial and commercial.state != "confirmed":
+                raise ValidationError(
+                    _(
+                        "Customer %s is not active yet. It must be "
+                        "approved before placing orders."
+                    )
+                    % commercial.display_name
+                )
+
     def _sales_rep_check_rep_can_edit(self, vals):
         """Block rep users from editing orders past draft.
 
