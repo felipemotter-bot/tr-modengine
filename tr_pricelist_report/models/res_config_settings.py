@@ -25,7 +25,7 @@ class ResConfigSettings(models.TransientModel):
         default="MARCA",
         help=(
             "Name of the product attribute used as the brand grouping axis "
-            "in the Complete Pricelist layout (Mode A)."
+            "in the General Pricelist layout (Mode A)."
         ),
     )
     tr_pricelist_report_history_months_back = fields.Integer(

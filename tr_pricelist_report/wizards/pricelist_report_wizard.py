@@ -29,23 +29,27 @@ class PricelistReportWizard(models.TransientModel):
     )
     layout = fields.Selection(
         [
-            ("por_categoria", "By Category"),
-            ("completa", "Complete Pricelist"),
+            ("geral", "General Pricelist"),
             ("historico", "Customer History"),
         ],
         required=True,
-        default="por_categoria",
+        default="geral",
     )
     group_axis = fields.Selection(
         [("marca", "By Brand"), ("categoria", "By Category")],
+        required=True,
         default="marca",
-        help="Grouping axis for the Complete Pricelist layout.",
+        help="Grouping axis for the General Pricelist layout.",
     )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
         help="Pick one or more product categories. Sub-categories are included "
-        "automatically. Optional when layout is Complete Pricelist.",
+        "automatically. Always optional — leave empty to print every "
+        "sellable product.",
+        # Always optional now that por_categoria is gone. The wizard prints
+        # every active + sale_ok product when empty, filtered to selected
+        # categories (and their descendants) when populated.
     )
     discount_display = fields.Selection(
         [
@@ -94,8 +98,6 @@ class PricelistReportWizard(models.TransientModel):
 
     def action_generate(self):
         self.ensure_one()
-        if self.layout == "por_categoria" and not self.category_ids:
-            raise UserError(_("Pick at least one product category."))
         if self.layout == "historico" and not self._resolve_history_quantities():
             raise UserError(
                 _(
@@ -196,8 +198,8 @@ class PricelistReportWizard(models.TransientModel):
 
         Rigid cascade rule (§4.5): any ``product.category`` with the flag
         set, PLUS every descendant of those, is out of scope for the
-        general-pricelist layouts (``por_categoria`` and ``completa``
-        Modes A and B). The customer-history layout (PR4) bypasses this
+        general-pricelist layouts (``geral`` Modes A and B). The
+        customer-history layout bypasses this
         by resolving products through a different code path.
 
         The batch expansion uses ``child_of``, which relies on
@@ -565,14 +567,14 @@ class PricelistReportWizard(models.TransientModel):
     def _build_sections(self, products, rates):
         """Route products into sections per layout / group_axis.
 
-        - ``completa`` + ``marca`` → partition by MARCA attribute, products
+        - ``geral`` + ``marca`` → partition by MARCA attribute, products
           without MARCA fall back to the category partition at the end.
-        - ``completa`` + ``categoria`` or ``por_categoria`` → partition by
-          the category at ``category_depth`` (shared resolver).
+        - ``geral`` + ``categoria`` → partition by the category at
+          ``category_depth`` (shared resolver).
         - ``historico`` uses its own resolver and bypasses this router
           (see ``_build_sections_from_history``).
         """
-        if self.layout == "completa" and self.group_axis == "marca":
+        if self.layout == "geral" and self.group_axis == "marca":
             return self._build_sections_by_marca(products, rates)
         return self._build_sections_by_category(products, rates)
 

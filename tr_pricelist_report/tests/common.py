@@ -35,9 +35,20 @@ class PricelistReportTestCommon(CommercialPolicyTestCommon):
 
     @classmethod
     def _open_wizard(cls, category_ids=None, **vals):
+        """Factory for the wizard with explicit defaults.
+
+        After por_categoria was dropped, the wizard default became
+        ``layout='geral'`` + ``group_axis='marca'``. The test helper
+        keeps the historical contract (category-based partitioning
+        with a picked category) by setting ``group_axis='categoria'``
+        and filling ``category_ids`` — callers that want another shape
+        pass ``layout``/``group_axis`` explicitly via ``vals``.
+        """
         category_ids = category_ids or [cls.categ_chemicals.id]
         wizard_vals = {
             "condition_id": cls.condition.id,
+            "layout": "geral",
+            "group_axis": "categoria",
             "category_ids": [(6, 0, category_ids)],
         }
         wizard_vals.update(vals)

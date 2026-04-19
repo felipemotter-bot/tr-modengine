@@ -17,7 +17,7 @@
                             <field name="layout" />
                             <field
                 name="group_axis"
-                attrs="{'invisible': [('layout', '!=', 'completa')], 'required': [('layout', '=', 'completa')]}"
+                attrs="{'invisible': [('layout', '!=', 'geral')]}"
               />
                             <field name="discount_display" />
                             <field name="send_by_email" />
@@ -27,7 +27,6 @@
                 name="category_ids"
                 widget="many2many_tags"
                 options="{'no_create': True}"
-                attrs="{'required': [('layout', '=', 'por_categoria')]}"
               />
                         </group>
                     </group>

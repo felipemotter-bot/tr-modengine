@@ -33,7 +33,7 @@ class TestCategoryDepth(PricelistReportTestCommon):
 
     def _wizard(self):
         return self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id, "layout": "completa"}
+            {"condition_id": self.condition.id, "layout": "geral"}
         )
 
     def test_negative_depth_leaf(self):

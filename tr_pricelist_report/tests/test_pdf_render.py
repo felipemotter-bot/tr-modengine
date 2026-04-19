@@ -159,7 +159,7 @@ class TestPdfRender(PricelistReportTestCommon):
         self.assertIn("Devoluções não são descontadas".encode("utf-8"), note)
 
     def test_history_footer_note_absent_on_other_layouts(self):
-        """por_categoria / completa don't carry the history note."""
+        """``geral`` doesn't carry the history note."""
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         html = self._render_html(wizard)
         self.assertNotIn(b'class="pricelist-history-note"', html)

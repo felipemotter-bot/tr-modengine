@@ -9,10 +9,10 @@ class TestCategoryExclusion(PricelistReportTestCommon):
     ``product.category`` (§4.5 of the plan).
 
     The cascade is rigid: a category with the flag set excludes itself and
-    every descendant from the general-pricelist layouts (``por_categoria``
-    and ``completa`` Modes A / B). A descendant cannot turn the exclusion
-    off. The customer-history layout (PR4) ignores this flag; that
-    guarantee is covered on the PR4 test suite.
+    every descendant from the general-pricelist layouts (``geral`` Modes
+    A / B). A descendant cannot turn the exclusion off. The
+    customer-history layout ignores this flag; that guarantee is covered
+    on the history test suite.
     """
 
     @classmethod
@@ -92,8 +92,8 @@ class TestCategoryExclusion(PricelistReportTestCommon):
     # Tests
     # ------------------------------------------------------------------
 
-    def test_flagged_category_excluded_from_por_categoria(self):
-        """Layout ``por_categoria`` drops products whose category is flagged."""
+    def test_flagged_category_excluded_from_geral_categoria(self):
+        """``geral`` with ``group_axis=categoria`` drops flagged products."""
         self.categ_custom.tr_exclude_from_general_pricelist = True
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         products = self._products_in_report(wizard)
@@ -101,13 +101,13 @@ class TestCategoryExclusion(PricelistReportTestCommon):
         # Unrelated products in Chemicals still pass through.
         self.assertIn(self.product_a, products)
 
-    def test_flagged_category_excluded_from_completa(self):
-        """Modes A and B of ``completa`` also drop flagged products."""
+    def test_flagged_category_excluded_from_geral_marca(self):
+        """Both axes of ``geral`` drop flagged products."""
         self.categ_custom.tr_exclude_from_general_pricelist = True
         wizard_b = self.env["tr.pricelist.report.wizard"].create(
             {
                 "condition_id": self.condition.id,
-                "layout": "completa",
+                "layout": "geral",
                 "group_axis": "categoria",
             }
         )
@@ -115,7 +115,7 @@ class TestCategoryExclusion(PricelistReportTestCommon):
         wizard_a = self.env["tr.pricelist.report.wizard"].create(
             {
                 "condition_id": self.condition.id,
-                "layout": "completa",
+                "layout": "geral",
                 "group_axis": "marca",
             }
         )
