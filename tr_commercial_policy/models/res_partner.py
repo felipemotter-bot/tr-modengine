@@ -84,7 +84,11 @@ class ResPartner(models.Model):
             .sudo()
             .create({"partner_id": self.id})
         )
-        self.commercial_condition_id = condition
+        # ``sudo()`` + explicit ``write()`` (not the attribute-setter
+        # shorthand) so that the write actually runs under SUPERUSER
+        # and tr_sales_rep_access's guard on Active partners lets
+        # this module-owned field update pass.
+        self.sudo().write({"commercial_condition_id": condition.id})
         return {
             "type": "ir.actions.act_window",
             "res_model": "partner.commercial.condition",
@@ -113,7 +117,11 @@ class ResPartner(models.Model):
                 }
             )
         condition = self.env["partner.commercial.condition"].sudo().create(vals)
-        self.commercial_condition_id = condition
+        # ``sudo()`` + explicit ``write()`` (not the attribute-setter
+        # shorthand) so that the write actually runs under SUPERUSER
+        # and tr_sales_rep_access's guard on Active partners lets
+        # this module-owned field update pass.
+        self.sudo().write({"commercial_condition_id": condition.id})
         return {
             "type": "ir.actions.act_window",
             "res_model": "partner.commercial.condition",
@@ -126,7 +134,11 @@ class ResPartner(models.Model):
         """Remove the override and inherit from group again."""
         self.ensure_one()
         own_condition = self.commercial_condition_id
-        self.commercial_condition_id = False
+        # ``sudo()`` + explicit ``write()`` (not the attribute-setter
+        # shorthand) so that the write actually runs under SUPERUSER
+        # and tr_sales_rep_access's guard on Active partners lets
+        # this module-owned field update pass.
+        self.sudo().write({"commercial_condition_id": False})
         if own_condition and own_condition.partner_id == self:
             own_condition.sudo().unlink()
         return True

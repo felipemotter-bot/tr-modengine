@@ -12,3 +12,4 @@ from . import test_catalog_constraint
 from . import test_catalog_security
 from . import test_new_customer_workflow
 from . import test_change_request
+from . import test_rep_partner_block

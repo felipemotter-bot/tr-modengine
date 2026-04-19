@@ -197,13 +197,49 @@ the server-side block on rep writing `res.partner` fields directly live in 4b.
   field update / Request new contact), visible only to rep users on commercial parents
   in `confirmed` stage. Menu under `sale.sale_menu_root`.
 
+## Direct write block on Active partners (PR 4b)
+
+Closes the change-request loop: rep cannot write directly on a partner in Active stage;
+every cadastral change goes through `tr.partner.change.request`, and the commercial
+condition goes through the `tr_commercial_policy` action buttons.
+
+- **Override** of `res.partner.write` (`_sales_rep_should_block_active_write`): rejects
+  with `AccessError` when `env.user.has_group(group_sales_rep_external)` and the write
+  touches any field outside `REP_ACTIVE_WRITE_ALLOWLIST` and the recordset contains at
+  least one partner with `state == 'confirmed'`.
+- **Allowlist**: hard-coded tuple in `models/res_partner.py` listing the `mail.thread`
+  and `mail.activity.mixin` fields (`message_ids`, `message_follower_ids`,
+  `activity_ids`, etc.). Chatter and scheduled activities stay open — they are not
+  business data. Choice was hard-coded over mro detection for auditability; add new
+  entries when a future Odoo bump introduces new mail/activity fields.
+- **Draft stage stays fully editable**: PR 3 create flow is untouched. Rep creates
+  partner → nasce Draft → edits freely → manager approves tier → state flips to Active →
+  guard engages.
+- **Internal writes bypass via sudo**: `_apply_field_update` and `_create_child` in
+  `tr.partner.change.request` already use `.sudo()`; `env.user` becomes SUPERUSER and
+  `has_group(REP_GROUP)` returns False, so the guard is a no-op for them.
+- **`tr_commercial_policy` action buttons use `.sudo()` on the partner write**. Three
+  methods adjusted in `tr_commercial_policy/models/res_partner.py`:
+  `action_create_commercial_condition`, `action_create_override_condition` and
+  `action_remove_override_condition`. The module owns the `commercial_condition_id`
+  field and gates all legitimate writes behind these action buttons; `.sudo()` lets the
+  writes pass the PR 4b guard without exposing the field on the allowlist (which would
+  let a rep set it via RPC, bypassing the action logic).
+- **Child contacts (intentional limitation)**: a child partner inherits
+  `state == 'confirmed'` from `partner_stage` defaults, so direct edits by a rep on an
+  existing Active child also hit the guard. There is no workflow for editing existing
+  children today (rep only adds new ones via `new_child`). If a real need shows up, a
+  future PR will extend `tr.partner.change.request` with a `field_update_child` variant
+  — we keep the "everything via change_request" principle instead of opening an
+  exception.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
 - Partner Draft workflow → PR 3 (implemented, see above).
 - `tr.partner.change.request` model + tier + view → PR 4a (implemented, see above).
-- Wizard that propagates approved updates to open orders + server-side block on rep
-  writing partner fields directly → PR 4b.
+- Direct-write block on Active partners + `tr_commercial_policy` sudo → PR 4b
+  (implemented, see above).
 - Rep-facing partner views → PR 5.
 - Tier + `tr_rep_notes` + print block override on sale.order → PR 6.
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,

@@ -4,7 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 4a — Solicitações de alteração cadastral** (+ PR 1, 2 e 3 mergeadas).
+Status atual: **PR 4b — Bloqueio de write direto em cliente Active** (+ PR 1, 2, 3 e 4a
+mergeadas).
 
 ---
 
@@ -418,13 +419,27 @@ antes de a mudança ser aplicada.
 - Reviews pendentes: canceladas ou rejeitadas são explicitamente fechadas pra não deixar
   reviews penduradas com mais de uma tier.definition.
 
-### O que fica pra PR 4b
+### Bloqueio de write direto (PR 4b)
 
-- Wizard de propagação pra pedidos em aberto do cliente quando a approve muda campos que
-  aparecem no pedido (snapshot).
-- Bloqueio server-side: rep não pode fazer `write` direto em `res.partner` para
-  **nenhum** campo fora da condição comercial (que continua gerenciada pelo
-  `tr_commercial_policy`).
+A PR 4b fechou o ciclo: rep **não faz `write` direto** em `res.partner` quando o cliente
+está Active — qualquer mudança cadastral passa obrigatoriamente por um change_request.
+
+- Mensagens no chatter e atividades agendadas continuam livres (não são business data).
+- Editar partner em Draft (pré-aprovação da PR 3) segue funcionando normalmente.
+- Os três botões da condição comercial do `tr_commercial_policy`
+  (`action_create_commercial_condition`, `action_create_override_condition`,
+  `action_remove_override_condition`) usam `.sudo()` internamente pra escrever
+  `commercial_condition_id` no partner — o rep clica no botão normalmente, o módulo
+  garante os invariantes e o guard da 4b deixa passar.
+- **Limitação intencional**: edição de contato-filho existente em partner Active também
+  cai no guard. Hoje não há fluxo pra isso (rep só cria filho novo via `new_child`). Se
+  virar necessidade, uma PR futura estende o change_request com `field_update_child`.
+
+O **wizard de propagação** do plano original (partner → pedidos em aberto) foi
+**descartado** nesta iteração: a whitelist atual é puramente cadastral e nenhum campo é
+copiado pro `sale.order` / `account.move` (o pedido só tem M2O pro partner; endereço
+flui via related dinâmico). Se a whitelist crescer pra incluir snapshot fields (ex:
+`property_payment_term_id`), PR 4c dedicada.
 
 ---
 
@@ -432,20 +447,20 @@ antes de a mudança ser aplicada.
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
-| PR  | Conteúdo                                                         |
-| --- | ---------------------------------------------------------------- |
-| 2   | ✅ Catálogo por agente (ver seção 9)                             |
-| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)        |
-| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)      |
-| 4b  | Wizard de propagação + bloqueio de write direto em `res.partner` |
-| 5   | Views do cliente para o rep (campos sensíveis com `groups`)      |
-| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido  |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,               |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,         |
-|     | `tr_pricelist_report`                                            |
-| 8   | Chatter restrito (RPC test + rules + override de fallback)       |
-| 9   | Estoque totalmente invisível                                     |
-| 10  | Tradução pt_BR + docs finais                                     |
+| PR  | Conteúdo                                                           |
+| --- | ------------------------------------------------------------------ |
+| 2   | ✅ Catálogo por agente (ver seção 9)                               |
+| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)          |
+| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)        |
+| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11) |
+| 5   | Views do cliente para o rep (campos sensíveis com `groups`)        |
+| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido    |
+| 7   | Bloqueios server-side de `eng_partner_sales_info`,                 |
+|     | `sale_order_line_price_history`, `sale_last_price_info`,           |
+|     | `tr_pricelist_report`                                              |
+| 8   | Chatter restrito (RPC test + rules + override de fallback)         |
+| 9   | Estoque totalmente invisível                                       |
+| 10  | Tradução pt_BR + docs finais                                       |
 
 Cada PR incrementa este guia na seção correspondente.
 
