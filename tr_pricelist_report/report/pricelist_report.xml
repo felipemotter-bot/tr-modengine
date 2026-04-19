@@ -12,6 +12,10 @@
         <field name="report_name">tr_pricelist_report.report_pricelist_document</field>
         <field name="report_file">tr_pricelist_report.report_pricelist_document</field>
         <field
+      name="paperformat_id"
+      ref="trento_report_utils.paperformat_a4_port_low_margin"
+    />
+        <field
       name="print_report_name"
     >'Price List - %s' % (object.condition_id.partner_id.name or '')</field>
     </record>

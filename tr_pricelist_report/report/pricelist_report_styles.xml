@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <!--
+        Central stylesheet for the pricelist report.
+
+        Kept as a QWeb sub-template instead of inline ``style=""`` on every
+        element: readability, single place to tweak, and ready to be reused
+        by the future nominal-pricelist template (PR-C) via ``t-call``.
+
+        All rules are scoped to the ``.pricelist-*`` semantic classes the
+        main template emits, so this stylesheet doesn't leak beyond the
+        report DOM and doesn't fight with ``web.external_layout``.
+    -->
+    <template id="report_pricelist_styles">
+        <style>
+            /* ---------- Header (title + client + emission) ----------- */
+            .pricelist-header {
+                margin-top: 4pt;
+                margin-bottom: 12pt;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 8pt;
+            }
+            .pricelist-header-title {
+                font-size: 15pt;
+                font-weight: 600;
+                letter-spacing: 1px;
+                text-align: center;
+                margin: 0 0 8pt 0;
+            }
+            .pricelist-header-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 10pt;
+                color: #444;
+            }
+            .pricelist-header-meta strong { color: #222; }
+
+            /* ---------- Section titles (categoria/marca + exceções) --- */
+            .pricelist-section { margin-top: 14pt; }
+            .pricelist-section-title {
+                font-size: 11pt;
+                font-weight: 600;
+                letter-spacing: 0.8px;
+                padding: 4pt 0 3pt 8pt;
+                border-left: 3px solid #002FA7;
+                color: #333;
+                text-transform: uppercase;
+                margin-bottom: 0;
+            }
+
+            /* ---------- Product table ----------------------------------- */
+            .pricelist-table {
+                width: 100%;
+                margin-top: 6pt;
+            }
+            /* Hard reset to outrun Bootstrap/Odoo table defaults. Same
+               pattern used by engenere_custom.css in the invoice report:
+               zero every border + box-shadow with !important, and force
+               border-collapse/border-spacing explicitly. Specific
+               bottom borders are re-applied below, also with !important. */
+            .pricelist-table,
+            .pricelist-table thead,
+            .pricelist-table tbody,
+            .pricelist-table tr,
+            .pricelist-table th,
+            .pricelist-table td {
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            .pricelist-table {
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+            }
+            .pricelist-table thead th {
+                font-size: 8.5pt;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                color: #666;
+                border-bottom: 1px solid #cfcfcf !important;
+                padding: 6pt 6pt;
+                text-align: center;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+            .pricelist-table thead th.pricelist-cell-description {
+                text-align: left;
+            }
+            .pricelist-table tbody td {
+                padding: 6pt 8pt;
+                border-bottom: 1px solid #eee !important;
+                text-align: center;
+                vertical-align: middle;
+                font-size: 10pt;
+            }
+            .pricelist-table tbody td.pricelist-cell-description {
+                text-align: left;
+            }
+            .pricelist-table tbody tr:nth-child(even) {
+                background: #fafafa;
+            }
+            .pricelist-table .pricelist-cell-price {
+                font-weight: 600;
+                color: #111;
+            }
+
+            /* ---------- Historico explanatory note (inline after
+                           the Condições Comerciais block) ----------------- */
+            .pricelist-history-note {
+                font-size: 9pt;
+                color: #666;
+                font-style: italic;
+                margin: 6pt 0 0 0;
+            }
+        </style>
+    </template>
+
+</odoo>

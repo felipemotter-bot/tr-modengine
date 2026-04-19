@@ -5,29 +5,58 @@ from .common import PricelistReportTestCommon
 
 
 class TestPdfRender(PricelistReportTestCommon):
-    def test_report_renders_html(self):
-        """Report renders to HTML without raising."""
-        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+    """Cover the new semantic-class contract of the pricelist PDF template.
+
+    Each assertion anchors on a ``pricelist-*`` class introduced in PR-B
+    instead of brittle substring matches of inline styles. If the visual
+    tuning changes (colors, paddings, widths) those tests don't break —
+    but any structural regression (a missing section, column order swap,
+    wrong layout branch) will.
+    """
+
+    def _render_html(self, wizard):
         html, _type = self.env["ir.actions.report"]._render_qweb_html(
             "tr_pricelist_report.action_report_pricelist", wizard.ids
         )
-        self.assertIn(b"TABELA DE PRE", html)
+        return html
+
+    def test_report_renders_header_with_title_and_client(self):
+        """Header carries title + client/emission meta row."""
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        self.assertIn(b'class="pricelist-header"', html)
+        self.assertIn(b'class="pricelist-header-title"', html)
+        self.assertIn("TABELA DE PREÇOS".encode("utf-8"), html)
+        self.assertIn(b'class="pricelist-header-meta"', html)
         self.assertIn(self.customer.display_name.encode("utf-8"), html)
 
+    def test_report_does_not_render_codigo_column_header(self):
+        """Column Código was absorbed by Descrição; header must not list it."""
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        # ``Código`` as a <th> header no longer exists in any section.
+        self.assertNotIn(b"<th>C\xc3\xb3digo</th>", html)
+        self.assertNotIn(b'<th style="width: 12%;">C\xc3\xb3digo</th>', html)
+
+    def test_report_sections_use_semantic_titles(self):
+        """Category/marca titles use the pricelist-section-title class."""
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        self.assertIn(b'class="pricelist-section-title"', html)
+        self.assertIn(b'class="pricelist-table"', html)
+
     def test_report_renders_with_show_discounts(self):
-        """Template branches on ``discount_display`` without crashing."""
+        """``show_discounts`` adds the Preço Ref. + Desc. % columns."""
         wizard = self._open_wizard(
             category_ids=[self.categ_chemicals.id],
             discount_display="show_discounts",
         )
-        html, _type = self.env["ir.actions.report"]._render_qweb_html(
-            "tr_pricelist_report.action_report_pricelist", wizard.ids
-        )
+        html = self._render_html(wizard)
         self.assertIn(b"Pre\xc3\xa7o Ref.", html)
         self.assertIn(b"Desc. %", html)
 
     def test_report_renders_with_exceptions(self):
-        """Exceptions section renders when variants diverge."""
+        """Exception sections render with the same section-title class."""
         attr = self.env["product.attribute"].create(
             {"name": "Color", "create_variant": "always"}
         )
@@ -92,8 +121,45 @@ class TestPdfRender(PricelistReportTestCommon):
             }
         )
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
-        html, _type = self.env["ir.actions.report"]._render_qweb_html(
-            "tr_pricelist_report.action_report_pricelist", wizard.ids
-        )
+        html = self._render_html(wizard)
         self.assertIn(b"Pre\xc3\xa7os Especiais por Variante", html)
         self.assertIn(b"Pre\xc3\xa7os por Quantidade", html)
+
+    def test_history_layout_footer_note_present(self):
+        """Historico footer note carries the full copy: window + date + returns."""
+        # Place at least one confirmed sale so the history isn't empty.
+        self.env["sale.order"].create(
+            {
+                "partner_id": self.customer.id,
+                "pricelist_id": self.pricelist.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product_a.id,
+                            "product_uom_qty": 1,
+                            "price_unit": 100.0,
+                        },
+                    ),
+                ],
+            }
+        ).action_confirm()
+        wizard = self._open_wizard(
+            category_ids=[self.categ_chemicals.id], layout="historico"
+        )
+        html = self._render_html(wizard)
+        self.assertIn(b'class="pricelist-history-note"', html)
+        # Normalize whitespace before asserting so brittle indent/newlines
+        # from QWeb output don't trip this test.
+        note = b" ".join(html.split())
+        self.assertIn("pedidos de venda confirmados".encode("utf-8"), note)
+        self.assertIn("nos últimos".encode("utf-8"), note)
+        self.assertIn("meses".encode("utf-8"), note)
+        self.assertIn("Devoluções não são descontadas".encode("utf-8"), note)
+
+    def test_history_footer_note_absent_on_other_layouts(self):
+        """por_categoria / completa don't carry the history note."""
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        self.assertNotIn(b'class="pricelist-history-note"', html)

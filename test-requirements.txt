@@ -7,6 +7,7 @@ odoo-addon-engenere_commission @ git+https://${GH_PAT}@github.com/Engenere/engen
 odoo-addon-engenere_dummy_br_coa_dependency @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_dummy_br_coa_dependency
 odoo-addon-trento_sale_usability @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_sale_usability
 odoo-addon-trento_invoice_usability @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_invoice_usability
+odoo-addon-trento_report_utils @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_report_utils
 # Transitive dependencies of trento_sale_usability
 odoo-addon-eng_sale_first_time_state @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_sale_first_time_state
 odoo-addon-eng_partner_confirmation @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_partner_confirmation

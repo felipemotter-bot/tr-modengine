@@ -103,11 +103,18 @@ meses, agrupados pelo mesmo resolvedor de categoria do layout `completa` Modo B.
   cliente comprou aparece pra ele poder recomprar.
 - **Variante por variante**, sem consolidação template-first — o histórico reflete
   exatamente o que o cliente comprou.
-- Colunas do PDF: `Código | Descrição | [Preço Ref. | Desc. % |] Qtd. comprada | Preço`
-  (as duas colunas intermediárias só aparecem em `show_discounts`).
-- Coluna `Qtd. comprada` mostra valor agregado na UoM default do produto, acompanhado do
-  label da UoM (ex.: `"120 un"`). Linhas em UoMs diferentes são convertidas via
-  `product_uom._compute_quantity(qty, product.uom_id)` antes de somar.
+- Colunas do PDF: `Descrição | Qtd. | [Preço Ref. | Desc. % |] Preço` (as duas
+  intermediárias só aparecem em `show_discounts`). A coluna `Código` dedicada foi
+  removida na PR-B — `display_name` já inclui `[COD] NOME`.
+- Coluna `Qtd.` mostra valor agregado na UoM default do produto, acompanhado do label da
+  UoM (ex.: `"120 CX"`). Linhas em UoMs diferentes são convertidas via
+  `product_uom._compute_quantity(qty, product.uom_id)` antes de somar. UoMs cujo nome
+  pt_BR começa com `CAIXA` são renderizadas como `CX` (`.replace("CAIXA", "CX")` inline
+  no `uom_label`).
+- O PDF do histórico carrega um rodapé explicativo: "Qtd. considera pedidos de venda
+  confirmados desde DD/MM/YYYY. Devoluções não são descontadas." A data vem de
+  `date_history_threshold` no payload de `_get_report_values`, calculada como
+  `fields.Date.today() - relativedelta(months=history_months_back)`.
 - Quando o histórico é vazio na janela configurada, `action_generate` levanta
   `UserError` com mensagem clara — evita PDF em branco que parece bug.
 

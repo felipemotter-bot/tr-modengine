@@ -126,3 +126,51 @@ class TestLayoutCompleta(PricelistReportTestCommon):
         # Must not raise despite empty category_ids.
         action = wizard.action_generate()
         self.assertEqual(action["type"], "ir.actions.report")
+
+    def test_mode_a_empty_marca_section_is_dropped(self):
+        """A MARCA whose every product got filtered by invalid_price_threshold
+        is skipped — no ghost section with an empty table.
+
+        Covers ``_build_sections_by_marca`` skip branch (mirror of the
+        ``_build_sections_by_category`` guard). Felipe hit this in devel:
+        printing the layout listed several marca/category titles with no
+        rows underneath because the whole bucket was above the 999999
+        placeholder threshold.
+        """
+        val_gamma = self.env["product.attribute.value"].create(
+            {"name": "Gamma Brand", "attribute_id": self.attr_marca.id}
+        )
+        placeholder_branded_tmpl = self.env["product.template"].create(
+            {
+                "name": "Gamma Placeholder",
+                "type": "consu",
+                "list_price": 999999.0,
+                "categ_id": self.categ_chemicals.id,
+                "attribute_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "attribute_id": self.attr_marca.id,
+                            "value_ids": [(6, 0, [val_gamma.id])],
+                        },
+                    ),
+                ],
+            }
+        )
+        self.env["product.pricelist.item"].create(
+            {
+                "pricelist_id": self.pricelist.id,
+                "applied_on": "1_product",
+                "product_tmpl_id": placeholder_branded_tmpl.id,
+                "compute_price": "fixed",
+                "fixed_price": 999999.0,
+            }
+        )
+        wizard = self._open_completa(group_axis="marca")
+        values = wizard._get_report_values(wizard.ids)
+        titles = [s["title"] for s in values["sections"]]
+        # Gamma is dropped; Alpha/Beta still there (they have a valid price).
+        self.assertNotIn("Gamma Brand", titles)
+        self.assertIn("Alpha Brand", titles)
+        self.assertIn("Beta Brand", titles)

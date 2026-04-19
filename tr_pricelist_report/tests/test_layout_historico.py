@@ -213,16 +213,62 @@ class TestLayoutHistorico(PricelistReportTestCommon):
     # ------------------------------------------------------------------
 
     def test_render_shows_quantity_with_uom_label(self):
-        """PDF renders ``qty + uom`` on the Qtd. comprada column."""
+        """PDF renders ``qty + uom`` on the Qtd. column (PR-B layout)."""
         today = fields.Date.today()
         self._place_confirmed_order(self.product_a, 8, today)
         wizard = self._open_history_wizard()
         html, _type = self.env["ir.actions.report"]._render_qweb_html(
             "tr_pricelist_report.action_report_pricelist", wizard.ids
         )
-        self.assertIn(b"Qtd. comprada", html)
+        self.assertIn(b">Qtd.<", html)
         uom_label = self.product_a.uom_id.name.encode("utf-8")
         self.assertIn(uom_label, html)
+
+    def test_date_history_threshold_is_in_payload(self):
+        """``_get_report_values`` passes the history start date to the template.
+
+        The footer note ("desde DD/MM/YYYY") renders this value, so any
+        drift between the resolver window and the footer would show up
+        here first.
+        """
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "4"
+        )
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self._open_history_wizard()
+        values = wizard._get_report_values(wizard.ids)
+        self.assertEqual(
+            values["date_history_threshold"],
+            today - relativedelta(months=4),
+        )
+
+    def test_uom_label_caixa_is_replaced_with_cx(self):
+        """UoM names starting with 'CAIXA' are rendered as 'CX' (PR-B)."""
+        # Create a UoM whose pt_BR/English name is "CAIXA" and assign it to
+        # product_a, then confirm a sale. The payload must surface "CX".
+        caixa_uom = self.env["uom.uom"].create(
+            {
+                "name": "CAIXA",
+                "category_id": self.env.ref("uom.product_uom_categ_unit").id,
+                "factor": 1.0,
+                "uom_type": "bigger",
+                "factor_inv": 6.0,
+            }
+        )
+        self.product_a.uom_id = caixa_uom
+        self.product_a.uom_po_id = caixa_uom
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 2, today, uom=caixa_uom)
+        wizard = self._open_history_wizard()
+        values = wizard._get_report_values(wizard.ids)
+        labels = [
+            row["uom_label"]
+            for section in values["sections"]
+            for row in section["rows"]
+        ]
+        self.assertIn("CX", labels)
+        self.assertNotIn("CAIXA", labels)
 
     def test_orders_variants_of_same_template_adjacent(self):
         """Variants of the same template sit next to each other in the row list.
