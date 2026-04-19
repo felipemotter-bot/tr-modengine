@@ -188,6 +188,100 @@ class TestNewCustomerWorkflow(SalesRepAccessTestCommon):
         )
         self.assertEqual(customer.agent_ids, self.agent_a1)
 
+    def test_rep_create_with_empty_agent_ids_raises(self):
+        """Rep passing ``agent_ids=[]`` via RPC must be rejected.
+
+        Without this guard, the customer would be created in
+        Draft but with no agents, which would (a) hide it from
+        the rep via the partner record rule and (b) skip the
+        tier because the definition domain requires
+        ``agent_ids != False``.
+        """
+        with self.assertRaises(ValidationError):
+            self.env["res.partner"].with_user(self.user_u1).create(
+                {
+                    "name": "Rep Customer Empty Agents",
+                    "agent_ids": [(6, 0, [])],
+                }
+            )
+
+    def test_rep_create_with_link_command_passes(self):
+        """Legacy short ``(4, rep_partner_id)`` command is accepted."""
+        customer = (
+            self.env["res.partner"]
+            .with_user(self.user_u1)
+            .create(
+                {
+                    "name": "Rep Customer With Link Command",
+                    "agent_ids": [(4, self.agent_a1.id)],
+                }
+            )
+        )
+        self.assertEqual(customer.agent_ids, self.agent_a1)
+
+    def test_rep_create_with_list_of_lists_command_passes(self):
+        """JSON-RPC sends commands as lists of lists; must be accepted.
+
+        The normalization step converts each inner ``list`` to a
+        ``tuple`` before the whitelist check. Without it, a
+        legitimate payload from a JSON-RPC client would be
+        rejected purely on wire format.
+        """
+        customer = (
+            self.env["res.partner"]
+            .with_user(self.user_u1)
+            .create(
+                {
+                    "name": "Rep Customer JSON-RPC shape",
+                    "agent_ids": [[6, 0, [self.agent_a1.id]]],
+                }
+            )
+        )
+        self.assertEqual(customer.agent_ids, self.agent_a1)
+
+    def test_rep_create_with_canonical_link_command_passes(self):
+        """Canonical ``(4, rep_partner_id, 0)`` 3-tuple is accepted.
+
+        ``odoo.fields.Command.link()`` returns this 3-tuple form;
+        the guard must match it, not only the legacy short form.
+        """
+        customer = (
+            self.env["res.partner"]
+            .with_user(self.user_u1)
+            .create(
+                {
+                    "name": "Rep Customer With Canonical Link",
+                    "agent_ids": [(4, self.agent_a1.id, 0)],
+                }
+            )
+        )
+        self.assertEqual(customer.agent_ids, self.agent_a1)
+
+    def test_rep_create_with_clear_command_raises(self):
+        """``(5,)`` (clear) leaves agent_ids empty and is rejected."""
+        with self.assertRaises(ValidationError):
+            self.env["res.partner"].with_user(self.user_u1).create(
+                {
+                    "name": "Rep Customer With Clear Command",
+                    "agent_ids": [(5,)],
+                }
+            )
+
+    def test_rep_create_with_foreign_agent_raises(self):
+        """Rep assigning another rep as agent is rejected.
+
+        Business rule: a customer created by a rep belongs to
+        that rep. Passing a different rep via RPC/import is a
+        bypass attempt and must be blocked server-side.
+        """
+        with self.assertRaises(ValidationError):
+            self.env["res.partner"].with_user(self.user_u1).create(
+                {
+                    "name": "Rep Customer Foreign Agent",
+                    "agent_ids": [(6, 0, [self.agent_a2.id])],
+                }
+            )
+
     def test_rep_child_contact_inherits_agent_from_parent(self):
         """Child contacts are not auto-linked by the override.
 
