@@ -770,13 +770,7 @@ class PricelistReportWizard(models.TransientModel):
                     "threshold setting."
                 )
             )
-        # sudo() on the condition so the template can read related fields
-        # (payment_mode_id, payment_term_id, incoterm_id, pricelist_id.currency_id,
-        # ...) regardless of multi-company record rules. Felipe triggered an
-        # AccessError when the condition referenced a payment_mode from a
-        # company he didn't have access to — this is display-only rendering,
-        # not a privileged write.
-        condition = wizard.condition_id.sudo()
+        condition = wizard.condition_id
         partner = condition.partner_id
         # Starting point of the historico window. Computed once here so the
         # template (which renders a footer note citing this date) can't
