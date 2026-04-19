@@ -98,14 +98,22 @@ block; the Python gate short-circuits only for rep users.
 
 - `res.partner.create` override extension: when the acting user is in the rep group and
   the partner has no `parent_id` (i.e., it is a new commercial), the override first
-  **auto-populates `agent_ids`** with `env.user.partner_id` (if the caller did not
-  provide one), then forces `stage_id` to `partner_stage.partner_stage_draft`
-  **regardless of any explicit value** in `vals`. The auto-populate is required because
-  this project does not install `sale_commission_agent_restrict` or
-  `trento_commission_agent_restrict`; without it, `agent_ids` would stay empty and the
-  tier_definition (which demands `agent_ids != False`) would never fire, leaving the
-  customer stuck in Draft. Forcing Draft blocks bypass via RPC/import trying to send
-  `stage_id=active` alongside the auto-populated agent.
+  handles `agent_ids` and then forces `stage_id` to `partner_stage.partner_stage_draft`
+  **regardless of any explicit value** in `vals`. On `agent_ids`:
+  - if the caller did not pass the key, **auto-populate** with `env.user.partner_id`
+    (the acting rep). Required because the project does not install
+    `sale_commission_agent_restrict` / `trento_commission_agent_restrict`; without it,
+    `agent_ids` would stay empty and the tier_definition (which demands
+    `agent_ids != False`) would never fire, leaving the customer stuck in Draft.
+  - if the caller passed the key, **validate** that the x2many commands resolve to
+    exactly `{env.user.partner_id}` — the whitelist accepts the three canonical forms
+    `(6, 0, [rep])`, `(4, rep, 0)` and the legacy `(4, rep)`, with a normalization step
+    to tolerate JSON-RPC lists-of-lists. Anything else (empty replace, clear, foreign
+    id, multiple commands) raises `ValidationError` so the RPC/import bypass attempt is
+    visible and auditable. Business rule: a customer created by a rep **belongs to that
+    rep**; there is no legitimate case for assigning another agent on create. Forcing
+    Draft blocks the parallel bypass via RPC/import trying to send `stage_id=active`
+    alongside the auto-populated agent.
 - After the `super().create()` call, the override invokes `request_validation()` on
   rep-created commercials that match the tier domain, so the reviewer queue shows the
   new customer right away.

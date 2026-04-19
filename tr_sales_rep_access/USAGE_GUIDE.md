@@ -317,8 +317,13 @@ podem ser usados em pedidos.
   vazio (ou seja, um cliente comercial raiz, não um contato filho).
 - O stage do novo partner é **forçado** a Draft mesmo se o vals recebido trouxer
   `stage_id=active` — proteção contra bypass via RPC/import.
+- O `agent_ids` do novo cliente também é controlado pelo módulo:
+  - Se o rep não preencher, é preenchido automaticamente com o próprio rep.
+  - Se o rep tentar atribuir outro representante (ou deixar em branco) via RPC/import, o
+    `create` levanta `ValidationError`. Regra de negócio: cliente cadastrado por rep
+    **pertence ao rep**; rep não pode atribuir cliente novo a outro representante.
 - Admin ou outros usuários internos **não** são afetados. Cliente criado por eles segue
-  o fluxo default do `partner_stage` (nasce Active).
+  o fluxo default do `partner_stage` (nasce Active) e pode ter qualquer `agent_ids`.
 
 ### Tier de validação
 
