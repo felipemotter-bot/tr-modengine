@@ -20,6 +20,19 @@
         "sale",
         "account",
         "commission",
+        # PR 5 — server-side hide (bucket A) redeclares fields from
+        # these modules with ``groups=`` in ``models/res_partner.py``.
+        # View-only hide of fiscal operational fields (``vat``,
+        # ``tax_framework``, ``fiscal_profile_id``, ``ind_*``, etc.)
+        # was deferred to PR 5b because XPath ``position=
+        # "attributes"`` only applies to the first match, and those
+        # fields appear in multiple subviews (kanban, child_ids
+        # subtree) — partial hide would be security theater.
+        "l10n_br_sped_base",
+        "l10n_br_account_withholding",
+        "l10n_br_hr",
+        "partner_capital",
+        "partner_employee_quantity",
     ],
     "data": [
         "security/security.xml",

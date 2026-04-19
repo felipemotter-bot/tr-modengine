@@ -115,6 +115,55 @@ class ResPartner(models.Model):
         ),
     )
 
+    # PR 5 — server-side hide: non-operational sensitive fields that
+    # rep should not read nor write via RPC. Fields are redeclared
+    # here only to add ``groups=`` restriction; the original
+    # declaration in each upstream module stays untouched (Odoo 16
+    # merges the attributes). Fiscal operational fields
+    # (``tax_framework``, ``fiscal_profile_id``, ``ind_ie_dest``,
+    # ``ind_final``, ``vat``, etc.) are NOT server-side hidden —
+    # they are read inside ``l10n_br_fiscal`` onchanges during order
+    # creation and blocking them would break the rep's sale flow.
+    # Those go view-only (see views/res_partner_views.xml).
+
+    # ---- partner_capital ----
+    capital_amount = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    capital_currency_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    turnover_range_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    turnover_amount = fields.Float(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    company_size = fields.Selection(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_sped_base ----
+    is_accountant = fields.Boolean(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    crc_code = fields.Char(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    crc_state_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_account_withholding ----
+    wh_cityhall = fields.Boolean(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_hr ----
+    union_entity_code = fields.Char(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         default_ids = self._sales_rep_default_catalog_ids()
