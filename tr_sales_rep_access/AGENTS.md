@@ -233,6 +233,40 @@ condition goes through the `tr_commercial_policy` action buttons.
   — we keep the "everything via change_request" principle instead of opening an
   exception.
 
+## Server-side hide of non-operational sensitive fields (PR 5)
+
+Rep cannot read or write a handful of sensitive fields on any partner, regardless of
+stage. These are fields that don't participate in the rep's operational flow (sale order
+creation, fiscal compute, etc.), so blocking them server-side via `groups=!rep` is safe.
+
+- **partner_capital**: `capital_amount`, `capital_currency_id`, `turnover_range_id`,
+  `turnover_amount`, `company_size`.
+- **l10n_br_sped_base**: `is_accountant`, `crc_code`, `crc_state_id`.
+- **l10n_br_account_withholding**: `wh_cityhall`.
+- **l10n_br_hr**: `union_entity_code`.
+
+Each field is redeclared in `models/res_partner.py` with
+`groups="!tr_sales_rep_access.group_sales_rep_external"`. The ORM filters them out of
+`fields_get`, `read` and `write` for reps (AccessError on explicit access, silent filter
+on `fields_get`). The modules above are added to `depends` for the same reason: the
+redeclaration needs the original field to exist at registry build time.
+
+**Deferred to future PRs** because of an XPath limitation in Odoo 16:
+
+- **View-only hide** of fiscal operational fields (`vat`, `tax_framework`,
+  `fiscal_profile_id`, `ind_ie_dest`, `ind_final`, `l10n_br_ie_code`, `l10n_br_im_code`,
+  `rntrc_code`, `legal_nature_id`, `cnae_*`, `is_public_entity`, `public_entity_type`,
+  `nif_motive_absence`) — these appear in multiple subviews of the partner form (main
+  sheet, child_ids subtree, kanban embed) and `xpath position="attributes"` only applies
+  to the first match, leaving others exposed. A dedicated PR needs either N targeted
+  xpaths or an override of the upstream `l10n_br_fiscal` onchanges running under `sudo`
+  (to promote those fields to server-side hide without breaking fiscal flow).
+- **Readonly-active** UX on cadastral fields (`phone`, `mobile`, `email`, `street`,
+  `street2`, `city`, `zip`, `state_id`, `country_id`, `name`) — same XPath limitation,
+  and overriding `attrs` on fields that already ship `required`/`invisible` upstream
+  clobbers their own rules. The real write protection is already in place (PR 4b's
+  `res.partner.write` guard), so moving this to a dedicated PR is acceptable.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
@@ -240,6 +274,10 @@ condition goes through the `tr_commercial_policy` action buttons.
 - `tr.partner.change.request` model + tier + view → PR 4a (implemented, see above).
 - Direct-write block on Active partners + `tr_commercial_policy` sudo → PR 4b
   (implemented, see above).
+- Server-side hide of non-operational sensitive partner fields → PR 5 (implemented, see
+  above).
+- View-only hide of fiscal operational fields + cadastral readonly-active UX → PR 5b
+  (deferred, see PR 5 section above for context).
 - Rep-facing partner views → PR 5.
 - Tier + `tr_rep_notes` + print block override on sale.order → PR 6.
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,
