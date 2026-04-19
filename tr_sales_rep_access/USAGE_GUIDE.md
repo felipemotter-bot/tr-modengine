@@ -275,8 +275,9 @@ A visibilidade efetiva é `descendants(allowed) − descendants(excluded)`, calc
 a todo agente novo criado sem catálogo explícito. Alteração retroativa não acontece —
 agentes existentes mantêm o catálogo atual.
 
-**Cadastro do parceiro** (aba _Agent information_): um Sales Manager configura
-`allowed_category_ids` e `excluded_category_ids` caso a caso.
+**Cadastro do parceiro** (aba _Sales Rep Catalog_, visível apenas para Sales Manager e
+só quando o parceiro é agente): um Sales Manager configura `allowed_category_ids` e
+`excluded_category_ids` caso a caso.
 
 ### Proteção server-side
 

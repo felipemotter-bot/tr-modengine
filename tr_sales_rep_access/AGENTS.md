@@ -74,17 +74,22 @@ block; the Python gate short-circuits only for rep users.
 - `_get_visible_category_ids()` (on partner): computed on-the-fly as
   `descendants(allowed) − descendants(excluded)`. Returns a `product.category`
   recordset; callers use `.ids` at the domain edge.
-- `res.config.settings.default_agent_allowed_category_ids`: M2M persisted manually via
+- `res.config.settings.tr_sales_rep_default_category_ids`: M2M persisted manually via
   `get_values()` / `set_values()` in `ir.config_parameter` key
-  `tr_sales_rep_access.default_agent_allowed_category_ids` (CSV of ids). The template
-  `config_parameter=` does not support Many2many, hence the manual serialization.
+  `tr_sales_rep_access.tr_sales_rep_default_category_ids` (CSV of ids). The template
+  `config_parameter=` does not support Many2many, hence the manual serialization. The
+  field name deliberately avoids the reserved `default_` prefix, which Odoo's settings
+  classifier pairs with `ir.default` and does not support Many2many.
 - `res.partner.create()` override: when `agent=True` and caller did not pass
   `allowed_category_ids`, fills it with the default configured in settings. Stale IDs
   (deleted categories) are silently ignored.
 - `product.template._search()` / `product.product._search()`: when the caller is a rep,
-  `AND` the domain with `('categ_id', 'child_of', visible_ids)`. Fail-safe empty returns
-  `[('id', '=', 0)]`. Non-rep users are unaffected. This covers dropdowns, list, kanban,
-  "Search More" and `name_search` via the delegation chain in the core.
+  `AND` the domain with `('categ_id', 'in', visible_ids)`. Uses `in` (not `child_of`)
+  because `visible_ids` already contains every allowed descendant minus excluded
+  subtrees — `child_of` would re-expand from the roots and pull excluded categories
+  back. Fail-safe empty returns `[('id', '=', 0)]`. Non-rep users are unaffected. This
+  covers dropdowns, list, kanban, "Search More" and `name_search` via the delegation
+  chain in the core.
 - `sale.order.line` `@api.constrains("product_id")`: blocks `create`/`write` with a
   product outside the rep's catalog. Catches RPC/import/load paths that bypass
   `_search`.
