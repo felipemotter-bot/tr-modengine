@@ -98,6 +98,19 @@ msgid "Action Needed"
 msgstr "Ação necessária"
 
 #. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/res_partner.py:0
+#, python-format
+msgid ""
+"As a sales representative, you cannot modify an Active customer directly. "
+"Use the 'Request field update' or 'Request new contact' buttons to open a "
+"change request for the Sales Manager to approve."
+msgstr ""
+"Como representante, você não pode alterar diretamente um cliente Ativo. "
+"Use os botões 'Solicitar alteração' ou 'Solicitar novo contato' para abrir "
+"uma solicitação para o Gerente de Vendas aprovar."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__allowed_category_ids
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__allowed_category_ids
 msgid "Allowed Product Categories"

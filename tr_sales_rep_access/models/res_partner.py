@@ -1,13 +1,70 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import threading
+
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 
 MANAGER_GROUP_XMLID = "tr_commercial_policy.group_sales_manager"
 REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
 DEFAULT_CATALOG_PARAM = "tr_sales_rep_access.tr_sales_rep_default_category_ids"
 DRAFT_STAGE_XMLID = "partner_stage.partner_stage_draft"
+
+# Thread-local flag set by the module's own ``create`` override so
+# that side-effect writes fired by inverses/computes during the
+# create (e.g. ``l10n_br_fiscal._inverse_fiscal_profile`` touching
+# ``tax_framework`` on a parent Active partner) are not blocked by
+# the PR 4b write guard. The guard is about external writes from
+# the rep (UI / RPC), not about framework-triggered propagation
+# inside a single ``create`` call. Using a thread-local here
+# instead of ``self.env.context`` closes a bypass that a context
+# key would open: an attacker could otherwise call
+# ``.with_context(FLAG=True).write(...)`` via RPC and bypass the
+# guard. Thread-locals are not reachable from outside the Python
+# process.
+_tls = threading.local()
+
+
+def _in_create_scope():
+    return getattr(_tls, "tr_sales_rep_access_in_create", False)
+
+
+# Fields that a rep is still allowed to write on an Active partner,
+# because they are not business data but chatter / scheduled
+# activities. Every other field must go through a
+# ``tr.partner.change.request`` (cadastral fields) or through the
+# ``tr_commercial_policy`` action buttons (commercial condition).
+# Internal writes by this module use ``.sudo()`` so the guard is a
+# no-op for them (``env.user`` becomes SUPERUSER).
+REP_ACTIVE_WRITE_ALLOWLIST = frozenset(
+    {
+        # mail.thread
+        "message_ids",
+        "message_follower_ids",
+        "message_partner_ids",
+        "message_main_attachment_id",
+        "website_message_ids",
+        "message_unread",
+        "message_unread_counter",
+        "message_needaction",
+        "message_needaction_counter",
+        "message_has_error",
+        "message_has_error_counter",
+        "message_attachment_count",
+        # mail.activity.mixin
+        "activity_ids",
+        "activity_state",
+        "activity_user_id",
+        "activity_type_id",
+        "activity_type_icon",
+        "activity_date_deadline",
+        "activity_summary",
+        "activity_exception_decoration",
+        "activity_exception_icon",
+        "activity_calendar_event_id",
+    }
+)
 
 
 def _allowed_rep_agent_commands(rep_partner_id):
@@ -112,7 +169,19 @@ class ResPartner(models.Model):
                 # against ``commercial_partner_id.state``.
                 if draft_stage:
                     vals["stage_id"] = draft_stage.id
-        records = super().create(vals_list)
+        # Thread-local flag telling the PR 4b write guard to stand
+        # down on side-effect writes fired inside this create
+        # (e.g. ``l10n_br_fiscal`` inverses that touch fiscal fields
+        # on the parent Active partner via _onchange hooks). A
+        # context key would be RPC-controllable and let a rep
+        # bypass the guard; thread-local is only reachable from
+        # this Python process.
+        previous = getattr(_tls, "tr_sales_rep_access_in_create", False)
+        _tls.tr_sales_rep_access_in_create = True
+        try:
+            records = super().create(vals_list)
+        finally:
+            _tls.tr_sales_rep_access_in_create = previous
         # Fire tier reviews immediately for new commercial partners
         # created by a rep that match the tier_definition domain,
         # so the reviewer list shows up right after creation
@@ -124,6 +193,62 @@ class ResPartner(models.Model):
                 lambda p: p.state == "draft" and p.agent_ids and not p.parent_id
             ).request_validation()
         return records
+
+    def write(self, vals):
+        # PR 4b — rep cannot write directly on Active partners. The
+        # canonical path is a ``tr.partner.change.request`` for
+        # cadastral fields and the action buttons on
+        # ``tr_commercial_policy`` for the commercial condition (those
+        # actions use ``.sudo()`` to write ``commercial_condition_id``
+        # and therefore bypass this guard naturally). Partners still
+        # in Draft (pre-approval, PR 3 flow) remain freely editable.
+        if self._sales_rep_should_block_active_write(vals):
+            raise AccessError(
+                _(
+                    "As a sales representative, you cannot modify an "
+                    "Active customer directly. Use the 'Request field "
+                    "update' or 'Request new contact' buttons to open "
+                    "a change request for the Sales Manager to approve."
+                )
+            )
+        return super().write(vals)
+
+    def _sales_rep_should_block_active_write(self, vals):
+        """Return True when this write must be rejected for a rep.
+
+        - Non-rep users are unaffected.
+        - Internal writes by this module use ``.sudo()`` already, so
+          ``env.user`` is SUPERUSER and ``has_group`` returns False.
+        - Writes limited to ``mail.thread`` / ``mail.activity.mixin``
+          fields are allowed (chatter and activities are not business
+          data — rep continues to post comments and schedule
+          activities on any visible partner).
+        - Partners still in Draft (pre-approval) stay fully editable.
+        - Active (``state == 'confirmed'``) partners reject any
+          business-field write. Child partners follow the same rule
+          because they inherit the Active stage via ``partner_stage``
+          defaults; edition of existing child contacts is an
+          intentional limitation tracked for a future PR (``change_-
+          request`` would need a ``field_update_child`` variant).
+        """
+        if self.env.su:
+            # SUPERUSER / ``sudo()`` bypasses the guard: any caller
+            # that uses ``.sudo()`` is explicitly a system-controlled
+            # path (e.g. ``tr_commercial_policy`` action buttons,
+            # ``_apply_field_update`` / ``_create_child`` on an
+            # approved change request).
+            return False
+        if _in_create_scope():
+            return False
+        if not self.env.user.has_group(REP_GROUP_XMLID):
+            return False
+        sensitive = set(vals) - REP_ACTIVE_WRITE_ALLOWLIST
+        if not sensitive:
+            return False
+        for partner in self:
+            if partner.state == "confirmed":
+                return True
+        return False
 
     @api.model
     def _sales_rep_default_catalog_ids(self):
