@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="tr_partner_change_request_view_form" model="ir.ui.view">
+        <field name="name">tr.partner.change.request.form</field>
+        <field name="model">tr.partner.change.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+            name="action_cancel"
+            string="Cancel"
+            type="object"
+            attrs="{'invisible': [('state', '!=', 'pending')]}"
+          />
+                    <button
+            name="action_reject"
+            string="Reject"
+            type="object"
+            groups="tr_commercial_policy.group_sales_manager"
+            attrs="{'invisible': [('state', '!=', 'pending')]}"
+          />
+                    <button
+            name="action_approve"
+            string="Approve"
+            type="object"
+            class="btn-primary"
+            groups="tr_commercial_policy.group_sales_manager"
+            attrs="{'invisible': [('state', '!=', 'pending')]}"
+          />
+                    <field
+            name="state"
+            widget="statusbar"
+            statusbar_visible="pending,approved"
+          />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field
+                name="partner_id"
+                options="{'no_create': True}"
+                attrs="{'readonly': [('state', '!=', 'pending')]}"
+              />
+                            <field
+                name="request_type"
+                attrs="{'readonly': [('state', '!=', 'pending')]}"
+              />
+                        </group>
+                        <group>
+                            <field name="requested_by" readonly="1" />
+                            <field name="sales_rep_partner_id" readonly="1" />
+                            <field
+                name="processed_partner_id"
+                attrs="{'invisible': [('processed_partner_id', '=', False)]}"
+              />
+                        </group>
+                    </group>
+                    <group string="Reason">
+                        <field
+              name="reason"
+              nolabel="1"
+              attrs="{'readonly': [('state', '!=', 'pending')]}"
+            />
+                    </group>
+                    <notebook>
+                        <page
+              name="fields"
+              string="Fields"
+              attrs="{'invisible': [('request_type', '!=', 'field_update')]}"
+            >
+                            <field
+                name="line_ids"
+                attrs="{'readonly': [('state', '!=', 'pending')]}"
+              >
+                                <tree editable="bottom">
+                                    <field name="field_id" />
+                                    <field name="field_ttype" invisible="1" />
+                                    <field
+                    name="new_value_char"
+                    attrs="{'invisible': [('field_ttype', '!=', 'char')], 'required': [('field_ttype', '=', 'char')]}"
+                  />
+                                    <field
+                    name="new_value_reference"
+                    attrs="{'invisible': [('field_ttype', '!=', 'many2one')], 'required': [('field_ttype', '=', 'many2one')]}"
+                  />
+                                </tree>
+                            </field>
+                        </page>
+                        <page
+              name="new_child"
+              string="New contact"
+              attrs="{'invisible': [('request_type', '!=', 'new_child')]}"
+            >
+                            <group>
+                                <field
+                  name="new_child_name"
+                  attrs="{'readonly': [('state', '!=', 'pending')], 'required': [('request_type', '=', 'new_child')]}"
+                />
+                                <field
+                  name="new_child_type"
+                  attrs="{'readonly': [('state', '!=', 'pending')]}"
+                />
+                                <field
+                  name="new_child_function"
+                  attrs="{'readonly': [('state', '!=', 'pending')]}"
+                />
+                                <field
+                  name="new_child_email"
+                  attrs="{'readonly': [('state', '!=', 'pending')]}"
+                />
+                                <field
+                  name="new_child_phone"
+                  attrs="{'readonly': [('state', '!=', 'pending')]}"
+                />
+                                <field
+                  name="new_child_mobile"
+                  attrs="{'readonly': [('state', '!=', 'pending')]}"
+                />
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="tr_partner_change_request_view_tree" model="ir.ui.view">
+        <field name="name">tr.partner.change.request.tree</field>
+        <field name="model">tr.partner.change.request</field>
+        <field name="arch" type="xml">
+            <tree
+        decoration-info="state == 'pending'"
+        decoration-success="state == 'approved'"
+        decoration-danger="state == 'rejected'"
+        decoration-muted="state == 'cancelled'"
+      >
+                <field name="name" />
+                <field name="partner_id" />
+                <field name="request_type" />
+                <field name="requested_by" />
+                <field name="create_date" />
+                <field name="state" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="tr_partner_change_request_view_search" model="ir.ui.view">
+        <field name="name">tr.partner.change.request.search</field>
+        <field name="model">tr.partner.change.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id" />
+                <field name="requested_by" />
+                <filter
+          name="pending"
+          string="Pending"
+          domain="[('state', '=', 'pending')]"
+        />
+                <filter
+          name="approved"
+          string="Approved"
+          domain="[('state', '=', 'approved')]"
+        />
+                <filter
+          name="rejected"
+          string="Rejected"
+          domain="[('state', '=', 'rejected')]"
+        />
+                <filter
+          name="cancelled"
+          string="Cancelled"
+          domain="[('state', '=', 'cancelled')]"
+        />
+                <separator />
+                <filter
+          name="my_requests"
+          string="My requests"
+          domain="[('requested_by', '=', uid)]"
+        />
+                <group expand="0" string="Group by">
+                    <filter
+            name="group_partner"
+            string="Customer"
+            context="{'group_by': 'partner_id'}"
+          />
+                    <filter
+            name="group_state"
+            string="State"
+            context="{'group_by': 'state'}"
+          />
+                    <filter
+            name="group_type"
+            string="Type"
+            context="{'group_by': 'request_type'}"
+          />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tr_partner_change_request" model="ir.actions.act_window">
+        <field name="name">Change Requests</field>
+        <field name="res_model">tr.partner.change.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="tr_partner_change_request_view_search" />
+        <field name="context">{'search_default_my_requests': 1}</field>
+    </record>
+
+    <record
+    id="action_tr_partner_change_request_field_update"
+    model="ir.actions.act_window"
+  >
+        <field name="name">Request field update</field>
+        <field name="res_model">tr.partner.change.request</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'default_request_type': 'field_update'}</field>
+    </record>
+
+    <record
+    id="action_tr_partner_change_request_new_child"
+    model="ir.actions.act_window"
+  >
+        <field name="name">Request new contact</field>
+        <field name="res_model">tr.partner.change.request</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'default_request_type': 'new_child'}</field>
+    </record>
+
+    <menuitem
+    id="menu_tr_partner_change_request_root"
+    name="Change Requests"
+    parent="sale.sale_menu_root"
+    action="action_tr_partner_change_request"
+    sequence="80"
+    groups="tr_sales_rep_access.group_sales_rep_external,tr_commercial_policy.group_sales_manager"
+  />
+</odoo>

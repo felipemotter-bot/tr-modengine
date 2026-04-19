@@ -9,3 +9,7 @@ access_sales_rep_account_move,account.move sales_rep,account.model_account_move,
 access_sales_rep_account_move_line,account.move.line sales_rep,account.model_account_move_line,group_sales_rep_external,1,0,0,0
 access_sales_rep_mail_activity,mail.activity sales_rep,mail.model_mail_activity,group_sales_rep_external,1,1,1,1
 access_sales_rep_res_partner_stage,res.partner.stage sales_rep,partner_stage.model_res_partner_stage,group_sales_rep_external,1,0,0,0
+access_sales_rep_change_request,tr.partner.change.request sales_rep,model_tr_partner_change_request,group_sales_rep_external,1,1,1,0
+access_sales_rep_change_request_manager,tr.partner.change.request manager,model_tr_partner_change_request,tr_commercial_policy.group_sales_manager,1,1,1,1
+access_sales_rep_change_request_line,tr.partner.change.request.line sales_rep,model_tr_partner_change_request_line,group_sales_rep_external,1,1,1,1
+access_sales_rep_change_request_line_manager,tr.partner.change.request.line manager,model_tr_partner_change_request_line,tr_commercial_policy.group_sales_manager,1,1,1,1

@@ -9,3 +9,5 @@ from . import product_product
 from . import sale_order
 from . import sale_order_line
 from . import account_move
+from . import tr_partner_change_request_line
+from . import tr_partner_change_request

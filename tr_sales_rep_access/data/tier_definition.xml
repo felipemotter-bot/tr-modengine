@@ -24,4 +24,30 @@
         <field name="notify_on_create" eval="True" />
         <field name="active" eval="True" />
     </record>
+
+    <!--
+        Tier definition for partner change requests opened by a sales
+        rep. Fires on every pending request where sales_rep_partner_id
+        is set (i.e. all rep-created requests). The reviewer group is
+        Sales Manager, same as the new-customer tier. has_comment MUST
+        stay False — action_approve / action_reject do not propagate
+        the wizard action the mixin returns when has_comment=True, and
+        the model guards against that combination in Python to fail
+        fast instead of silently ignoring the wizard.
+    -->
+    <record id="tier_def_partner_change_request" model="tier.definition">
+        <field name="name">Approve partner change request from sales rep</field>
+        <field name="model_id" ref="model_tr_partner_change_request" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_manager"
+    />
+        <field name="definition_type">domain</field>
+        <field
+      name="definition_domain"
+    >[('state', '=', 'pending'), ('sales_rep_partner_id', '!=', False)]</field>
+        <field name="notify_on_create" eval="True" />
+        <field name="active" eval="True" />
+    </record>
 </odoo>

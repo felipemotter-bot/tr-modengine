@@ -133,11 +133,77 @@ block; the Python gate short-circuits only for rep users.
   system default stage (Active). Protection against selling to an unapproved commercial
   comes from the `commercial_partner_id` check, not from their own stage.
 
+## Change request (PR 4a)
+
+`tr.partner.change.request` (+ `tr.partner.change.request.line`): rep-facing request
+object that a rep opens to update a customer's cadastral fields or add a new child
+contact, subject to Sales Manager approval via `tier.validation`. The 4a ships the
+structure; the wizard that propagates approved updates to the customer's open orders and
+the server-side block on rep writing `res.partner` fields directly live in 4b.
+
+- **Whitelist**: `models/tr_partner_change_request_line.py` defines
+  `EDITABLE_PARTNER_FIELDS = ('phone', 'mobile', 'email', 'street', 'street2', 'city', 'zip', 'state_id', 'country_id')`.
+  The line's `field_id` (M2O to `ir.model.fields`) uses a domain lambda pointing to this
+  tuple, plus a `@api.constrains` that revalidates the whitelist server-side (RPC/import
+  paths that ignore the view domain).
+- **Typed payload**: lines carry either `new_value_char` (for char fields) or
+  `new_value_reference` (for many2one, with the selection restricted to the two
+  legitimate comodels: `res.country` and `res.country.state`). A `@api.constrains`
+  checks that the payload matches `field_id.ttype` and `field_id.relation`.
+- **Request types**: `field_update` (uses `line_ids`) and `new_child` (inline payload
+  `new_child_name/email/phone/mobile/function/type`; one request = one new contact).
+  Constraint on the header rejects mixed payload (lines + child data) or missing
+  required pieces for each type.
+- **Tier**: `data/tier_definition.xml` declares `tier_def_partner_change_request`
+  (`review_type=group`, reviewer `group_sales_manager`, domain
+  `state=pending && sales_rep_partner_id != False`, `notify_on_create=True`).
+  `has_comment` MUST stay False — `action_approve` / `action_reject` do not propagate
+  the wizard action the mixin returns when `has_comment=True`, and
+  `_raise_if_comment_required` fails fast in Python if it is turned on.
+- **State machine**: `pending → approved | rejected | cancelled`. Mixin attributes
+  overridden to `_state_from=['pending']`, `_state_to=['approved']`,
+  `_cancel_state='cancelled'`. `action_reject` uses the mixin's `reject_tier()` plus
+  `with_context(skip_validation_check=True)` to clear the "Write under validation" guard
+  — `rejected` is not in `_state_to + [_cancel_- state]`.
+- **Authorship invariants**: on create, when the acting user is in the rep group,
+  `requested_by` and `sales_rep_partner_id` are **forced** to `env.user` /
+  `env.user.partner_id` regardless of what comes in vals — closes the RPC/import forgery
+  path for the audit trail and the per-group record rule.
+- **Direct state-write bypass**: the `write` override rejects any change to `state`
+  unless the private context flag `_tr_change_request_internal_trans- ition` is set; the
+  three `action_*` methods set it explicitly, so RPC-level shortcuts like
+  `with_context(skip_validation_check=True).write({'state': 'rejected'})` are blocked.
+- **Line hardening**: `create` / `write` / `unlink` on the line reject if
+  `request_id.state != 'pending'`. The `unlink` on the header is manager-only and only
+  for `rejected/cancelled` records (audit trail).
+- **Uniqueness**: `@api.constrains` enforces one `pending` request per partner, using
+  `sudo().search_count(...)` because the per-group record rule would otherwise hide
+  pending requests from other reps and let a rep open a second one that collides at the
+  business level.
+- **Terminal review cleanup**: `action_reject` and `action_cancel` call
+  `_close_pending_reviews()` (sweeps reviews still `pending` via sudo), because the
+  mixin's `reject_tier()` only rejects the acting user's reviews — with more than one
+  tier.definition the others would be left dangling.
+- **Happy path of approve**: `action_approve` validates the tier, then checks
+  `validation_status == 'validated'` before touching the partner or creating the child.
+  Without that check, a write to `state='approved'` blocked by the mixin would leave the
+  partner already mutated.
+- **Record rules**: `tr.partner.change.request` per-group rule filters by
+  `sales_rep_partner_id = user.partner_id.id`. Line rule follows the parent's snapshot.
+  Both are simple per-group rules — no open broadener needed because the model is new
+  and has no permissive core rules.
+- **Views / navigation**: form with status bar, conditional notebook (field lines vs.
+  child data), `mail.thread` chatter. Two header buttons on `res.partner` form (Request
+  field update / Request new contact), visible only to rep users on commercial parents
+  in `confirmed` stage. Menu under `sale.sale_menu_root`.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
 - Partner Draft workflow → PR 3 (implemented, see above).
-- `tr.partner.change.request` model + wizard → PR 4.
+- `tr.partner.change.request` model + tier + view → PR 4a (implemented, see above).
+- Wizard that propagates approved updates to open orders + server-side block on rep
+  writing partner fields directly → PR 4b.
 - Rep-facing partner views → PR 5.
 - Tier + `tr_rep_notes` + print block override on sale.order → PR 6.
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,

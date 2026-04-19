@@ -37,4 +37,39 @@
             </xpath>
         </field>
     </record>
+
+    <!--
+        Change request buttons for reps. Visible only to members of the
+        rep group and only for partners already in the "confirmed"
+        stage (i.e. Active) — pending/draft partners shouldn't have
+        change requests, the rep edits them directly or uses the
+        standard create flow.
+    -->
+    <record id="res_partner_form_change_request_buttons" model="ir.ui.view">
+        <field name="name">res.partner.form.change.request.buttons</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button
+            name="%(action_tr_partner_change_request_field_update)d"
+            string="Request field update"
+            type="action"
+            groups="tr_sales_rep_access.group_sales_rep_external"
+            context="{'default_partner_id': active_id, 'default_request_type': 'field_update'}"
+            attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
+          />
+                    <button
+            name="%(action_tr_partner_change_request_new_child)d"
+            string="Request new contact"
+            type="action"
+            groups="tr_sales_rep_access.group_sales_rep_external"
+            context="{'default_partner_id': active_id, 'default_request_type': 'new_child'}"
+            attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
+          />
+                </header>
+            </xpath>
+        </field>
+    </record>
 </odoo>

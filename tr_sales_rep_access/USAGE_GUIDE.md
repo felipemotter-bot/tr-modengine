@@ -4,8 +4,7 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 3 — Workflow Draft → Active de cliente novo** (+ PR 1 fundação e PR 2
-catálogo mergeadas).
+Status atual: **PR 4a — Solicitações de alteração cadastral** (+ PR 1, 2 e 3 mergeadas).
 
 ---
 
@@ -21,8 +20,9 @@ catálogo mergeadas).
 8. [Troca de agente e histórico](#8-troca-de-agente-e-histórico)
 9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
 10. [Workflow Draft → Active de cliente novo (PR 3)](#10-workflow-draft--active-de-cliente-novo-pr-3)
-11. [Roadmap — o que vem nas próximas PRs](#11-roadmap)
-12. [Solução de problemas](#12-solução-de-problemas)
+11. [Solicitações de alteração cadastral (PR 4a)](#11-solicitações-de-alteração-cadastral-pr-4a)
+12. [Roadmap — o que vem nas próximas PRs](#12-roadmap)
+13. [Solução de problemas](#13-solução-de-problemas)
 
 ---
 
@@ -356,29 +356,102 @@ rep.
 
 ---
 
-## 11. Roadmap
+## 11. Solicitações de alteração cadastral (PR 4a)
+
+Depois que um cliente está Active, o rep **não edita** campos cadastrais direto: abre
+uma **solicitação de alteração** (`tr.partner.change.request`) e um Sales Manager aprova
+antes de a mudança ser aplicada.
+
+### Quando usar
+
+- Mudança de telefone, e-mail, endereço, estado, país, CEP.
+- Criação de novo contato-filho (comprador, financeiro, etc) depois que o cliente já
+  está Active.
+
+### O que NÃO passa pelo change_request
+
+- Condição comercial (`sales_profile_id`, `commission_id`, banda de desconto, pricelist,
+  payment_term): Sales Manager ajusta direto no cadastro, usando o fluxo próprio do
+  `tr_commercial_policy`.
+- Criação de cliente novo: continua pelo form padrão (fluxo da PR 3, força Draft +
+  tier).
+- Criação de child_ids antes de o cliente ser Active: rep faz direto no form do partner.
+
+### Fluxo do rep
+
+1. Abre o cliente no **Vendas → Clientes**.
+2. Clica em um dos botões no topo:
+   - **Solicitar alteração** → formulário pra adicionar linhas com campo + novo valor.
+     Whitelist: phone, mobile, email, street, street2, city, zip, state_id, country_id.
+   - **Solicitar novo contato** → campos do contato novo (nome, e-mail, telefone,
+     função, tipo).
+3. Preenche o motivo (`reason`) e salva. O request nasce em **Pendente** e o Sales
+   Manager recebe notificação pelo `tier.validation`.
+4. Enquanto a solicitação está Pendente, o rep pode **Cancelar** pra abrir outra
+   (unicidade: só 1 pendente por cliente).
+
+### Fluxo do Sales Manager
+
+1. **Discuss → Reviews** (ou **Vendas → Change Requests**) mostra as solicitações
+   pendentes.
+2. Analisa o motivo + payload.
+3. Clica em **Aprovar** (aplica direto no cliente ou cria o filho, dependendo do tipo)
+   ou **Rejeitar** (marca como `rejected`, nada muda no partner).
+4. Pode **deletar** (menu contextual) solicitações rejeitadas ou canceladas — pending e
+   approved são protegidas (audit trail).
+
+### Guardas server-side (PR 4a)
+
+- Unicidade: um único `pending` por partner. `sudo().search_count` para não deixar rep
+  abrir um segundo pendente invisível (por record rule) ao primeiro.
+- Whitelist tipada: `field_id` restrito via domain lambda + `@api.constrains`. Payload
+  (char / reference) validado contra `field_id.ttype` e `field_id.relation`.
+- Authorship: `requested_by` e `sales_rep_partner_id` são forçados pelo create quando o
+  user é rep, ignorando o que vier no vals (anti-forge).
+- Payload pós-Pending: linhas e campos de payload são read-only via override de
+  `create/write/unlink` na linha + `IMMUTABLE_FIELDS_AFTER_PENDING` no header.
+- State machine: `pending → approved / rejected / cancelled`. Qualquer write direto de
+  `state` via RPC é bloqueado — só os botões `action_*` podem transicionar.
+- Tier: reviewer é `tr_commercial_policy.group_sales_manager`. `has_comment=True` não é
+  suportado — se alguém ativar via RPC, `action_approve` / `action_reject` levantam
+  `UserError` em vez de ignorar o wizard de comentário.
+- Reviews pendentes: canceladas ou rejeitadas são explicitamente fechadas pra não deixar
+  reviews penduradas com mais de uma tier.definition.
+
+### O que fica pra PR 4b
+
+- Wizard de propagação pra pedidos em aberto do cliente quando a approve muda campos que
+  aparecem no pedido (snapshot).
+- Bloqueio server-side: rep não pode fazer `write` direto em `res.partner` para
+  **nenhum** campo fora da condição comercial (que continua gerenciada pelo
+  `tr_commercial_policy`).
+
+---
+
+## 12. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
-| PR  | Conteúdo                                                        |
-| --- | --------------------------------------------------------------- |
-| 2   | ✅ Catálogo por agente (ver seção 9)                            |
-| 3   | Workflow Draft → Active de cliente novo (partner_stage + tier)  |
-| 4   | `tr.partner.change.request` (edição cadastral por solicitação)  |
-| 5   | Views do cliente para o rep (campos sensíveis com `groups`)     |
-| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,              |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,        |
-|     | `tr_pricelist_report`                                           |
-| 8   | Chatter restrito (RPC test + rules + override de fallback)      |
-| 9   | Estoque totalmente invisível                                    |
-| 10  | Tradução pt_BR + docs finais                                    |
+| PR  | Conteúdo                                                         |
+| --- | ---------------------------------------------------------------- |
+| 2   | ✅ Catálogo por agente (ver seção 9)                             |
+| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)        |
+| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)      |
+| 4b  | Wizard de propagação + bloqueio de write direto em `res.partner` |
+| 5   | Views do cliente para o rep (campos sensíveis com `groups`)      |
+| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido  |
+| 7   | Bloqueios server-side de `eng_partner_sales_info`,               |
+|     | `sale_order_line_price_history`, `sale_last_price_info`,         |
+|     | `tr_pricelist_report`                                            |
+| 8   | Chatter restrito (RPC test + rules + override de fallback)       |
+| 9   | Estoque totalmente invisível                                     |
+| 10  | Tradução pt_BR + docs finais                                     |
 
 Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 12. Solução de problemas
+## 13. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 
