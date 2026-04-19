@@ -342,3 +342,105 @@ class TestMultiCompanyGuard(CommercialPolicyTestCommon):
         row = self.env.cr.fetchone()
         self.assertIsNotNone(row)
         self.assertEqual(row[0], self.company_b.id)
+
+    def _commercial_condition_field_id(self):
+        self.env.cr.execute(
+            """
+            SELECT id FROM ir_model_fields
+            WHERE model = 'res.partner'
+              AND name = 'commercial_condition_id'
+            """
+        )
+        return self.env.cr.fetchone()[0]
+
+    def test_hook_create_group_conditions_forwards_target_company(self):
+        """``_create_group_conditions`` creates one condition per group head
+        and the ``ir.property`` that links the head is tagged to the target
+        company.
+        """
+        from ..hooks import _create_group_conditions
+
+        head = self.env["res.partner"].create({"name": "Group Head Multi"})
+        member = self.env["res.partner"].create({"name": "Group Member Multi"})
+        result = _create_group_conditions(
+            self.env.cr,
+            group_heads={head.id: [member.id]},
+            default_pricelist_id=self.pricelist_a.id,
+            field_id=self._commercial_condition_field_id(),
+            target_company_id=self.company_a.id,
+        )
+        self.assertIn(head.id, result)
+        condition = self.env["partner.commercial.condition"].browse(result[head.id])
+        self.assertEqual(condition.partner_id, head)
+        self.assertEqual(condition.company_id, self.company_a)
+        self.env.cr.execute(
+            """
+            SELECT company_id FROM ir_property
+            WHERE res_id = CONCAT('res.partner,', %s::text)
+              AND name = 'commercial_condition_id'
+            """,
+            (head.id,),
+        )
+        self.assertEqual(self.env.cr.fetchone()[0], self.company_a.id)
+
+    def test_hook_assign_group_members_writes_ir_property_per_member(self):
+        """``_assign_group_members`` writes one ``ir.property`` per member,
+        every row tagged to the target company.
+        """
+        from ..hooks import _assign_group_members
+
+        head = self.env["res.partner"].create({"name": "Assign Head"})
+        member_a = self.env["res.partner"].create({"name": "Assign Member A"})
+        member_b = self.env["res.partner"].create({"name": "Assign Member B"})
+        condition = self._make_condition()
+        _assign_group_members(
+            self.env.cr,
+            group_heads={head.id: [member_a.id, member_b.id]},
+            group_condition_map={head.id: condition.id},
+            field_id=self._commercial_condition_field_id(),
+            target_company_id=self.company_a.id,
+        )
+        for partner_id in (member_a.id, member_b.id):
+            self.env.cr.execute(
+                """
+                SELECT company_id FROM ir_property
+                WHERE res_id = CONCAT('res.partner,', %s::text)
+                  AND name = 'commercial_condition_id'
+                """,
+                (partner_id,),
+            )
+            self.assertEqual(
+                self.env.cr.fetchone()[0],
+                self.company_a.id,
+                "member %s ir.property should be tagged to company_a" % partner_id,
+            )
+
+    def test_hook_create_individual_conditions_scopes_by_company(self):
+        """``_create_individual_conditions`` creates condition +
+        ``ir.property`` per individual partner, both scoped to the target
+        company.
+        """
+        from ..hooks import _create_individual_conditions
+
+        partner = self.env["res.partner"].create({"name": "Individual Multi"})
+        _create_individual_conditions(
+            self.env.cr,
+            individuals=[partner.id],
+            default_pricelist_id=self.pricelist_a.id,
+            field_id=self._commercial_condition_field_id(),
+            target_company_id=self.company_a.id,
+        )
+        condition = self.env["partner.commercial.condition"].search(
+            [("partner_id", "=", partner.id)], limit=1
+        )
+        self.assertTrue(condition)
+        self.assertEqual(condition.company_id, self.company_a)
+        self.env.cr.execute(
+            """
+            SELECT company_id FROM ir_property
+            WHERE res_id = CONCAT('res.partner,', %s::text)
+              AND name = 'commercial_condition_id'
+            """,
+            (partner.id,),
+        )
+        self.assertEqual(self.env.cr.fetchone()[0], self.company_a.id)
