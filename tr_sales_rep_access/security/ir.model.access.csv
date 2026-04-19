@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sales_rep_res_partner,res.partner sales_rep,base.model_res_partner,group_sales_rep_external,1,1,1,0
+access_sales_rep_sale_order,sale.order sales_rep,sale.model_sale_order,group_sales_rep_external,1,1,1,0
+access_sales_rep_sale_order_line,sale.order.line sales_rep,sale.model_sale_order_line,group_sales_rep_external,1,1,1,1
+access_sales_rep_product_template,product.template sales_rep,product.model_product_template,group_sales_rep_external,1,0,0,0
+access_sales_rep_product_product,product.product sales_rep,product.model_product_product,group_sales_rep_external,1,0,0,0
+access_sales_rep_product_category,product.category sales_rep,product.model_product_category,group_sales_rep_external,1,0,0,0
+access_sales_rep_account_move,account.move sales_rep,account.model_account_move,group_sales_rep_external,1,0,0,0
+access_sales_rep_account_move_line,account.move.line sales_rep,account.model_account_move_line,group_sales_rep_external,1,0,0,0
+access_sales_rep_mail_activity,mail.activity sales_rep,mail.model_mail_activity,group_sales_rep_external,1,1,1,1
+access_sales_rep_res_partner_stage,res.partner.stage sales_rep,partner_stage.model_res_partner_stage,group_sales_rep_external,1,0,0,0
