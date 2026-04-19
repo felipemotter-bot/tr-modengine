@@ -28,5 +28,6 @@ from . import test_invoice_policy_validity
 from . import test_invoice_policy_price_protection
 from . import test_invoice_policy_refund
 from . import test_pragma_coverage
+from . import test_multi_company_guard
 from . import test_readonly_agents
 from . import test_safe_install

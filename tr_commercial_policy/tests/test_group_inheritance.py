@@ -918,7 +918,10 @@ class TestHookHelpers(CommercialPolicyTestCommon):
 
         new_partner = self.env["res.partner"].create({"name": "SQLTest"})
         condition_id = _create_condition_sql(
-            self.env.cr, new_partner.id, self.pricelist.id
+            self.env.cr,
+            new_partner.id,
+            self.pricelist.id,
+            self.env.company.id,
         )
         self.assertTrue(condition_id)
         condition = self.env["partner.commercial.condition"].browse(condition_id)
@@ -938,7 +941,11 @@ class TestHookHelpers(CommercialPolicyTestCommon):
         field_id = self.env.cr.fetchone()[0]
         new_partner = self.env["res.partner"].create({"name": "PropTest"})
         _set_condition_property(
-            self.env.cr, new_partner.id, self.condition.id, field_id
+            self.env.cr,
+            new_partner.id,
+            self.condition.id,
+            field_id,
+            self.env.company.id,
         )
         self.env.cr.execute(
             """

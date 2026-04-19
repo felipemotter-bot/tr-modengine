@@ -18,6 +18,13 @@ class PartnerCommercialCondition(models.Model):
     _description = "Partner Commercial Condition"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _rec_name = "display_name"
+    # Odoo's auto check: any ``Many2one`` with ``check_company=True``
+    # on this model must point at a record whose ``company_id`` is
+    # either empty (company-less / shared) or matches ``self.company_id``.
+    # Covers create, write, copy, and defaults. Needed to block the
+    # cross-company references Felipe found in devel (e.g. a condition
+    # of TRENTO pointing at a payment_mode_id of TREINAMENTO).
+    _check_company_auto = True
 
     display_name = fields.Char(compute="_compute_display_name")
 
@@ -40,11 +47,13 @@ class PartnerCommercialCondition(models.Model):
         required=True,
         default=lambda self: self._default_pricelist_id(),
         tracking=True,
+        check_company=True,
     )
     payment_term_id = fields.Many2one(
         comodel_name="account.payment.term",
         string="Payment Terms",
         tracking=True,
+        check_company=True,
     )
     incoterm_id = fields.Many2one(
         comodel_name="account.incoterms",
@@ -55,11 +64,13 @@ class PartnerCommercialCondition(models.Model):
         comodel_name="account.payment.mode",
         string="Payment Mode",
         tracking=True,
+        check_company=True,
     )
     delivery_carrier_id = fields.Many2one(
         comodel_name="delivery.carrier",
         string="Delivery Method",
         tracking=True,
+        check_company=True,
     )
 
     @api.model
