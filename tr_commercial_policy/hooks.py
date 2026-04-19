@@ -228,6 +228,12 @@ def _ensure_default_profiles(env):
 def _create_conditions_from_partners(env):
     """Create conditions using SQL to avoid ORM recompute cascades."""
     cr = env.cr
+    # Target company for this migration run: everything the hook creates
+    # is anchored to the current admin's default company. Every ``ir.property``
+    # read down the chain filters by this company (OR company-less) so a
+    # partner preconfigured in multiple companies doesn't leak values from
+    # the wrong one into the condition.
+    target_company_id = env.company.id
 
     # Get field_id for ir.property
     cr.execute(
@@ -243,13 +249,14 @@ def _create_conditions_from_partners(env):
         return
     field_id = row[0]
 
-    # Default pricelist
+    # Default pricelist (scoped to the target company or company-less)
     cr.execute(
         """
         SELECT id FROM product_pricelist
-        WHERE company_id IS NULL OR company_id = 1
+        WHERE company_id IS NULL OR company_id = %s
         ORDER BY id LIMIT 1
-        """
+        """,
+        (target_company_id,),
     )
     default_pl = cr.fetchone()
     default_pricelist_id = default_pl[0] if default_pl else 1
@@ -291,10 +298,14 @@ def _create_conditions_from_partners(env):
             individuals.append(partner_id)
 
     group_condition_map = _create_group_conditions(
-        cr, group_heads, default_pricelist_id, field_id
+        cr, group_heads, default_pricelist_id, field_id, target_company_id
     )
-    member_count = _assign_group_members(cr, group_heads, group_condition_map, field_id)
-    _create_individual_conditions(cr, individuals, default_pricelist_id, field_id)
+    member_count = _assign_group_members(
+        cr, group_heads, group_condition_map, field_id, target_company_id
+    )
+    _create_individual_conditions(
+        cr, individuals, default_pricelist_id, field_id, target_company_id
+    )
     _logger.info(
         "Migration complete: %d groups, %d members, %d individual.",
         len(group_condition_map),
@@ -303,104 +314,112 @@ def _create_conditions_from_partners(env):
     )
 
 
-def _create_group_conditions(cr, group_heads, default_pricelist_id, field_id):
+def _create_group_conditions(
+    cr, group_heads, default_pricelist_id, field_id, target_company_id
+):
     """Step 1: Create conditions for group heads."""
     _logger.info("Step 1: Creating %d group conditions...", len(group_heads))
     group_condition_map = {}
     for idx, group_id in enumerate(group_heads, 1):
-        condition_id = _create_condition_sql(cr, group_id, default_pricelist_id)
+        condition_id = _create_condition_sql(
+            cr, group_id, default_pricelist_id, target_company_id
+        )
         if condition_id:
             group_condition_map[group_id] = condition_id
-            _set_condition_property(cr, group_id, condition_id, field_id)
+            _set_condition_property(
+                cr, group_id, condition_id, field_id, target_company_id
+            )
             if idx % 50 == 0:
                 _logger.info("  [%d/%d] groups processed...", idx, len(group_heads))
     _logger.info("Step 1 complete: %d group conditions.", len(group_condition_map))
     return group_condition_map
 
 
-def _assign_group_members(cr, group_heads, group_condition_map, field_id):
+def _assign_group_members(
+    cr, group_heads, group_condition_map, field_id, target_company_id
+):
     """Step 2: Assign group condition to members."""
     _logger.info("Step 2: Assigning conditions to group members...")
     member_count = 0
     for group_id, condition_id in group_condition_map.items():
         for member_id in group_heads.get(group_id, []):
-            _set_condition_property(cr, member_id, condition_id, field_id)
+            _set_condition_property(
+                cr, member_id, condition_id, field_id, target_company_id
+            )
             member_count += 1
     _logger.info("Step 2 complete: %d members inherited.", member_count)
     return member_count
 
 
-def _create_individual_conditions(cr, individuals, default_pricelist_id, field_id):
+def _create_individual_conditions(
+    cr, individuals, default_pricelist_id, field_id, target_company_id
+):
     """Step 3: Create conditions for partners without group."""
     _logger.info("Step 3: Creating %d individual conditions...", len(individuals))
     for idx, partner_id in enumerate(individuals, 1):
-        condition_id = _create_condition_sql(cr, partner_id, default_pricelist_id)
+        condition_id = _create_condition_sql(
+            cr, partner_id, default_pricelist_id, target_company_id
+        )
         if condition_id:
-            _set_condition_property(cr, partner_id, condition_id, field_id)
+            _set_condition_property(
+                cr, partner_id, condition_id, field_id, target_company_id
+            )
         if idx % 100 == 0:
             _logger.info("  [%d/%d] individuals processed...", idx, len(individuals))
     _logger.info("Step 3 complete: %d individual conditions.", len(individuals))
 
 
-def _create_condition_sql(cr, partner_id, default_pricelist_id):
-    """Create a condition via SQL, copying partner property fields."""
-    # Read pricelist from ir.property
+# ``ir.property`` lookup scoped by company: prefer company-specific value,
+# fall back to the company-less (global) one. Same shape for all four
+# partner property fields the migration copies.
+_SCOPED_PROPERTY_LOOKUP = """
+    SELECT value_reference FROM ir_property
+    WHERE res_id = CONCAT('res.partner,', %s::text)
+      AND name = %s
+      AND value_reference IS NOT NULL
+      AND (company_id = %s OR company_id IS NULL)
+    ORDER BY company_id NULLS LAST
+    LIMIT 1
+"""
+
+
+def _create_condition_sql(cr, partner_id, default_pricelist_id, target_company_id):
+    """Create a condition via SQL, copying partner property fields.
+
+    Every ``ir.property`` read is scoped to ``target_company_id`` so a
+    partner preconfigured in multiple companies doesn't end up with a
+    ``payment_mode_id`` of one company attached to a condition of
+    another — the exact bug Felipe hit in devel.
+    """
     cr.execute(
-        """
-        SELECT value_reference FROM ir_property
-        WHERE res_id = CONCAT('res.partner,', %s::text)
-          AND name = 'property_product_pricelist'
-          AND value_reference IS NOT NULL
-        LIMIT 1
-        """,
-        (partner_id,),
+        _SCOPED_PROPERTY_LOOKUP,
+        (partner_id, "property_product_pricelist", target_company_id),
     )
     row = cr.fetchone()
     pricelist_id = _ref_to_id(row[0]) if row else default_pricelist_id
 
-    # Read payment term
     cr.execute(
-        """
-        SELECT value_reference FROM ir_property
-        WHERE res_id = CONCAT('res.partner,', %s::text)
-          AND name = 'property_payment_term_id'
-          AND value_reference IS NOT NULL
-        LIMIT 1
-        """,
-        (partner_id,),
+        _SCOPED_PROPERTY_LOOKUP,
+        (partner_id, "property_payment_term_id", target_company_id),
     )
     row = cr.fetchone()
     payment_term_id = _ref_to_id(row[0]) if row else None
 
-    # Read payment mode
     cr.execute(
-        """
-        SELECT value_reference FROM ir_property
-        WHERE res_id = CONCAT('res.partner,', %s::text)
-          AND name = 'customer_payment_mode_id'
-          AND value_reference IS NOT NULL
-        LIMIT 1
-        """,
-        (partner_id,),
+        _SCOPED_PROPERTY_LOOKUP,
+        (partner_id, "customer_payment_mode_id", target_company_id),
     )
     row = cr.fetchone()
     payment_mode_id = _ref_to_id(row[0]) if row else None
 
-    # Read delivery carrier
     cr.execute(
-        """
-        SELECT value_reference FROM ir_property
-        WHERE res_id = CONCAT('res.partner,', %s::text)
-          AND name = 'property_delivery_carrier_id'
-          AND value_reference IS NOT NULL
-        LIMIT 1
-        """,
-        (partner_id,),
+        _SCOPED_PROPERTY_LOOKUP,
+        (partner_id, "property_delivery_carrier_id", target_company_id),
     )
     row = cr.fetchone()
     delivery_carrier_id = _ref_to_id(row[0]) if row else None
 
-    # Read incoterm and punctuality (regular columns)
+    # Read incoterm and punctuality (regular columns, not ir.property)
     cr.execute(
         """
         SELECT sale_incoterm_id, punctuality_discount
@@ -420,13 +439,14 @@ def _create_condition_sql(cr, partner_id, default_pricelist_id):
              contractual_return, discount_display,
              create_uid, create_date, write_uid, write_date)
         VALUES
-            (%s, 1, %s, %s, %s, %s, %s, %s, 'show_discounts',
+            (%s, %s, %s, %s, %s, %s, %s, %s, 'show_discounts',
              1, NOW(), 1, NOW())
         ON CONFLICT (partner_id, company_id) DO NOTHING
         RETURNING id
         """,
         (
             partner_id,
+            target_company_id,
             pricelist_id or default_pricelist_id,
             payment_term_id,
             payment_mode_id,
@@ -439,19 +459,19 @@ def _create_condition_sql(cr, partner_id, default_pricelist_id):
     return result[0] if result else None
 
 
-def _set_condition_property(cr, partner_id, condition_id, field_id):
+def _set_condition_property(cr, partner_id, condition_id, field_id, target_company_id):
     """Set commercial_condition_id via ir.property (avoids ORM recompute)."""
     cr.execute(
         """
         INSERT INTO ir_property
             (name, type, fields_id, company_id, res_id, value_reference)
         VALUES
-            ('commercial_condition_id', 'many2one', %s, 1,
+            ('commercial_condition_id', 'many2one', %s, %s,
              CONCAT('res.partner,', %s::text),
              CONCAT('partner.commercial.condition,', %s::text))
         ON CONFLICT DO NOTHING
         """,
-        (field_id, partner_id, condition_id),
+        (field_id, target_company_id, partner_id, condition_id),
     )
 
 

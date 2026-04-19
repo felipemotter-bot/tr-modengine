@@ -198,6 +198,14 @@ class ResPartner(models.Model):
         Keeps company_dependent behavior intact for multi-company and
         direct DB queries. Only syncs fields that exist on the partner
         model (safe for partial module installations).
+
+        The write is ``with_company(condition.company_id)`` so the
+        resulting ``ir.property`` rows land in the company-scope of the
+        condition being copied — not in the current user's default
+        company. Without this, editing a TRENTO condition while the
+        user had TREINAMENTO active would update the partner's
+        ``ir.property`` against TREINAMENTO, reintroducing exactly the
+        cross-company drift this PR is closing.
         """
         for partner in self:
             condition = partner.effective_condition_id
@@ -211,7 +219,7 @@ class ResPartner(models.Model):
                 else:
                     vals[partner_field] = value
             if vals:
-                partner.sudo().write(vals)
+                partner.sudo().with_company(condition.company_id).write(vals)
 
     def write(self, vals):
         result = super().write(vals)

@@ -10,11 +10,15 @@
                     <group>
                         <group string="General">
                             <field name="partner_id" readonly="1" />
-                            <field
-                name="company_id"
-                readonly="1"
-                groups="base.group_multi_company"
-              />
+                            <!--
+                                ``company_id`` stays always rendered (no
+                                ``groups``) because ``check_company=True``
+                                on the M2O fields below injects a domain
+                                that references it. Hiding it behind
+                                ``base.group_multi_company`` breaks view
+                                validation for single-company users.
+                            -->
+                            <field name="company_id" readonly="1" />
                             <field name="applicable_profile_id" readonly="1" />
                             <field name="profile_source" readonly="1" />
                         </group>
