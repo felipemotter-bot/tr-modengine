@@ -6,3 +6,7 @@ from . import test_security
 from . import test_record_rules
 from . import test_snapshot
 from . import test_rpc_blocks
+from . import test_catalog
+from . import test_catalog_search
+from . import test_catalog_constraint
+from . import test_catalog_security

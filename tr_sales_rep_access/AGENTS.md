@@ -65,9 +65,33 @@ block; the Python gate short-circuits only for rep users.
 - Defense in depth: `Base.export_data` raises `AccessError` for the rep group (see
   `models/base.py`).
 
+## Catalog by agent (PR 2)
+
+- `res.partner.allowed_category_ids` and `excluded_category_ids`: Many2many on
+  `product.category`, declared with field-level
+  `groups="tr_commercial_policy.group_sales_manager"` so rep users cannot read/write
+  them via RPC (ORM filters the field out of `fields_get`, `read`, `write`).
+- `_get_visible_category_ids()` (on partner): computed on-the-fly as
+  `descendants(allowed) − descendants(excluded)`. Returns a `product.category`
+  recordset; callers use `.ids` at the domain edge.
+- `res.config.settings.default_agent_allowed_category_ids`: M2M persisted manually via
+  `get_values()` / `set_values()` in `ir.config_parameter` key
+  `tr_sales_rep_access.default_agent_allowed_category_ids` (CSV of ids). The template
+  `config_parameter=` does not support Many2many, hence the manual serialization.
+- `res.partner.create()` override: when `agent=True` and caller did not pass
+  `allowed_category_ids`, fills it with the default configured in settings. Stale IDs
+  (deleted categories) are silently ignored.
+- `product.template._search()` / `product.product._search()`: when the caller is a rep,
+  `AND` the domain with `('categ_id', 'child_of', visible_ids)`. Fail-safe empty returns
+  `[('id', '=', 0)]`. Non-rep users are unaffected. This covers dropdowns, list, kanban,
+  "Search More" and `name_search` via the delegation chain in the core.
+- `sale.order.line` `@api.constrains("product_id")`: blocks `create`/`write` with a
+  product outside the rep's catalog. Catches RPC/import/load paths that bypass
+  `_search`.
+
 ## Out of scope for this PR (planned in later PRs)
 
-- Catalog restriction by category on agent → PR 2.
+- Catalog restriction by category on agent → PR 2 (implemented, see above).
 - Partner Draft workflow → PR 3.
 - `tr.partner.change.request` model + wizard → PR 4.
 - Rep-facing partner views → PR 5.

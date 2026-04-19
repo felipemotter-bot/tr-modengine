@@ -4,7 +4,7 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 1 — Fundação de segurança**.
+Status atual: **PR 2 — Catálogo por agente** (+ PR 1 fundação mergeada).
 
 ---
 
@@ -18,8 +18,9 @@ Status atual: **PR 1 — Fundação de segurança**.
 6. [Fluxo de lançamento de pedido (PR 1)](#6-fluxo-de-lançamento-de-pedido-pr-1)
 7. [Bloqueios server-side (PR 1)](#7-bloqueios-server-side-pr-1)
 8. [Troca de agente e histórico](#8-troca-de-agente-e-histórico)
-9. [Roadmap — o que vem nas próximas PRs](#9-roadmap)
-10. [Solução de problemas](#10-solução-de-problemas)
+9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
+10. [Roadmap — o que vem nas próximas PRs](#10-roadmap)
+11. [Solução de problemas](#11-solução-de-problemas)
 
 ---
 
@@ -255,14 +256,59 @@ As comissões já resolvidas em linhas de pedidos antigos continuam apontando pa
 
 ---
 
-## 9. Roadmap
+## 9. Catálogo por agente (PR 2)
+
+Cada agente tem duas listas de categorias de produto, editáveis apenas por **Sales
+Manager**:
+
+- `allowed_category_ids`: categorias que o rep pode vender. A inclusão é por subárvore —
+  marcar uma categoria também libera todas as subcategorias.
+- `excluded_category_ids`: exclusões específicas dentro da subárvore permitida. Útil
+  para "tudo de Química Industrial, exceto Solventes Especiais".
+
+A visibilidade efetiva é `descendants(allowed) − descendants(excluded)`, calculada
+**on-the-fly** (sem cache) quando necessário.
+
+### Onde configurar
+
+**Configurações → Vendas → Sales Rep Access**: define o **default de catálogo** aplicado
+a todo agente novo criado sem catálogo explícito. Alteração retroativa não acontece —
+agentes existentes mantêm o catálogo atual.
+
+**Cadastro do parceiro** (aba _Agent information_): um Sales Manager configura
+`allowed_category_ids` e `excluded_category_ids` caso a caso.
+
+### Proteção server-side
+
+Os dois M2M são declarados com `groups="tr_commercial_policy.group_sales_manager"` no
+**field definition**. Rep externo, ainda que tente via RPC
+(`partner.write({'allowed_category_ids': [...]})`), recebe `AccessError`. Não é só
+ocultação de view.
+
+### Como o filtro aplica
+
+- **Qualquer `search()`** em `product.product` e `product.template` é filtrado quando o
+  usuário logado é rep: dropdowns, listas, kanban, "Ver mais" e `name_search`.
+- **Constraint** em `sale.order.line`: se uma linha vier com produto fora do catálogo
+  (por RPC, import, ou `message_update`), dispara `ValidationError` ao criar/alterar.
+- **Fail-safe**: rep sem `allowed_category_ids` **não vê produto nenhum** — evita
+  "esqueci de configurar → rep vê tudo".
+
+### Campos sensíveis do produto
+
+Ficam **para PR 9** (estoque, custo, margem, `standard_price`). Esta PR só filtra
+_quais_ produtos o rep vê; _o que_ ele vê dentro do formulário do produto fica como
+está.
+
+---
+
+## 10. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
 | PR  | Conteúdo                                                        |
 | --- | --------------------------------------------------------------- |
-| 2   | Catálogo por agente (`allowed_category_ids` +                   |
-|     | `excluded_category_ids` + override de `_search` em `product.*`) |
+| 2   | ✅ Catálogo por agente (ver seção 9)                            |
 | 3   | Workflow Draft → Active de cliente novo (partner_stage + tier)  |
 | 4   | `tr.partner.change.request` (edição cadastral por solicitação)  |
 | 5   | Views do cliente para o rep (campos sensíveis com `groups`)     |
@@ -278,7 +324,7 @@ Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 10. Solução de problemas
+## 11. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 

@@ -65,6 +65,25 @@ class SalesRepAccessTestCommon(TransactionCase):
             }
         )
 
+        # Category tree used by PR 2 (catalog) tests. Root → allowed
+        # (has a sub-branch) and → other. A1's catalog allows `allowed`
+        # and excludes `excluded_sub` (descendant of allowed).
+        cls.cat_root = cls.env["product.category"].create(
+            {"name": "Sales Rep Access Root"}
+        )
+        cls.cat_allowed = cls.env["product.category"].create(
+            {"name": "Allowed", "parent_id": cls.cat_root.id}
+        )
+        cls.cat_allowed_sub = cls.env["product.category"].create(
+            {"name": "Allowed Sub", "parent_id": cls.cat_allowed.id}
+        )
+        cls.cat_excluded_sub = cls.env["product.category"].create(
+            {"name": "Excluded Sub", "parent_id": cls.cat_allowed.id}
+        )
+        cls.cat_other = cls.env["product.category"].create(
+            {"name": "Other", "parent_id": cls.cat_root.id}
+        )
+
         # Product used in order lines. `invoice_policy='order'` is the
         # core default for consumable products, set explicitly as defense
         # in depth so `_create_invoices` produces an invoice regardless
@@ -75,6 +94,36 @@ class SalesRepAccessTestCommon(TransactionCase):
                 "type": "consu",
                 "list_price": 100.0,
                 "invoice_policy": "order",
+                "categ_id": cls.cat_allowed.id,
+            }
+        )
+        # Additional products placed in different branches to exercise
+        # the catalog filter in PR 2 tests.
+        cls.product_allowed_sub = cls.env["product.product"].create(
+            {
+                "name": "Product Allowed Sub",
+                "type": "consu",
+                "list_price": 50.0,
+                "invoice_policy": "order",
+                "categ_id": cls.cat_allowed_sub.id,
+            }
+        )
+        cls.product_excluded = cls.env["product.product"].create(
+            {
+                "name": "Product Excluded",
+                "type": "consu",
+                "list_price": 50.0,
+                "invoice_policy": "order",
+                "categ_id": cls.cat_excluded_sub.id,
+            }
+        )
+        cls.product_other = cls.env["product.product"].create(
+            {
+                "name": "Product Other",
+                "type": "consu",
+                "list_price": 50.0,
+                "invoice_policy": "order",
+                "categ_id": cls.cat_other.id,
             }
         )
 
@@ -132,6 +181,16 @@ class SalesRepAccessTestCommon(TransactionCase):
                 "login": "tsra_u2",
                 "partner_id": cls.agent_a2.id,
                 "groups_id": [(6, 0, [cls.rep_group.id])],
+            }
+        )
+
+        # PR 2 catalog configuration on A1. A2 intentionally left
+        # empty — fail-safe tests rely on A2 having no allowed
+        # categories (sees nothing).
+        cls.agent_a1.write(
+            {
+                "allowed_category_ids": [(6, 0, [cls.cat_allowed.id])],
+                "excluded_category_ids": [(6, 0, [cls.cat_excluded_sub.id])],
             }
         )
 
