@@ -91,6 +91,55 @@ se preenchido). Dois sub-modos via `group_axis`:
 Layout "lista de recompra" pro cliente: produtos que o parceiro comprou nos últimos N
 meses, agrupados pelo mesmo resolvedor de categoria do layout `geral` Modo B.
 
+## Tabela Básica (wizard separado)
+
+`tr.pricelist.basic.wizard` — wizard independente, **não** compartilha o form do geral.
+Para o representante externo que precisa imprimir tabela sem condição comercial de
+cliente.
+
+- Campos: `pricelist_id`, `company_id`, `group_axis` (marca/categoria — mesmos do
+  geral), `category_ids` (opcional), `simulated_contractual_return` (float %), `date`.
+- Sem `condition_id`, sem `discount_display`, sem `payment_term_id`, sem nada da
+  política do cliente.
+- Preço resolvido via
+  `pricelist._get_product_price(product, 1.0, partner=False, date=date)` — API canônica
+  do core que respeita `base_pricelist_id` e tiers, sem aplicar regra partner-specific.
+- `simulated_contractual_return` é só um multiplicador:
+  `price_unit = base * (1 - simulated/100)`. A chave `simulated_contractual_return` no
+  dict de pricing é dedicada — **não** mascara como `seller_discount` (que fica em zero
+  no básico).
+- Multi-company **load-bearing**: `_check_company_auto=True`, `check_company=True` em
+  `pricelist_id`, domain `[('company_id','in',[False, company_id])]` e filtro em
+  `_resolve_products` por `company_id`. Pricelist ou produto de outra empresa não entram
+  no relatório.
+- Flag `tr_exclude_from_general_pricelist` **vale** na básica também — mesma cascata do
+  geral. A básica é uma tabela tipo-geral, não um recibo de recompra.
+- Helpers compartilhados via mixin `tr.pricelist.report.section.builder`
+  (`models/pricelist_report_section_builder.py`): scope/grouping/consolidação. O wizard
+  geral e o básico passam resolvers de preço diferentes como callback
+  (`_compute_pricing` vs `_resolve_basic_pricing`) e o mixin faz o resto.
+- Menu em Sales > Reports > Basic Pricelist.
+- Sem `qty_exceptions` na v1 — a básica não tem seção de tiers por quantidade.
+
+## Contrato de `pricing` dict (compartilhado pelos dois wizards)
+
+Todo resolver de preço retorna o mesmo dict:
+
+```python
+{
+    "product": product,                      # consumido pela consolidação de variantes
+    "base": float,                           # preço bruto do pricelist
+    "reference": float,                      # preço de referência (pré-desconto)
+    "price_unit": float,                     # preço final que sai impresso
+    "seller_discount": float,                # % desconto do vendedor (0 na básica)
+    "simulated_contractual_return": float,   # % retorno simulado (0 no geral)
+}
+```
+
+Bucket key de `_consolidate_templates` usa os quatro floats (`price_unit`, `reference`,
+`seller_discount`, `simulated_contractual_return`) — assim variantes que chegam no mesmo
+preço final por caminhos diferentes aparecem como linhas separadas.
+
 - Escopo: `sale.order.line` com `order_id.partner_id = condition.partner_id`,
   `order_id.state in ('sale','done')` e
   `order_id.date_order >= today - history_months_back`.

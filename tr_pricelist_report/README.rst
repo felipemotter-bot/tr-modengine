@@ -52,6 +52,26 @@ logged on the condition's chatter with the attachment. Partners
 without an email address don't block — fill the email directly in the
 composer.
 
+Basic Pricelist
+~~~~~~~~~~~~~~~
+
+A separate wizard (``Sales > Reports > Basic Pricelist``) prints the
+pricelist without applying any customer commercial condition. Meant for
+external sales reps that need the raw pricelist values in hand before
+committing to a specific customer.
+
+The wizard takes a pricelist, a company, a grouping axis (brand or
+category), an optional category filter, an optional simulated
+contractual-return percent, and a reference date. The PDF shows the
+pricelist's raw price, optionally multiplied by ``(1 - simulated/100)``
+when a simulated return is set — the simulation never replaces a real
+commercial condition and is rendered as "retorno simulado", not as a
+seller discount.
+
+Category exclusions (**Exclude from general pricelists**) apply to the
+Basic Pricelist the same way as the General one. Pricelist and product
+multi-company rules are enforced by the wizard.
+
 Customer History layout
 ~~~~~~~~~~~~~~~~~~~~~~~
 
