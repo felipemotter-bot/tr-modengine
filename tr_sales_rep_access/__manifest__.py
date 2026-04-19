@@ -8,6 +8,7 @@
     "author": "Engenere",
     "license": "AGPL-3",
     "category": "Sales",
+    "development_status": "Alpha",
     "summary": "External sales rep access: isolated group, snapshot-based "
     "record rules and export blocking.",
     "website": "https://github.com/Engenere/addons-trento",
