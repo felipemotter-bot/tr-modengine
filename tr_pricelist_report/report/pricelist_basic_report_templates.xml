@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <template id="report_pricelist_basic_document">
+        <t t-call="web.html_container">
+            <t t-call="trento_report_utils.external_layout_boxed_compact">
+                <div class="page">
+
+                    <t t-call="tr_pricelist_report.report_pricelist_styles" />
+
+                    <!-- Header: title + pricelist + emission -->
+                    <div class="pricelist-header">
+                        <h2 class="pricelist-header-title">TABELA BÁSICA</h2>
+                        <div class="pricelist-header-meta">
+                            <div>
+                                <strong>Tabela:</strong>
+                                <span t-esc="pricelist.display_name" />
+                            </div>
+                            <div>
+                                <strong>Emissão:</strong>
+                                <span
+                  t-esc="date_issued"
+                  t-options="{'widget': 'date'}"
+                />
+                            </div>
+                        </div>
+                        <p
+              t-if="simulated_contractual_return"
+              class="pricelist-history-note"
+            >
+                            Valores com retorno contratual simulado de
+                            <span
+                t-esc="simulated_contractual_return"
+                t-options="{'widget': 'float', 'precision': 2}"
+              />%.
+                        </p>
+                    </div>
+
+                    <!-- Main sections (marca / categoria) -->
+                    <t t-foreach="sections" t-as="section">
+                        <div class="pricelist-section">
+                            <h3 class="pricelist-section-title">
+                                <t t-esc="section['title']" />
+                            </h3>
+                            <table class="pricelist-table">
+                                <thead>
+                                    <tr>
+                                        <th
+                      class="pricelist-cell-description"
+                    >Descrição</th>
+                                        <t t-if="simulated_contractual_return">
+                                            <th style="width: 14%;">Preço Ref.</th>
+                                            <th style="width: 10%;">Ret. Sim. %</th>
+                                        </t>
+                                        <th style="width: 14%;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="section['rows']" t-as="row">
+                                        <tr>
+                                            <td class="pricelist-cell-description">
+                                                <span
+                          t-esc="row['template'].display_name"
+                        />
+                                            </td>
+                                            <t t-if="simulated_contractual_return">
+                                                <td>
+                                                    <span
+                            t-esc="row['pricing']['reference']"
+                            t-options="{'widget': 'monetary', 'display_currency': pricelist.currency_id}"
+                          />
+                                                </td>
+                                                <td>
+                                                    <span
+                            t-esc="row['pricing']['simulated_contractual_return']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          />
+                                                </td>
+                                            </t>
+                                            <td class="pricelist-cell-price">
+                                                <span
+                          t-esc="row['pricing']['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': pricelist.currency_id}"
+                        />
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+
+                    <!-- Variant-level exceptions (same columns as the
+                         main body so a divergent variant keeps the
+                         reference/simulated context when it was exactly
+                         that context that pushed it out of the dominant
+                         bucket). -->
+                    <t t-if="variant_exceptions">
+                        <div class="pricelist-section">
+                            <h3
+                class="pricelist-section-title"
+              >Preços Especiais por Variante</h3>
+                            <table class="pricelist-table">
+                                <thead>
+                                    <tr>
+                                        <th
+                      class="pricelist-cell-description"
+                    >Descrição</th>
+                                        <t t-if="simulated_contractual_return">
+                                            <th style="width: 14%;">Preço Ref.</th>
+                                            <th style="width: 10%;">Ret. Sim. %</th>
+                                        </t>
+                                        <th style="width: 14%;">Preço</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="variant_exceptions" t-as="exc">
+                                        <td
+                      class="pricelist-cell-description"
+                      t-esc="exc['product'].display_name"
+                    />
+                                        <t t-if="simulated_contractual_return">
+                                            <td>
+                                                <span
+                          t-esc="exc['reference']"
+                          t-options="{'widget': 'monetary', 'display_currency': pricelist.currency_id}"
+                        />
+                                            </td>
+                                            <td>
+                                                <span
+                          t-esc="exc['simulated_contractual_return']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        />
+                                            </td>
+                                        </t>
+                                        <td class="pricelist-cell-price">
+                                            <span
+                        t-esc="exc['price_unit']"
+                        t-options="{'widget': 'monetary', 'display_currency': pricelist.currency_id}"
+                      />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

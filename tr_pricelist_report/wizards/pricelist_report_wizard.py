@@ -3,6 +3,7 @@
 
 import base64
 from collections import defaultdict
+from functools import partial
 
 from dateutil.relativedelta import relativedelta
 
@@ -19,6 +20,7 @@ from odoo.addons.tr_commercial_policy.models.policy_utils import (
 
 class PricelistReportWizard(models.TransientModel):
     _name = "tr.pricelist.report.wizard"
+    _inherit = ["tr.pricelist.report.section.builder"]
     _description = "Pricelist Report Wizard"
 
     condition_id = fields.Many2one(
@@ -175,58 +177,36 @@ class PricelistReportWizard(models.TransientModel):
     # Report values
     # ------------------------------------------------------------------
 
-    def _expand_categories(self):
-        """Return all categories including descendants of the picked ones."""
-        if not self.category_ids:
-            return self.env["product.category"]
-        return self.env["product.category"].search(
-            [("id", "child_of", self.category_ids.ids)]
-        )
+    def _expand_categories(self, category_ids=None):
+        """Override that defaults to ``self.category_ids``.
 
-    def _resolve_products(self):
-        domain = [("active", "=", True), ("sale_ok", "=", True)]
-        if self.category_ids:
-            categories = self._expand_categories()
-            domain.append(("categ_id", "in", categories.ids))
-        excluded_ids = self._resolve_excluded_category_ids()
-        if excluded_ids:
-            domain.append(("categ_id", "not in", excluded_ids))
-        return self.env["product.product"].search(domain)
-
-    def _resolve_excluded_category_ids(self):
-        """Expand the ``tr_exclude_from_general_pricelist`` cascade in one shot.
-
-        Rigid cascade rule (§4.5): any ``product.category`` with the flag
-        set, PLUS every descendant of those, is out of scope for the
-        general-pricelist layouts (``geral`` Modes A and B). The
-        customer-history layout bypasses this
-        by resolving products through a different code path.
-
-        The batch expansion uses ``child_of``, which relies on
-        ``parent_path`` and runs in a single SQL. ``child_of`` with an
-        empty list returns an empty recordset, so the call is safe when
-        no category is flagged.
+        The signature is kept compatible with the mixin (``category_ids``
+        arg) so that calls coming from the mixin's own
+        ``_resolve_products`` don't trip on the override, while the
+        callers that used the pre-mixin ``_expand_categories()`` shape
+        keep working.
         """
-        Category = self.env["product.category"]
-        flagged = Category.search([("tr_exclude_from_general_pricelist", "=", True)])
-        if not flagged:
-            return []
-        return Category.search([("id", "child_of", flagged.ids)]).ids
+        if category_ids is None:
+            category_ids = self.category_ids
+        return super()._expand_categories(category_ids)
+
+    def _resolve_products(self, category_ids=None, company_id=False):
+        """Override that defaults to ``self.category_ids``.
+
+        Multi-company scoping on the General layout is enforced by the
+        ``partner.commercial.condition`` record rules and by the
+        condition itself pinning the pricelist — so ``company_id`` is
+        not pushed down here by default (callers can still override).
+        """
+        if category_ids is None:
+            category_ids = self.category_ids
+        return super()._resolve_products(
+            category_ids=category_ids, company_id=company_id
+        )
 
     # ------------------------------------------------------------------
     # Grouping resolvers (shared between layouts)
     # ------------------------------------------------------------------
-
-    def _get_category_depth(self):
-        value = (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("tr_pricelist_report.category_depth", "-2")
-        )
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return -2
 
     def _get_history_months_back(self):
         value = (
@@ -238,61 +218,6 @@ class PricelistReportWizard(models.TransientModel):
             return int(value)
         except (TypeError, ValueError):
             return 6
-
-    def _get_invalid_price_threshold(self):
-        value = (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("tr_pricelist_report.invalid_price_threshold", "99999.0")
-        )
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return 99999.0
-
-    def _is_valid_price(self, price_unit):
-        threshold = self._get_invalid_price_threshold()
-        if threshold <= 0:
-            return True
-        return price_unit < threshold
-
-    def _get_group_attribute(self):
-        """Return the ``product.attribute`` used as the MARCA axis, or empty.
-
-        Resolved at install by the ``post_init_hook`` and cached in
-        ``tr_pricelist_report.group_attribute_id``. Empty recordset when
-        no attribute with the configured name exists.
-        """
-        param = (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("tr_pricelist_report.group_attribute_id", "")
-        )
-        if not param or not param.isdigit():
-            return self.env["product.attribute"]
-        return self.env["product.attribute"].browse(int(param)).exists()
-
-    def _resolve_grouping_category(self, product, depth):
-        """Return the category used to bucket ``product`` at ``depth``.
-
-        Clamping is silent (plan §7): if ``depth`` falls outside the
-        product's own category trail, we return the closest available
-        ancestor. ``-N`` above the root becomes the root; positive level
-        above the tree depth becomes the leaf.
-        """
-        trail = []
-        category = product.categ_id
-        while category:
-            trail.append(category)
-            category = category.parent_id
-        if not trail:
-            return self.env["product.category"]
-        # ``trail`` is leaf-first: [leaf, parent, ..., root].
-        if depth >= 0:
-            root_first = list(reversed(trail))
-            return root_first[min(depth, len(root_first) - 1)]
-        # Negative: -1 leaf, -2 parent of leaf, ...
-        return trail[min(abs(depth) - 1, len(trail) - 1)]
 
     def _get_fiscal_position(self, partner, company):
         """Resolve the fiscal position the same way ``sale.order`` does.
@@ -386,85 +311,9 @@ class PricelistReportWizard(models.TransientModel):
             "base": base,
             "reference": reference,
             "seller_discount": seller,
+            "simulated_contractual_return": 0.0,
             "price_unit": price_unit,
         }
-
-    def _format_variant_label(self, product):
-        """Return a printable label for the inline variant list."""
-        attrs = product.product_template_attribute_value_ids.mapped("name")
-        if attrs:
-            label = " / ".join(attrs)
-        else:
-            label = product.display_name
-        code = product.default_code or ""
-        return {"code": code, "label": label}
-
-    def _consolidate_templates(self, products, rates):
-        """Group products by template and consolidate same-priced variants.
-
-        Returns tuple ``(rows, variant_exceptions)`` where:
-
-        - ``rows`` is a list of dicts with keys ``template``, ``pricing``,
-          ``variants`` (inline variants sharing the dominant price),
-          ``default_code`` (template default_code if all inline variants
-          collapse to a single display).
-        - ``variant_exceptions`` is a list of pricing dicts for variants
-          whose ``price_unit`` diverges from the template's dominant price.
-        """
-        precision = self.env["decimal.precision"].precision_get("Product Price")
-        by_template = defaultdict(list)
-        for product in products:
-            by_template[product.product_tmpl_id].append(product)
-
-        rows = []
-        variant_exceptions = []
-        for template, variants in by_template.items():
-            pricings = [
-                p
-                for p in (self._compute_pricing(v, rates) for v in variants)
-                if self._is_valid_price(p["price_unit"])
-            ]
-            if not pricings:
-                continue
-            # Bucket by the **three values the template shows in
-            # show_discounts mode** — ``price_unit`` alone would collapse
-            # variants that hit the same final price via different base /
-            # reference / seller_discount, and the consolidated line would
-            # lie about those fields. Bucketing by all three makes the
-            # inline-variants row truthful in both ``net_price`` and
-            # ``show_discounts`` displays.
-            price_buckets = defaultdict(list)
-            for pricing in pricings:
-                key = (
-                    float_round(pricing["price_unit"], precision_digits=precision),
-                    float_round(pricing["reference"], precision_digits=precision),
-                    float_round(pricing["seller_discount"], precision_digits=2),
-                )
-                price_buckets[key].append(pricing)
-            # dominant = bucket with the most variants; tie: highest price
-            dominant_key = max(price_buckets, key=lambda k: (len(price_buckets[k]), k))
-            dominant_pricings = price_buckets[dominant_key]
-            other_pricings = [
-                pricing
-                for key, bucket in price_buckets.items()
-                if key != dominant_key
-                for pricing in bucket
-            ]
-            rows.append(
-                {
-                    "template": template,
-                    "pricing": dominant_pricings[0],
-                    "variants": [
-                        self._format_variant_label(p["product"])
-                        for p in dominant_pricings
-                    ],
-                }
-            )
-            for pricing in other_pricings:
-                variant_exceptions.append(pricing)
-        rows.sort(key=lambda row: row["template"].display_name)
-        variant_exceptions.sort(key=lambda p: p["product"].display_name)
-        return rows, variant_exceptions
 
     def _resolve_qty_exceptions(self, products, rates):
         """Return tier-quantity exceptions for the scope products.
@@ -531,13 +380,14 @@ class PricelistReportWizard(models.TransientModel):
             ]
             if not variant_pricings:
                 continue
-            # Same three-field key used by ``_consolidate_templates`` so the
+            # Same four-field key used by ``_consolidate_templates`` so the
             # template-collapsed row is truthful in both display modes.
             unique_prices = {
                 (
                     float_round(p["price_unit"], precision_digits=precision),
                     float_round(p["reference"], precision_digits=precision),
                     float_round(p["seller_discount"], precision_digits=2),
+                    float_round(p["simulated_contractual_return"], precision_digits=2),
                 )
                 for _v, p in variant_pricings
             }
@@ -563,87 +413,6 @@ class PricelistReportWizard(models.TransientModel):
                     )
         rows.sort(key=lambda row: (row["target"].display_name, row["min_qty"]))
         return rows
-
-    def _build_sections(self, products, rates):
-        """Route products into sections per layout / group_axis.
-
-        - ``geral`` + ``marca`` → partition by MARCA attribute, products
-          without MARCA fall back to the category partition at the end.
-        - ``geral`` + ``categoria`` → partition by the category at
-          ``category_depth`` (shared resolver).
-        - ``historico`` uses its own resolver and bypasses this router
-          (see ``_build_sections_from_history``).
-        """
-        if self.layout == "geral" and self.group_axis == "marca":
-            return self._build_sections_by_marca(products, rates)
-        return self._build_sections_by_category(products, rates)
-
-    def _build_sections_by_category(self, products, rates):
-        depth = self._get_category_depth()
-        by_category = defaultdict(lambda: self.env["product.product"])
-        for product in products:
-            by_category[self._resolve_grouping_category(product, depth)] |= product
-        sections = []
-        for category in sorted(
-            by_category, key=lambda cat: cat.complete_name if cat else ""
-        ):
-            rows, variant_exceptions = self._consolidate_templates(
-                by_category[category], rates
-            )
-            # Skip sections that ended up empty after the invalid-price
-            # filter. Otherwise the PDF renders a ghost section with only
-            # the title + empty table.
-            if not rows and not variant_exceptions:
-                continue
-            sections.append(
-                {
-                    "title": category.name if category else "",
-                    "rows": rows,
-                    "variant_exceptions": variant_exceptions,
-                }
-            )
-        return sections
-
-    def _build_sections_by_marca(self, products, rates):
-        """Mode A: group by MARCA attribute value, fallback by category.
-
-        Products with a MARCA value form one section per value. Products
-        without the attribute (or when the attribute itself is unresolved)
-        fall back to the category resolver used by Mode B — we don't
-        introduce a second notion of "category" in the module.
-        """
-        attribute = self._get_group_attribute()
-        by_marca = defaultdict(lambda: self.env["product.product"])
-        no_marca = self.env["product.product"]
-        if attribute:
-            for product in products:
-                ptav = product.product_template_attribute_value_ids.filtered(
-                    lambda v, attr=attribute: v.attribute_id == attr
-                )
-                if ptav:
-                    by_marca[ptav[0].product_attribute_value_id] |= product
-                else:
-                    no_marca |= product
-        else:
-            no_marca = products
-        sections = []
-        for marca in sorted(by_marca, key=lambda value: value.name or ""):
-            rows, variant_exceptions = self._consolidate_templates(
-                by_marca[marca], rates
-            )
-            # Same empty-section guard as _build_sections_by_category.
-            if not rows and not variant_exceptions:
-                continue
-            sections.append(
-                {
-                    "title": marca.name,
-                    "rows": rows,
-                    "variant_exceptions": variant_exceptions,
-                }
-            )
-        if no_marca:
-            sections.extend(self._build_sections_by_category(no_marca, rates))
-        return sections
 
     # ------------------------------------------------------------------
     # Customer-history layout
@@ -758,7 +527,10 @@ class PricelistReportWizard(models.TransientModel):
             qty_exceptions = []
         else:
             products = wizard._resolve_products()
-            sections = wizard._build_sections(products, rates)
+            resolver = partial(wizard._compute_pricing, rates=rates)
+            sections = wizard._build_sections(
+                products, resolver, group_axis=wizard.group_axis
+            )
             variant_exceptions = [
                 exc for section in sections for exc in section["variant_exceptions"]
             ]

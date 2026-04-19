@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record id="action_report_pricelist_basic" model="ir.actions.report">
+        <field name="name">Basic Pricelist</field>
+        <field name="model">tr.pricelist.basic.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+      name="report_name"
+    >tr_pricelist_report.report_pricelist_basic_document</field>
+        <field
+      name="report_file"
+    >tr_pricelist_report.report_pricelist_basic_document</field>
+        <field
+      name="paperformat_id"
+      ref="trento_report_utils.paperformat_a4_port_low_margin"
+    />
+        <field
+      name="print_report_name"
+    >'Basic Pricelist - %s' % (object.pricelist_id.name or '')</field>
+    </record>
+
+</odoo>

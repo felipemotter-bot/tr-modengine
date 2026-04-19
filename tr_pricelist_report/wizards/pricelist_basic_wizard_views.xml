@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <record id="view_pricelist_basic_wizard_form" model="ir.ui.view">
+        <field name="name">tr.pricelist.basic.wizard.form</field>
+        <field name="model">tr.pricelist.basic.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Print Basic Pricelist">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="company_id" />
+                            <field name="pricelist_id" />
+                            <field name="group_axis" />
+                            <field name="simulated_contractual_return" />
+                            <field name="date" />
+                        </group>
+                        <group>
+                            <field
+                name="category_ids"
+                widget="many2many_tags"
+                options="{'no_create': True}"
+              />
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button
+            name="action_generate"
+            string="Generate PDF"
+            type="object"
+            class="btn-primary"
+          />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pricelist_basic_wizard" model="ir.actions.act_window">
+        <field name="name">Basic Pricelist</field>
+        <field name="res_model">tr.pricelist.basic.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+    id="menu_pricelist_basic_wizard"
+    name="Basic Pricelist"
+    parent="sale.menu_sale_report"
+    action="action_pricelist_basic_wizard"
+    sequence="80"
+  />
+
+</odoo>

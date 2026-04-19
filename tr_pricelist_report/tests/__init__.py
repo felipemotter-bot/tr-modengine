@@ -16,3 +16,4 @@ from . import test_pdf_render
 from . import test_pricing_consistency
 from . import test_resolve_condition
 from . import test_wizard
+from . import test_wizard_basic
