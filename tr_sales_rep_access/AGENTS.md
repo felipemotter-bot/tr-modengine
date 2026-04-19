@@ -38,15 +38,25 @@ PRs.
 
 ## Record rules
 
-- `res.partner`:
-  `['|', ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id]), ('id', '=', user.partner_id.id)]`.
-  Covers the commercial anchor (matrix + children + delivery addresses) and the rep's
-  own partner explicitly.
-- `sale.order`: two rules. Rule A (perm_read=1) uses only the snapshot. Rule B
-  (perm_write=1, perm_create=1) adds `state == 'draft'`.
-- `sale.order.line`: analogous (perm_read=1 rule without state; perm_write/create/unlink
-  rule with `order_id.state == 'draft'`).
-- `account.move` / `account.move.line`: read only, by snapshot.
+- `res.partner`: two rules — a per-group open rule (`[(1,'=',1)]`) that broadens the OR
+  across group rules, plus a **global rule with a conditional `user.has_group(...)`**
+  domain that narrows to
+  `['|', ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id]), ('id', '=', user.partner_id.id)]`
+  when the user is a rep and is a no-op `(1,'=',1)` otherwise. This pattern is only
+  needed here because `res_partner_rule_private_employee` from `base.group_user` is
+  permissive and combines by OR with any per-group rule; global rules combine by AND and
+  let us narrow scope without affecting non-rep users.
+- `sale.order`, `sale.order.line`, `account.move`, `account.move.line`: **single
+  per-group rule** filtering by the `sales_rep_partner_id` snapshot. No open broadener
+  and no global conditional are needed here because the core "personal" rules
+  (`sale_order_personal_rule`, etc.) belong to `sales_team.group_sale_salesman`, which
+  the rep group does not imply.
+
+Write/unlink restriction past draft for `sale.order` and `sale.order.line` is enforced
+in Python (`_sales_rep_check_rep_can_edit` in `models/sale_order.py` and
+`models/sale_order_line.py`), not via a state-based record rule. `sale_stock` performs
+legitimate internal writes on confirmed orders that a state-based rule would incorrectly
+block; the Python gate short-circuits only for rep users.
 
 ## Export
 

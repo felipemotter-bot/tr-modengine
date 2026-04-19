@@ -45,14 +45,36 @@ momento da criação. É um **fotografia** do agente responsável pelo pedido, e
 acompanha alterações posteriores no cadastro do cliente — o histórico fica preservado
 mesmo se o cliente trocar de agente.
 
-### Record rules em dois níveis
+### Record rules — duas estratégias
 
-1. **Rule per-group aberta**: `[(1, '=', 1)]` no grupo do rep. Amplia o OR entre as
-   rules de grupo (sobreponto a `sale_order_personal_rule` do core, que filtra por
-   `user_id`).
-2. **Rule global com `user.has_group(...)`**: aplica AND. Quando o usuário é rep,
-   restringe ao snapshot; quando não é, vira `(1, '=', 1)` (no-op). Garante que o filtro
-   real de escopo só atinge reps e não afeta demais usuários.
+**`res.partner` — per-group aberta + global conditional.** O core tem
+`res_partner_rule_private_employee` como rule de `base.group_user`, que libera ver quase
+todos os parceiros. Como o rep group implica `base.group_user` transitivamente, uma rule
+per-group simples seria combinada por OR com essa rule permissiva e perderia o escopo.
+Então:
+
+1. **Rule per-group aberta** `[(1, '=', 1)]` no grupo do rep — amplia o OR entre rules
+   de grupo, evitando que rules mais restritivas de outros grupos limitem o rep.
+2. **Rule global** com domain condicional
+   `[restrição] if user.has_group('...') else [(1, '=', 1)]` — aplica AND. Quando o user
+   é rep, narra ao escopo; caso contrário vira no-op. Garante que o filtro só atinge
+   reps.
+
+**`sale.order`, `sale.order.line`, `account.move`, `account.move.line` — rule per-group
+simples.** As rules "personal" do core (`sale_order_personal_rule`, etc.) pertencem a
+`sales_team.group_sale_salesman`, que o rep group **não** implica. Logo uma única rule
+per-group filtrando pelo snapshot basta. **Nenhum open broadener e nenhum global
+conditional são necessários nesses modelos.**
+
+### Bloqueio de write/unlink pós-draft — em Python, não em rule
+
+`sale.order` e `sale.order.line` sobrescrevem `write`/`unlink` com o helper
+`_sales_rep_check_rep_can_edit`: se o user logado é do grupo rep e o order não está mais
+em `draft`, levanta `AccessError`. Optou-se por Python em vez de rule state-based porque
+o `sale_stock` faz writes legítimos em pedidos confirmados (`procurement_group_id`,
+`qty_delivered`, etc.) que rodam como usuários internos — uma rule `state == 'draft'`
+bloquearia esses writes indevidamente. O gate Python só dispara quando o user
+efetivamente é um rep.
 
 ---
 
@@ -163,8 +185,9 @@ teste.
 3. Ao salvar, o módulo grava `sales_rep_partner_id` = partner do rep (derivado
    automaticamente de `partner.agent_ids`).
 4. Preenche linhas, confirma.
-5. Ao confirmar, o pedido deixa de ser editável pelo rep (record rule de write é
-   restrita a `state == 'draft'`).
+5. Ao confirmar, o pedido deixa de ser editável pelo rep (o override Python
+   `_sales_rep_check_rep_can_edit` em `sale.order`/`sale.order.line` levanta
+   `AccessError` quando o user é rep e o order não está em `draft`).
 
 ### Troca de cliente em rascunho
 

@@ -33,10 +33,18 @@ security primitives:
   ``account.move`` that captures the rep responsible for the
   document at creation and is propagated from quotation to invoice
   via ``_prepare_invoice``.
-- Record rules on ``res.partner``, ``sale.order``,
+- Record rules that apply the snapshot (and the partner's
+  ``agent_ids`` M2M) to filter visibility. ``res.partner`` uses a
+  per-group open rule plus a global rule with a conditional
+  ``user.has_group(...)`` domain to neutralise the permissive core
+  ``res_partner_rule_private_employee``; ``sale.order``,
   ``sale.order.line``, ``account.move`` and ``account.move.line``
-  that apply that snapshot (and the partner's ``agent_ids`` M2M) to
-  filter visibility and constrain write/create to draft.
+  use a simple per-group rule by snapshot.
+- Python overrides in ``sale.order`` and ``sale.order.line``
+  blocking ``write``/``unlink`` past draft for rep users (not a
+  state-based rule, because ``sale_stock`` performs legitimate
+  internal writes on confirmed orders that a rule would wrongly
+  block).
 - A defense-in-depth override of ``models.BaseModel.export_data``
   that raises ``AccessError`` for rep users.
 
@@ -69,9 +77,9 @@ After configuration, a rep logging in will only see:
 - Sales order lines belonging to those orders.
 - Invoices and invoice lines carrying the same snapshot.
 
-Write and create on sales orders and lines is restricted to
-``state == 'draft'``. Attempting to export any model via RPC raises
-``AccessError``.
+Write, create and unlink on sales orders and lines by rep users are
+restricted to ``state == 'draft'`` through Python overrides on the
+models. Attempting to export any model via RPC raises ``AccessError``.
 
 Known limitations (addressed in later PRs)
 ==========================================
