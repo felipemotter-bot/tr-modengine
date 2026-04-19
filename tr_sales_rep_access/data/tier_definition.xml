@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo noupdate="1">
+    <!--
+        Tier definition that fires on new commercial customers
+        (parent_id = False) created by a sales rep. The rep's
+        override in res.partner.create triggers
+        request_validation() right after insert, so the reviews
+        show up immediately for the Sales Manager group.
+        Child contacts and admin-created partners without
+        agent_ids stay out of the tier.
+    -->
+    <record id="tier_def_new_rep_customer" model="tier.definition">
+        <field name="name">Approve new customer from sales rep</field>
+        <field name="model_id" ref="base.model_res_partner" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_commercial_policy.group_sales_manager"
+    />
+        <field name="definition_type">domain</field>
+        <field
+      name="definition_domain"
+    >[('state', '=', 'draft'), ('agent_ids', '!=', False), ('parent_id', '=', False)]</field>
+        <field name="notify_on_create" eval="True" />
+        <field name="active" eval="True" />
+    </record>
+</odoo>

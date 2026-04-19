@@ -10,3 +10,4 @@ from . import test_catalog
 from . import test_catalog_search
 from . import test_catalog_constraint
 from . import test_catalog_security
+from . import test_new_customer_workflow

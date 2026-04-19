@@ -25,6 +25,7 @@
         "security/security.xml",
         "security/ir.model.access.csv",
         "security/ir_rules.xml",
+        "data/tier_definition.xml",
         "views/sale_order_views.xml",
         "views/res_partner_views.xml",
         "views/res_config_settings_views.xml",
