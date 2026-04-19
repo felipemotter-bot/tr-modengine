@@ -38,7 +38,7 @@
                             <label for="tr_pricelist_report_group_attribute_name" />
                             <div class="text-muted">
                                 Name of the product.attribute used as the
-                                brand grouping axis in the Complete Pricelist
+                                brand grouping axis in the General Pricelist
                                 layout (Mode A).
                             </div>
                             <div class="content-group mt16">

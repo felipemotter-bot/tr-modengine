@@ -17,7 +17,8 @@ class TestEmailSend(PricelistReportTestCommon, MailCommon):
     def _open_email_wizard(self, **overrides):
         values = {
             "condition_id": self.condition.id,
-            "layout": "por_categoria",
+            "layout": "geral",
+            "group_axis": "categoria",
             "category_ids": [(6, 0, [self.categ_chemicals.id])],
             "send_by_email": True,
         }

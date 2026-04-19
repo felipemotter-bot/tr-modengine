@@ -59,23 +59,17 @@ que chamam o action por código continuam funcionando.
 `tr.pricelist.report.wizard` (`TransientModel`). Campos:
 
 - `condition_id` — `partner.commercial.condition`, obrigatório.
-- `layout` — selection `por_categoria` / `completa`.
-- `group_axis` — selection `marca` / `categoria`. Exigido quando `layout=completa`.
-- `category_ids` — M2M `product.category`. Obrigatório quando `layout=por_categoria`;
-  opcional em `completa` (vazio = todo catálogo vendável).
+- `layout` — selection `geral` / `historico`. Default `geral`.
+- `group_axis` — selection `marca` / `categoria`. Sempre obrigatório (default `marca`).
+  Só usado quando `layout=geral`.
+- `category_ids` — M2M `product.category`, **sempre opcional**. Vazio imprime todos os
+  produtos vendáveis; preenchido filtra pelas categorias (e descendentes).
 - `discount_display` — selection (`show_discounts` / `net_price`); default vem da
   condição, vendedor pode sobrescrever por impressão.
 
-Todas as capacidades planejadas entregues (PR1–PR5).
-
 ## Layouts
 
-### `por_categoria`
-
-- Filtro: vendedor seleciona uma ou mais `product.category` no wizard.
-- Agrupamento: resolvedor único de categoria (ver abaixo), respeita `category_depth`.
-
-### `completa`
+### `geral`
 
 Escopo: todos os produtos `active` + `sale_ok` da base (ou filtrado por `category_ids`
 se preenchido). Dois sub-modos via `group_axis`:
@@ -87,12 +81,15 @@ se preenchido). Dois sub-modos via `group_axis`:
   adicionais ao final via **fallback por categoria** — mesmo resolvedor do Modo B, para
   não criar duas noções de categoria.
 - **Modo B — `categoria`**: particiona pela categoria no nível configurado por
-  `category_depth`.
+  `category_depth`. Esse modo cobre o que o extinto `por_categoria` fazia — na PR-C a
+  gente consolidou os dois layouts no `geral` porque `por_categoria` era um caso
+  particular do `geral + group_axis=categoria` com `category_ids` forçado a preenchido.
+  Agora `category_ids` é sempre opcional.
 
 ### `historico`
 
 Layout "lista de recompra" pro cliente: produtos que o parceiro comprou nos últimos N
-meses, agrupados pelo mesmo resolvedor de categoria do layout `completa` Modo B.
+meses, agrupados pelo mesmo resolvedor de categoria do layout `geral` Modo B.
 
 - Escopo: `sale.order.line` com `order_id.partner_id = condition.partner_id`,
   `order_id.state in ('sale','done')` e
@@ -150,8 +147,8 @@ Flag `tr_exclude_from_general_pricelist` em `product.category` (herdada pelo
 `tr_pricelist_report` via `models/product_category.py`). Comportamento:
 
 - Quando a flag está True numa categoria, produtos dessa categoria **e todas as
-  descendentes** ficam fora das listagens gerais do relatório (`por_categoria` e
-  `completa` Modo A/B).
+  descendentes** ficam fora das listagens gerais do relatório (layout `geral` em ambos
+  os eixos).
 - **Cascata rígida**: uma categoria filha não pode "desligar" o efeito herdado do pai.
   Solução operacional se precisar voltar: mover a filha pra outra árvore não flagada.
 - O **layout histórico** (PR4) **ignora** a flag — cliente que comprou o produto

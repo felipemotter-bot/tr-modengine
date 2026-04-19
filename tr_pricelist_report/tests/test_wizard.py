@@ -1,8 +1,6 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo.exceptions import UserError
-
 from .common import PricelistReportTestCommon
 
 
@@ -26,10 +24,12 @@ class TestWizard(PricelistReportTestCommon):
         action = wizard.action_generate()
         self.assertEqual(action["type"], "ir.actions.report")
 
-    def test_action_generate_blocks_without_categories(self):
-        """``action_generate`` raises if no category picked."""
+    def test_action_generate_accepts_empty_category_ids(self):
+        """After PR-C, ``geral`` prints the whole sellable list when
+        ``category_ids`` is empty. No more "pick at least one" block.
+        """
         wizard = self.env["tr.pricelist.report.wizard"].create(
             {"condition_id": self.condition.id}
         )
-        with self.assertRaises(UserError):
-            wizard.action_generate()
+        action = wizard.action_generate()
+        self.assertEqual(action["type"], "ir.actions.report")
