@@ -4,8 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente pro rep**
-(+ PR 1, 2, 3, 4a e 4b mergeadas).
+Status atual: **PR 7 — Bloqueios server-side em módulos companion (sales analysis, price
+history, pricelist report)** (+ PR 1, 2, 3, 4a, 4b, 5, 5b, 6a e 6b mergeadas).
 
 ---
 
@@ -22,8 +22,9 @@ Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente
 9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
 10. [Workflow Draft → Active de cliente novo (PR 3)](#10-workflow-draft--active-de-cliente-novo-pr-3)
 11. [Solicitações de alteração cadastral (PR 4a)](#11-solicitações-de-alteração-cadastral-pr-4a)
-12. [Roadmap — o que vem nas próximas PRs](#12-roadmap)
-13. [Solução de problemas](#13-solução-de-problemas)
+12. [Bloqueios server-side em módulos companion (PR 7)](#12-bloqueios-server-side-em-módulos-companion-pr-7)
+13. [Roadmap — o que vem nas próximas PRs](#13-roadmap)
+14. [Solução de problemas](#14-solução-de-problemas)
 
 ---
 
@@ -443,7 +444,69 @@ flui via related dinâmico). Se a whitelist crescer pra incluir snapshot fields 
 
 ---
 
-## 12. Roadmap
+## 12. Bloqueios server-side em módulos companion (PR 7)
+
+Três classes de exposição que o `tr_sales_rep_access` fechou sobre módulos companheiros
+já instalados no stack. Cada uma bloqueia um tipo de vazamento diferente, todas
+server-side — **não confiar em esconder via view** é o princípio (DA-6 do plano).
+
+### Estatísticas agregadas do cliente (`eng_partner_sales_info`)
+
+O módulo companheiro expõe 21 campos de análise comercial em `res.partner`
+(`last_order_id`, `order_count`, `total_ordered`, `average_ordered`,
+`days_since_last_order`, etc.). Upstream já restringe a **aba de análise** no form ao
+grupo `eng_partner_sales_info.group_partner_sales_analysis`, mas isso é hide view-only —
+leitura via RPC, `fields_get` ou `search` continua aberta a qualquer usuário interno,
+inclusive ao rep.
+
+O `tr_sales_rep_access` adiciona um bloqueio server-side **específico para o rep**: cada
+field é redeclarado com `groups="!tr_sales_rep_access.group_sales_rep_external"`,
+excluindo o rep da leitura em todos os caminhos do ORM. Usuários internos fora do
+analysis group continuam podendo ler via RPC (comportamento upstream preservado); só o
+rep é rejeitado. Auditoria regressiva da membership:
+`test_rep_is_not_in_partner_sales_analysis_group`.
+
+### Histórico de preços (`sale_order_line_price_history`)
+
+O módulo companion planta dois widgets interativos no sistema:
+
+- Widget "Show price history" no tree/kanban da linha do pedido.
+- Widget "Set price from history" dentro do wizard de histórico.
+
+Ambos ficam escondidos do rep via `groups=!rep` no field com widget. A barreira primária
+do wizard hoje é o ACL do upstream (rep não é membro do grupo que tem read na model
+`sale.order.line.price.history`), mas o hide na view serve de defense in depth caso o
+ACL mude no futuro.
+
+### Relatório de lista de preços do parceiro (`tr_pricelist_report`)
+
+O "Print Price List" do partner gera um relatório com toda a tabela de preços do cliente
+— inclusive produtos fora do catálogo permitido do rep (ver PR 2). Bloqueio em duas
+camadas:
+
+- **Barreira primária (server-side)**: override em `res.partner.action_print_pricelist`
+  levanta `AccessError` se o caller é rep. Cobre tanto o clique no botão do form quanto
+  o entrypoint do Action menu (que o upstream expõe via `ir.actions.server` com
+  `binding_model_id = res.partner` em todo list/form de partner).
+- **Limpeza de UI (defense in depth)**: o botão "Print Price List" no form do partner
+  some via `groups=!rep`. O item do Action menu **continua visível** na lista/form de
+  partner — é o guard server-side que realmente segura o acesso.
+
+### Decisões conscientes não cobertas pela PR 7
+
+- **`server_action_mass_edit`**: wizard ACL'd para `base.group_user` (rep herda
+  transitivamente). Hoje não existe `ir.actions.server` configurada como mass-edit no
+  stack, então o rep não tem entrypoint UI. Os write-guards das PRs 1/4b/6b limitam o
+  dano se alguém adicionar uma mass-edit action depois. Revisar quando surgir uma
+  mass-edit real.
+- **`groups_restrict_price_change`**: não está instalado no stack.
+- **Relatórios Trento** (`trento_report_invoice`, `trento_report_sale`,
+  `trento_report_utils`): cobertos pelo grupo contábil que o rep nunca integra, pela
+  record rule de sale.order, ou são puro boilerplate.
+
+---
+
+## 13. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
@@ -467,7 +530,7 @@ Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 13. Solução de problemas
+## 14. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 
