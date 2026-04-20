@@ -52,6 +52,16 @@ class SaleOrder(models.Model):
         ),
     )
 
+    # PR 8 — chatter hidden for reps.  field-level groups= closes the
+    # RPC read path (fields_get / read) without touching mail.message
+    # ACLs globally (which would break mail.activity creation).
+    message_ids = fields.One2many(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    message_follower_ids = fields.One2many(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         is_rep = self.env.user.has_group(REP_GROUP_XMLID)
@@ -87,6 +97,12 @@ class SaleOrder(models.Model):
     def write(self, vals):
         self._sales_rep_prepare_write_vals(vals)
         self._sales_rep_check_rep_can_edit(vals)
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            # PR 8 — suppress tracking messages when the rep writes so
+            # that internal chatter is not polluted.  Trade-off: rep
+            # writes produce no audit trail in the chatter (documented
+            # in AGENTS.md "PR 8 mail_notrack trade-off").
+            return super(SaleOrder, self.with_context(mail_notrack=True)).write(vals)
         return super().write(vals)
 
     def action_confirm(self):

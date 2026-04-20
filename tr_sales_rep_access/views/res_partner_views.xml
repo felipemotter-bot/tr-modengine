@@ -259,4 +259,18 @@
             -->
         </field>
     </record>
+
+    <!-- PR 8 — hide chatter for reps (defense in depth). -->
+    <record id="res_partner_form_hide_chatter_rep" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.chatter.rep</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_chatter')]" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

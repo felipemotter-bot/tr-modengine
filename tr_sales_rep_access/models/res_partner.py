@@ -115,6 +115,14 @@ class ResPartner(models.Model):
         ),
     )
 
+    # PR 8 — chatter hidden for reps (same pattern as sale.order).
+    message_ids = fields.One2many(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    message_follower_ids = fields.One2many(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
     # -----------------------------------------------------------------
     # PR 7 commit 1 — ``eng_partner_sales_info`` server-side hide.
     #
@@ -341,6 +349,10 @@ class ResPartner(models.Model):
                     "a change request for the Sales Manager to approve."
                 )
             )
+        if self.env.user.has_group(REP_GROUP_XMLID) and not self.env.su:
+            # PR 8 — suppress tracking for rep writes on Draft partners
+            # to avoid chatter pollution (same trade-off as sale.order).
+            return super(ResPartner, self.with_context(mail_notrack=True)).write(vals)
         return super().write(vals)
 
     def _sales_rep_should_block_active_write(self, vals):
