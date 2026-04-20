@@ -28,6 +28,14 @@ class SaleOrder(models.Model):
             "after draft."
         ),
     )
+    tr_rep_notes = fields.Text(
+        string="Sales Rep Notes",
+        help=(
+            "Operational notes from the sales representative about this "
+            "order. Not printed on the PDF; intended for internal "
+            "coordination with the sales manager."
+        ),
+    )
     tr_rep_conference_required = fields.Boolean(
         string="Needs Rep Conference",
         default=False,

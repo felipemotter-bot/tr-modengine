@@ -267,6 +267,20 @@ redeclaration needs the original field to exist at registry build time.
   clobbers their own rules. The real write protection is already in place (PR 4b's
   `res.partner.write` guard), so moving this to a dedicated PR is acceptable.
 
+## Rep notes on sale order (PR 6a)
+
+- Field `sale.order.tr_rep_notes`: `fields.Text`, no `tracking`, no `groups=`, no state
+  `attrs`. Free-text scratchpad for the rep to coordinate with the sales manager during
+  quotation negotiation. Not printed on the PDF.
+- Location on the form: inside the "Other Info" page, as a new group
+  `name="sales_rep" string="Sales Rep"` inserted after the core's `sale_info` group.
+  Field carries `nolabel="1"` + a placeholder so the group title acts as label.
+- Write policy: the pre-existing PR 1 guard `_sales_rep_check_rep_can_edit` still
+  applies — rep edits `tr_rep_notes` only while the order is in `draft`; after confirm
+  the manager holds the pen. No whitelist exception for the notes field (Felipe
+  2026-04-19). This keeps PR 6a's change surface trivial while respecting the PR 1 "rep
+  cannot modify non-draft orders" invariant.
+
 ## Conference tier on sale order (PR 6b)
 
 - **Group `group_sales_rep_checker`** declared in `security/security.xml`. No
@@ -282,10 +296,11 @@ redeclaration needs the original field to exist at registry build time.
   `group_sales_rep_external` — admin / manager / imports keep it False, which keeps
   `base_tier_validation` from locking their legitimate writes on confirm. Never written
   manually.
-- **`sale_order.create()`** calls `records.sudo().request_validation()` after `super()`
-  when the user is a rep and the records carry `tr_rep_conference_required=True`.
-  `notify_on_create` on the tier definition does nothing without this explicit call —
-  same pattern the PR 3 partner draft flow uses.
+- **`sale_order.create()`** calls `records.request_validation()` after `super()` when
+  the user is a rep and the records carry `tr_rep_conference_required=True`. No `sudo()`
+  — audit trail keeps the rep as `requested_by`. `notify_on_create` on the tier
+  definition does nothing without this explicit call — same pattern the PR 3 partner
+  draft flow uses.
 - **Override of `report.sale.report_saleorder._get_report_values`** in
   `reports/sale_report.py`. Relaxes `sale_tier_validation`'s print block when **all**
   pending reviews belong to the conference tier. Blocks when any other pending review is
@@ -310,13 +325,15 @@ redeclaration needs the original field to exist at registry build time.
   (implemented, see above).
 - Server-side hide of non-operational sensitive partner fields → PR 5 (implemented, see
   above).
-- Readonly-active UX on rep contact fields of the partner form → PR 5b (implemented, see
-  above).
+- Readonly-active UX for rep contact fields on partner form → PR 5b (implemented — scope
+  reduced to `name`/`phone`/`mobile`/`email` after discovering that the address block
+  lives in `l10n_br_base.l10n_br_base_res_partner_address` primary view, outside the
+  base form's inherit chain). PR 4b's write guard still blocks writes on Active partners
+  server-side.
+- Fiscal-field hide (PR 5c) and address-block readonly-active (PR 5d): abandoned. The PR
+  4b server-side guard already blocks writes; remaining gaps are cosmetic.
+- `tr_rep_notes` free-text field on `sale.order` → PR 6a (see above).
 - Conference tier + print block override on `sale.order` → PR 6b (see above).
-- View-only hide of fiscal operational fields + cadastral readonly-active UX → PR 5b
-  (deferred, see PR 5 section above for context).
-- Rep-facing partner views → PR 5.
-- Tier + `tr_rep_notes` + print block override on sale.order → PR 6.
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,
   `sale_last_price_info`, `tr_pricelist_report` → PR 7.
 - Chatter restriction (RPC + fallback overrides) → PR 8.

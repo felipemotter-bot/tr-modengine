@@ -498,6 +498,11 @@ msgid "If checked, some messages have a delivery error."
 msgstr "Se marcado, algumas mensagens têm erro de entrega."
 
 #. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.view_sale_order_form_sales_rep_access
+msgid "Internal notes for the sales manager..."
+msgstr "Observações internas para o gerente comercial..."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields.selection,name:tr_sales_rep_access.selection__tr_partner_change_request__new_child_type__invoice
 msgid "Invoice Address"
 msgstr "Endereço de faturamento"
@@ -708,6 +713,14 @@ msgid "Only rejected or cancelled change requests can be deleted."
 msgstr "Apenas solicitações rejeitadas ou canceladas podem ser excluídas."
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__tr_rep_notes
+msgid ""
+"Operational notes from the sales representative about this order. Not "
+"printed on the PDF; intended for internal coordination with the sales "
+"manager."
+msgstr "Observações operacionais do representante sobre este pedido. Não impressas no PDF; destinadas à coordenação interna com o gerente comercial."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields.selection,name:tr_sales_rep_access.selection__tr_partner_change_request__new_child_type__other
 msgid "Other"
 msgstr "Outro"
@@ -845,6 +858,7 @@ msgstr "Linha do Pedido de Venda"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_account_payment__sales_rep_partner_id
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__sales_rep_partner_id
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__sales_rep_partner_id
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.view_sale_order_form_sales_rep_access
 #, python-format
 msgid "Sales Rep"
 msgstr "Representante"
@@ -873,6 +887,11 @@ msgstr "Catálogo do Representante"
 #: model:res.groups,name:tr_sales_rep_access.group_sales_rep_external
 msgid "Sales Rep External"
 msgstr "Representante Externo"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_notes
+msgid "Sales Rep Notes"
+msgstr "Observações do Representante"
 
 #. module: tr_sales_rep_access
 #: model:res.groups,name:tr_sales_rep_access.group_sales_rep_checker

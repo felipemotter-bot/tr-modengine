@@ -303,3 +303,73 @@ class TestTierConference(SalesRepAccessTestCommon):
         ):
             with self.assertRaises(UserError):
                 self._render_report_values(order)
+
+    def test_print_allowed_when_company_print_block_disabled(self):
+        # Defensive branch: when ``company.sale_report_print_block``
+        # is False the override short-circuits the per-order check
+        # entirely. Flipping the flag off here exercises the first
+        # ``continue`` in the loop and proves that disabling the
+        # print block at the company level bypasses our override
+        # cleanly, matching the upstream semantics.
+        order = self._make_admin_order_with_injected_reviews(
+            self.customer_c1,
+            definitions=self.conference_tier + self.manager_tier,
+        )
+        self.env.company.sale_report_print_block = False
+        result = self._render_report_values(order)
+        self.assertIn("docs", result)
+
+    def test_print_allowed_when_no_reviews_on_order(self):
+        # Defensive branch: an admin-owned order without the
+        # conference flag matches no ``tier.definition`` domain,
+        # so ``review_ids`` stays empty and
+        # ``base_tier_validation._compute_validation_status``
+        # returns ``'no'`` (not ``'validated'``). The override's
+        # third ``continue`` (``if not pending``) exits cleanly
+        # before touching the conference-only decision path.
+        order = (
+            self.env["sale.order"]
+            .sudo()
+            .create(
+                {
+                    "partner_id": self.customer_c1.id,
+                    "order_line": [
+                        (
+                            0,
+                            0,
+                            {
+                                "product_id": self.product.id,
+                                "product_uom_qty": 1.0,
+                                "price_unit": 100.0,
+                            },
+                        ),
+                    ],
+                }
+            )
+        )
+        self.env.company.sale_report_print_block = True
+        self.assertFalse(order.review_ids)
+        self.assertEqual(order.validation_status, "no")
+        result = self._render_report_values(order)
+        self.assertIn("docs", result)
+
+    def test_print_allowed_when_order_already_validated(self):
+        # Defensive branch: once every injected review is
+        # ``approved``, ``base_tier_validation`` computes
+        # ``validation_status == 'validated'``. The override's
+        # second ``continue`` (``if order.validation_status ==
+        # 'validated'``) short-circuits before the ``pending``
+        # calculation, so the report renders without error even
+        # with the company print block still on.
+        order = self._make_admin_order_with_injected_reviews(
+            self.customer_c1,
+            definitions=self.conference_tier,
+        )
+        # Pre-approve the injected review so ``validation_status``
+        # computes to ``'validated'`` (not just ``pending=[]``).
+        order.review_ids.sudo().write({"status": "approved"})
+        order.invalidate_recordset(["validation_status"])
+        self.env.company.sale_report_print_block = True
+        self.assertEqual(order.validation_status, "validated")
+        result = self._render_report_values(order)
+        self.assertIn("docs", result)
