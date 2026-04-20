@@ -4,8 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 4b — Bloqueio de write direto em cliente Active** (+ PR 1, 2, 3 e 4a
-mergeadas).
+Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente pro rep**
+(+ PR 1, 2, 3, 4a e 4b mergeadas).
 
 ---
 
@@ -447,20 +447,21 @@ flui via related dinâmico). Se a whitelist crescer pra incluir snapshot fields 
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
-| PR  | Conteúdo                                                           |
-| --- | ------------------------------------------------------------------ |
-| 2   | ✅ Catálogo por agente (ver seção 9)                               |
-| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)          |
-| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)        |
-| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11) |
-| 5   | Views do cliente para o rep (campos sensíveis com `groups`)        |
-| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido    |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,                 |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,           |
-|     | `tr_pricelist_report`                                              |
-| 8   | Chatter restrito (RPC test + rules + override de fallback)         |
-| 9   | Estoque totalmente invisível                                       |
-| 10  | Tradução pt_BR + docs finais                                       |
+| PR  | Conteúdo                                                               |
+| --- | ---------------------------------------------------------------------- |
+| 2   | ✅ Catálogo por agente (ver seção 9)                                   |
+| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)              |
+| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)            |
+| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11)     |
+| 5   | ✅ Hide server-side dos campos não-operacionais sensíveis do partner   |
+| 5b  | View-only hide de fiscais operacionais + readonly-active em cadastrais |
+| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido        |
+| 7   | Bloqueios server-side de `eng_partner_sales_info`,                     |
+|     | `sale_order_line_price_history`, `sale_last_price_info`,               |
+|     | `tr_pricelist_report`                                                  |
+| 8   | Chatter restrito (RPC test + rules + override de fallback)             |
+| 9   | Estoque totalmente invisível                                           |
+| 10  | Tradução pt_BR + docs finais                                           |
 
 Cada PR incrementa este guia na seção correspondente.
 

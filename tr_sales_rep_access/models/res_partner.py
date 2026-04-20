@@ -115,6 +115,58 @@ class ResPartner(models.Model):
         ),
     )
 
+    # PR 5 — server-side hide: non-operational sensitive fields that
+    # rep should not read nor write via RPC. Fields are redeclared
+    # here only to add ``groups=`` restriction; the original
+    # declaration in each upstream module stays untouched (Odoo 16
+    # merges the attributes). Fiscal operational fields
+    # (``tax_framework``, ``fiscal_profile_id``, ``ind_ie_dest``,
+    # ``ind_final``, ``vat``, etc.) are NOT touched by this PR —
+    # they are read inside ``l10n_br_fiscal`` onchanges during order
+    # creation, so server-side hide would break the rep's sale flow.
+    # Hiding them is tracked for PR 5b (dedicated approach with
+    # targeted XPaths per subview or sudo-wrapped onchange
+    # overrides); see AGENTS.md "Server-side hide of non-operational
+    # sensitive fields (PR 5)" for the full deferral context.
+
+    # ---- partner_capital ----
+    capital_amount = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    capital_currency_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    turnover_range_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    turnover_amount = fields.Float(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    company_size = fields.Selection(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_sped_base ----
+    is_accountant = fields.Boolean(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    crc_code = fields.Char(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    crc_state_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_account_withholding ----
+    wh_cityhall = fields.Boolean(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
+    # ---- l10n_br_hr ----
+    union_entity_code = fields.Char(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         default_ids = self._sales_rep_default_catalog_ids()
