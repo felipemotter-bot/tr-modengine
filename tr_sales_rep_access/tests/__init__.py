@@ -14,3 +14,4 @@ from . import test_new_customer_workflow
 from . import test_change_request
 from . import test_rep_partner_block
 from . import test_rep_partner_views
+from . import test_rep_partner_readonly

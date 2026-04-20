@@ -72,4 +72,191 @@
             </xpath>
         </field>
     </record>
+
+    <!--
+        PR 5b — readonly-active UX for cadastral fields on the partner
+        form. Fields that belong to the PR 4a change-request whitelist
+        (name, phone, mobile, email, address) must not accept edits on
+        Active partners, because the PR 4b server-side guard would
+        raise AccessError at write time. This view duplicates those
+        nodes with groups="rep" + a state-based readonly modifier,
+        while hiding the original from the rep via groups="!rep". The
+        manager keeps the original node untouched.
+
+        Scope — main form contact fields only (name, phone, mobile,
+        email). The address block (street2, city, state_id, zip,
+        country_id plus the BR split street_name, street_number,
+        district, city_id) is rendered via the
+        l10n_br_base.l10n_br_base_res_partner_address primary view,
+        not through an inherit of base.view_partner_form — inherit
+        xpaths can match the base's own ``<field name="X">`` nodes
+        but those nodes are bypassed at runtime by the primary view
+        rendering, so our readonly modifier never reaches the user.
+
+        The nested child_ids form is also out of scope:
+        l10n_br_base.l10n_br_base_partner_contact_form (priority
+        9999) replaces the ``<div name="div_address">`` declared
+        inside that nested form. Hooking the child_ids subtree from
+        an inherit of base.view_partner_form is fragile — xpaths
+        either validate against the original base arch and get wiped
+        at replace time, or run after the replace (priority > 9999)
+        and fail validation because the fields are gone.
+
+        Both address and child_ids cases will be covered by a
+        dedicated PR that inherits the address primary view directly.
+        The PR 4b write guard keeps rep edits on Active partners
+        blocked server-side in the meantime, so this narrow UX
+        coverage is a hint, not a security boundary.
+    -->
+    <record id="res_partner_form_sales_rep_readonly_active" model="ir.ui.view">
+        <field name="name">res.partner.form.sales.rep.readonly.active</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <!--
+                 Inject the ``state`` field (read-only related to
+                 ``stage_id.state`` via partner_stage) at the top
+                 level so Odoo's view validator accepts
+                 ``attrs="{'readonly': [('state', '=', 'confirmed')]}"``
+                 on the rep-scoped copies. Marked invisible so the UI
+                 is unchanged; a groups= restriction is not needed —
+                 non-rep users never read the modifier anyway.
+            -->
+            <xpath expr="//field[@name='company_type']" position="before">
+                <field name="state" invisible="1" />
+            </xpath>
+
+            <!-- ==============================================
+                 Main form — name (two nodes: company + individual)
+                 ============================================== -->
+            <xpath expr="//field[@name='name' and @id='company']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name' and @id='company']" position="after">
+                <field
+          id="company_rep"
+          class="text-break"
+          name="name"
+          default_focus="1"
+          placeholder="e.g. Lumber Inc"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'invisible': [('is_company', '=', False)], 'required': [('type', '=', 'contact')], 'readonly': [('state', '=', 'confirmed')]}"
+        />
+            </xpath>
+
+            <xpath
+        expr="//field[@name='name' and @id='individual']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name' and @id='individual']" position="after">
+                <field
+          id="individual_rep"
+          class="text-break"
+          name="name"
+          default_focus="1"
+          placeholder="e.g. Brandom Freeman"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'invisible': [('is_company', '=', True)], 'required': [('type', '=', 'contact')], 'readonly': [('state', '=', 'confirmed')]}"
+        />
+            </xpath>
+
+            <!--
+                 Address block (street2, city, state_id, zip,
+                 country_id) intentionally out of scope — those nodes
+                 rendered in the resolved arch come from
+                 l10n_br_base.l10n_br_base_res_partner_address
+                 (primary view), not from base.view_partner_form's
+                 inherit chain, so xpaths on the base form cannot
+                 carry our readonly modifier through to runtime. A
+                 follow-up PR that inherits the address primary view
+                 will cover them. The PR 4b write guard keeps rep
+                 edits on Active partners blocked server-side in the
+                 meantime.
+            -->
+
+
+            <!-- ==============================================
+                 Main form — phone / mobile / email
+                 ============================================== -->
+            <xpath
+        expr="//field[@name='phone'][not(ancestor::field[@name='child_ids'])]"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='phone'][not(ancestor::field[@name='child_ids'])]"
+        position="after"
+      >
+                <field
+          name="phone"
+          widget="phone"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'readonly': [('state', '=', 'confirmed')]}"
+        />
+            </xpath>
+
+            <xpath
+        expr="//field[@name='mobile'][not(ancestor::field[@name='child_ids'])]"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='mobile'][not(ancestor::field[@name='child_ids'])]"
+        position="after"
+      >
+                <field
+          name="mobile"
+          widget="phone"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'readonly': [('state', '=', 'confirmed')]}"
+        />
+            </xpath>
+
+            <xpath
+        expr="//field[@name='email'][not(ancestor::field[@name='child_ids'])]"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='email'][not(ancestor::field[@name='child_ids'])]"
+        position="after"
+      >
+                <field
+          name="email"
+          widget="email"
+          context="{'gravatar_image': True}"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'required': [('user_ids', '!=', [])], 'readonly': [('state', '=', 'confirmed')]}"
+        />
+            </xpath>
+
+            <!--
+                 Nested child_ids form intentionally out of scope:
+                 l10n_br_base.l10n_br_base_partner_contact_form
+                 (priority 9999) replaces ``<div name="div_address">``
+                 inside the child_ids form, wiping out the address
+                 fields we would otherwise hook there. Running before
+                 the replace means our copies get wiped; running
+                 after means the xpath fails validation. The PR 4b
+                 write guard still blocks rep edits on Active
+                 children via server-side AccessError — only the UX
+                 hint is missing.
+            -->
+        </field>
+    </record>
 </odoo>
