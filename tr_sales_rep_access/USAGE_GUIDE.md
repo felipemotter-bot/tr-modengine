@@ -4,8 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente pro rep**
-(+ PR 1, 2, 3, 4a e 4b mergeadas).
+Status atual: **PR 6a — Campo `tr_rep_notes` no pedido (observação operacional do rep)**
+(+ PR 1, 2, 3, 4a, 4b, 5 e 5b mergeadas).
 
 ---
 
@@ -22,8 +22,9 @@ Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente
 9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
 10. [Workflow Draft → Active de cliente novo (PR 3)](#10-workflow-draft--active-de-cliente-novo-pr-3)
 11. [Solicitações de alteração cadastral (PR 4a)](#11-solicitações-de-alteração-cadastral-pr-4a)
-12. [Roadmap — o que vem nas próximas PRs](#12-roadmap)
-13. [Solução de problemas](#13-solução-de-problemas)
+12. [Observações do rep no pedido (PR 6a)](#12-observações-do-rep-no-pedido-pr-6a)
+13. [Roadmap — o que vem nas próximas PRs](#13-roadmap)
+14. [Solução de problemas](#14-solução-de-problemas)
 
 ---
 
@@ -443,31 +444,68 @@ flui via related dinâmico). Se a whitelist crescer pra incluir snapshot fields 
 
 ---
 
-## 12. Roadmap
+## 12. Observações do rep no pedido (PR 6a)
+
+Campo livre de texto (`tr_rep_notes`) no pedido, pra rep e manager coordenarem via notas
+operacionais durante a negociação.
+
+**Onde aparece:** aba "Other Info" do formulário de pedido → grupo "Sales Rep" (logo
+após "Invoicing and Payments").
+
+**Quem edita:**
+
+- Rep: só enquanto o pedido está em **draft** (cotação). O guard
+  `_sales_rep_check_rep_can_edit` do PR 1 bloqueia qualquer write do rep depois que o
+  pedido confirma — incluindo esse campo. Sem exceção de whitelist.
+- Manager / admin / diretor: edita em qualquer state (draft, sale, done, cancel).
+
+**O que ele faz:**
+
+- Campo texto simples, sem limite de tamanho.
+- **Não** é rastreado no chatter (`tracking=False`). Edições não geram histórico
+  automático — é um rascunho operacional, não trilha de auditoria. Se precisar de
+  histórico depois, abriremos PR dedicada.
+- **Não** é impresso no PDF de cotação/pedido. Rep anota sem preocupação de texto
+  contratual.
+
+**Cenários típicos:**
+
+- "Cliente pediu desconto por volume, aprovação já pedida ao Diretor."
+- "Combinada entrega pra 3ª feira, confirmar saída da NFe até 2ª."
+- "Cliente sinalizou que pode comprar mais 2 pallets se vier amostra."
+
+Quando o pedido confirma, a responsabilidade de atualizar notas passa pro manager — rep
+informa a novidade por chat/telefone e manager registra. Isso mantém coerência com a
+regra geral do PR 1 de que o rep não edita nada pós-confirm.
+
+---
+
+## 13. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
-| PR  | Conteúdo                                                               |
-| --- | ---------------------------------------------------------------------- |
-| 2   | ✅ Catálogo por agente (ver seção 9)                                   |
-| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)              |
-| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)            |
-| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11)     |
-| 5   | ✅ Hide server-side dos campos não-operacionais sensíveis do partner   |
-| 5b  | View-only hide de fiscais operacionais + readonly-active em cadastrais |
-| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido        |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,                     |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,               |
-|     | `tr_pricelist_report`                                                  |
-| 8   | Chatter restrito (RPC test + rules + override de fallback)             |
-| 9   | Estoque totalmente invisível                                           |
-| 10  | Tradução pt_BR + docs finais                                           |
+| PR  | Conteúdo                                                             |
+| --- | -------------------------------------------------------------------- |
+| 2   | ✅ Catálogo por agente (ver seção 9)                                 |
+| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)            |
+| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)          |
+| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11)   |
+| 5   | ✅ Hide server-side dos campos não-operacionais sensíveis do partner |
+| 5b  | ✅ Readonly-active de contact fields no form do partner              |
+| 6a  | ✅ `tr_rep_notes` no pedido (ver seção 12)                           |
+| 6b  | Tier "Conferente" + override de print block                          |
+| 7   | Bloqueios server-side de `eng_partner_sales_info`,                   |
+|     | `sale_order_line_price_history`, `sale_last_price_info`,             |
+|     | `tr_pricelist_report`                                                |
+| 8   | Chatter restrito (RPC test + rules + override de fallback)           |
+| 9   | Estoque totalmente invisível                                         |
+| 10  | Tradução pt_BR + docs finais                                         |
 
 Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 13. Solução de problemas
+## 14. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 
