@@ -17,3 +17,4 @@ from . import test_rep_partner_views
 from . import test_rep_partner_readonly
 from . import test_rep_partner_sales_info
 from . import test_rep_price_history_hide
+from . import test_rep_pricelist_report_block
