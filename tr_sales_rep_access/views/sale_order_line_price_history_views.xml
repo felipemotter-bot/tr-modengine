@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!--
+        PR 7 commit 2 — hide the ``sale_order_line_price_history``
+        widgets from the rep.
+
+        Upstream exposes two interactive surfaces that let a user
+        jump into the price history of a product:
+
+        - ``<field name="id" widget="sale_line_price_history_widget">``
+          injected after ``price_unit`` on the order line tree and
+          on the kanban of the sale order form.
+        - ``<field name="target_sale_order_line_id"
+          widget="set_price_to_line_widget">`` inside the history
+          wizard itself, which offers a one-click "set this old price
+          onto my current line" action.
+
+        Those are fields with a widget (not plain buttons), so the
+        hide needs field-level ``groups=`` on each node. Record rule
+        of PR 1 already filters the wizard's data by rep snapshot,
+        but the interactive "set price" path would bypass the real
+        price lock of ``tr_commercial_policy`` if the rep could
+        still trigger it. Hiding the widgets blocks the entry point
+        entirely; there is no separate menu for the wizard.
+    -->
+    <record id="view_order_form_sales_rep_hide_price_history" model="ir.ui.view">
+        <field name="name">sale.order.form.sales.rep.hide.price.history</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_order_line_price_history.view_order_form" />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='order_line']/tree/field[@name='id'][@widget='sale_line_price_history_widget']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='order_line']/kanban//field[@name='id'][@widget='sale_line_price_history_widget']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wizard_sales_rep_hide_set_price_widget" model="ir.ui.view">
+        <field
+      name="name"
+    >sale.order.line.price.history.form.sales.rep.hide.set.widget</field>
+        <field name="model">sale.order.line.price.history</field>
+        <field
+      name="inherit_id"
+      ref="sale_order_line_price_history.sale_order_line_price_history_view_form"
+    />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//field[@name='target_sale_order_line_id'][@widget='set_price_to_line_widget']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

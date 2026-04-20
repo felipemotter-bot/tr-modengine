@@ -38,6 +38,11 @@
         # on ``res.partner``. View already restricts the tab, this
         # blocks direct RPC read/fields_get.
         "eng_partner_sales_info",
+        # PR 7 commit 2 — hide the two widget fields that surface
+        # ``sale_order_line_price_history``'s UI entrypoints to the
+        # rep (the "show history" widget on the sale order line and
+        # the "set price from history" widget inside the wizard).
+        "sale_order_line_price_history",
     ],
     "data": [
         "security/security.xml",
@@ -46,6 +51,7 @@
         "data/tier_definition.xml",
         "views/tr_partner_change_request_views.xml",
         "views/sale_order_views.xml",
+        "views/sale_order_line_price_history_views.xml",
         "views/res_partner_views.xml",
         "views/res_config_settings_views.xml",
     ],
