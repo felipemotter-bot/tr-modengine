@@ -8,6 +8,22 @@
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="sales_rep_partner_id" readonly="1" />
             </xpath>
+            <!--
+                Insert the rep notes group right after ``sale_info`` so
+                the adjacency stays explicit: the core's Other Info
+                page has two sibling groups (``sales_person`` and
+                ``sale_info``) and a ``//page/group`` selector would
+                be ambiguous between them.
+            -->
+            <xpath expr="//group[@name='sale_info']" position="after">
+                <group name="sales_rep" string="Sales Rep">
+                    <field
+            name="tr_rep_notes"
+            nolabel="1"
+            placeholder="Internal notes for the sales manager..."
+          />
+                </group>
+            </xpath>
         </field>
     </record>
 </odoo>

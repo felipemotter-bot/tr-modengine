@@ -28,6 +28,14 @@ class SaleOrder(models.Model):
             "after draft."
         ),
     )
+    tr_rep_notes = fields.Text(
+        string="Sales Rep Notes",
+        help=(
+            "Operational notes from the sales representative about this "
+            "order. Not printed on the PDF; intended for internal "
+            "coordination with the sales manager."
+        ),
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
