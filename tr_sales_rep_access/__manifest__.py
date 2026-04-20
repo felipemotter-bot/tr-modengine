@@ -33,6 +33,11 @@
         "l10n_br_account_withholding",
         "l10n_br_hr",
         "partner_capital",
+        # PR 7 commit 1 — server-side hide of the 21 aggregated
+        # sales stats fields that ``eng_partner_sales_info`` adds
+        # on ``res.partner``. View already restricts the tab, this
+        # blocks direct RPC read/fields_get.
+        "eng_partner_sales_info",
     ],
     "data": [
         "security/security.xml",

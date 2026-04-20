@@ -3,6 +3,7 @@
 
 from . import base
 from . import res_partner
+from . import eng_partner_sales_info
 from . import res_config_settings
 from . import product_template
 from . import product_product
