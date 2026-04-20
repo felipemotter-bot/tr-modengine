@@ -174,6 +174,33 @@ class TestRepPartnerReadonly(SalesRepAccessTestCommon):
         draft.with_user(self.user_u1).write({"phone": "+55 11 0000-0000"})
         self.assertEqual(draft.phone, "+55 11 0000-0000")
 
+    # ------------------------------------------------------------------
+    # Helper defensive branches — exercised via synthetic nodes so the
+    # early-return paths stay covered even though the real arch
+    # produced by ``fields_view_get`` never hits them.
+    # ------------------------------------------------------------------
+
+    def test_helper_returns_false_on_empty_modifiers(self):
+        # Arch serializers sometimes emit ``modifiers=""`` for fields
+        # without any dynamic attr. The helper must treat that as
+        # "no state-confirmed readonly" without trying to json-parse.
+        node = etree.Element("field", name="phone", modifiers="")
+        self.assertFalse(_has_state_confirmed_readonly(node))
+
+    def test_helper_returns_false_on_invalid_json(self):
+        # Defensive: if a future arch generator produces a non-JSON
+        # modifiers payload, the helper falls back to False instead
+        # of raising and masking the real regression.
+        node = etree.Element("field", name="phone", modifiers="not-json")
+        self.assertFalse(_has_state_confirmed_readonly(node))
+
+    def test_helper_returns_false_when_readonly_not_list(self):
+        # If ``readonly`` ever shows up as a scalar (e.g. plain ``True``
+        # serialized as a JSON boolean), the helper keeps the
+        # state-confirmed semantics strict — no implicit coercion.
+        node = etree.Element("field", name="phone", modifiers='{"readonly": true}')
+        self.assertFalse(_has_state_confirmed_readonly(node))
+
     # Nested child_ids form is out of scope for PR 5b — see the
     # comment in views/res_partner_views.xml. The PR 4b guard keeps
     # rep writes on child partners blocked server-side regardless.
