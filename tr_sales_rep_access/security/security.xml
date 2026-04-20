@@ -17,4 +17,19 @@
             explicitly for this group.
         </field>
     </record>
+
+    <record id="group_sales_rep_checker" model="res.groups">
+        <field name="name">Sales Rep Order Checker</field>
+        <field name="category_id" ref="module_category_sales_rep_access" />
+        <field name="comment">
+            Operational reviewer for orders placed by external sales
+            representatives. Validates stock availability, fiscal
+            setup and delivery timing before the order is confirmed.
+            Does NOT approve pricing discounts — that role belongs to
+            Sales Manager / Director. Assign this group to the
+            checker user alongside a sale.order access group (e.g.
+            sales_team.group_sale_salesman) so the checker can see
+            the orders they need to validate.
+        </field>
+    </record>
 </odoo>

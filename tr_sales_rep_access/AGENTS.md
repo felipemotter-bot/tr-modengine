@@ -267,6 +267,40 @@ redeclaration needs the original field to exist at registry build time.
   clobbers their own rules. The real write protection is already in place (PR 4b's
   `res.partner.write` guard), so moving this to a dedicated PR is acceptable.
 
+## Conference tier on sale order (PR 6b)
+
+- **Group `group_sales_rep_checker`** declared in `security/security.xml`. No
+  `implied_ids` — operational reviewer group is a **permission role**, not an access
+  role. Admin assigns the checker also to `sales_team.group_sale_salesman` (or another
+  sale.order access group) so the person actually sees the orders they have to approve.
+- **Tier definition `tier_def_sales_rep_order_conference`** in
+  `data/tier_definition.xml`. Model `sale.order`, reviewer_group
+  `group_sales_rep_checker`, domain `[('tr_rep_conference_required', '=', True)]`,
+  `has_comment=False`, `notify_on_create=True`.
+- **Flag `tr_rep_conference_required`** on `sale.order` (stored Boolean, default False).
+  The `create()` override sets the flag to True only when the caller is in
+  `group_sales_rep_external` — admin / manager / imports keep it False, which keeps
+  `base_tier_validation` from locking their legitimate writes on confirm. Never written
+  manually.
+- **`sale_order.create()`** calls `records.sudo().request_validation()` after `super()`
+  when the user is a rep and the records carry `tr_rep_conference_required=True`.
+  `notify_on_create` on the tier definition does nothing without this explicit call —
+  same pattern the PR 3 partner draft flow uses.
+- **Override of `report.sale.report_saleorder._get_report_values`** in
+  `reports/sale_report.py`. Relaxes `sale_tier_validation`'s print block when **all**
+  pending reviews belong to the conference tier. Blocks when any other pending review is
+  around (Manager/Director/future tiers). Intentionally **does not** call `super()` in
+  the allow path: the upstream re-raises for `need_validation` /
+  `validation_status != 'validated'`, so we return the report dict directly (replicating
+  the 4 canonical keys of the core report). Maintenance note in the code: if a
+  downstream module starts enriching that dict, this override would drop it — zero risk
+  today, worth revisiting if upstream changes.
+- **End-to-end flow**: rep creates order → `tr_rep_conference_required=True` →
+  `request_validation()` → `tier.review` from Conference (plus Manager/Director when
+  `discount_approval_level != 'none'`) → Checker approves → `validation_status` still
+  depends on the other tiers → rep prints the quotation while only Conference is
+  pending; print is blocked while Manager/Director is pending.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
@@ -276,6 +310,9 @@ redeclaration needs the original field to exist at registry build time.
   (implemented, see above).
 - Server-side hide of non-operational sensitive partner fields → PR 5 (implemented, see
   above).
+- Readonly-active UX on rep contact fields of the partner form → PR 5b (implemented, see
+  above).
+- Conference tier + print block override on `sale.order` → PR 6b (see above).
 - View-only hide of fiscal operational fields + cadastral readonly-active UX → PR 5b
   (deferred, see PR 5 section above for context).
 - Rep-facing partner views → PR 5.

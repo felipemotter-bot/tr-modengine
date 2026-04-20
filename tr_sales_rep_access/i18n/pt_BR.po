@@ -26,13 +26,31 @@ msgid ""
 "            Does NOT extend Sales/Account stock groups — ACLs are declared\n"
 "            explicitly for this group.\n"
 "        "
+msgstr "\n            Representante comercial externo. Vê apenas os parceiros em que            é agente comercial (via commercial_partner_id.agent_ids) e os            pedidos de venda / faturas em que é o responsável registrado.            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são            declaradas explicitamente para este grupo.        "
+
+#. module: tr_sales_rep_access
+#: model:res.groups,comment:tr_sales_rep_access.group_sales_rep_checker
+msgid ""
+"\n"
+"            Operational reviewer for orders placed by external sales\n"
+"            representatives. Validates stock availability, fiscal\n"
+"            setup and delivery timing before the order is confirmed.\n"
+"            Does NOT approve pricing discounts — that role belongs to\n"
+"            Sales Manager / Director. Assign this group to the\n"
+"            checker user alongside a sale.order access group (e.g.\n"
+"            sales_team.group_sale_salesman) so the checker can see\n"
+"            the orders they need to validate.\n"
+"        "
 msgstr ""
 "\n"
-"            Representante comercial externo. Vê apenas os parceiros em que"
-"            é agente comercial (via commercial_partner_id.agent_ids) e os"
-"            pedidos de venda / faturas em que é o responsável registrado."
-"            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são"
-"            declaradas explicitamente para este grupo."
+"            Revisor operacional de pedidos lançados por representantes\n"
+"            comerciais externos. Valida disponibilidade de estoque,\n"
+"            configuração fiscal e prazo de entrega antes do pedido ser\n"
+"            confirmado. NÃO aprova descontos comerciais — esse papel é\n"
+"            do Gerente / Diretor de Vendas. Atribua este grupo ao\n"
+"            usuário conferente junto com um grupo de acesso ao\n"
+"            sale.order (ex: sales_team.group_sale_salesman) para que\n"
+"            o conferente veja os pedidos que precisa validar.\n"
 "        "
 
 #. module: tr_sales_rep_access
@@ -98,19 +116,6 @@ msgid "Action Needed"
 msgstr "Ação necessária"
 
 #. module: tr_sales_rep_access
-#. odoo-python
-#: code:addons/tr_sales_rep_access/models/res_partner.py:0
-#, python-format
-msgid ""
-"As a sales representative, you cannot modify an Active customer directly. "
-"Use the 'Request field update' or 'Request new contact' buttons to open a "
-"change request for the Sales Manager to approve."
-msgstr ""
-"Como representante, você não pode alterar diretamente um cliente Ativo. "
-"Use os botões 'Solicitar alteração' ou 'Solicitar novo contato' para abrir "
-"uma solicitação para o Gerente de Vendas aprovar."
-
-#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__allowed_category_ids
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__allowed_category_ids
 msgid "Allowed Product Categories"
@@ -138,6 +143,16 @@ msgid "Approved"
 msgstr "Aprovada"
 
 #. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/res_partner.py:0
+#, python-format
+msgid ""
+"As a sales representative, you cannot modify an Active customer directly. "
+"Use the 'Request field update' or 'Request new contact' buttons to open a "
+"change request for the Sales Manager to approve."
+msgstr "Como representante, você não pode alterar diretamente um cliente Ativo. Use os botões 'Solicitar alteração' ou 'Solicitar novo contato' para abrir uma solicitação para o Gerente de Vendas aprovar."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_attachment_count
 msgid "Attachment Count"
 msgstr "Contagem de anexos"
@@ -146,6 +161,18 @@ msgstr "Contagem de anexos"
 #: model:ir.model,name:tr_sales_rep_access.model_base
 msgid "Base"
 msgstr "Base"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__crc_code
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__crc_code
+msgid "CRC Code"
+msgstr "Código CRC"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__crc_state_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__crc_state_id
+msgid "CRC State"
+msgstr "UF do CRC"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__can_review
@@ -204,11 +231,41 @@ msgstr "Não é possível editar linha de uma solicitação que não está pende
 
 #. module: tr_sales_rep_access
 #. odoo-python
+#: code:addons/tr_sales_rep_access/models/tr_partner_change_request.py:0
+#, python-format
+msgid ""
+"Cannot modify audit fields %(fields)s on a change request — they are set at "
+"create and pin the record to its author and scope."
+msgstr "Não é possível modificar os campos de auditoria %(fields)s em uma solicitação de alteração — eles são definidos na criação e vinculam o registro ao seu autor e escopo."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/tr_partner_change_request.py:0
+#, python-format
+msgid ""
+"Cannot modify processed_partner_id — it is only written by action_approve "
+"when creating a new child contact."
+msgstr "Não é possível modificar processed_partner_id — ele é gravado apenas por action_approve ao criar um novo contato filho."
+
+#. module: tr_sales_rep_access
+#. odoo-python
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request_line.py:0
 #, python-format
 msgid ""
 "Cannot remove a line of a change request that is not in the pending state."
 msgstr "Não é possível remover linha de uma solicitação que não está pendente."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__capital_amount
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__capital_amount
+msgid "Capital amount"
+msgstr "Capital social"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__capital_currency_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__capital_currency_id
+msgid "Capital currency"
+msgstr "Moeda do capital"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_config_settings__tr_sales_rep_default_category_ids
@@ -257,6 +314,12 @@ msgid ""
 "customer's agent_ids. Re-synced if the customer changes while the order is "
 "in draft. Immutable after draft."
 msgstr "Agente comercial responsável por este pedido, capturado na criação a partir de agent_ids do cliente. Ressincronizado se o cliente mudar enquanto o pedido está em rascunho. Imutável depois de sair do rascunho."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__company_size
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__company_size
+msgid "Company size"
+msgstr "Porte da empresa"
 
 #. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_res_config_settings
@@ -440,6 +503,12 @@ msgid "Invoice Address"
 msgstr "Endereço de faturamento"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__wh_cityhall
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__wh_cityhall
+msgid "Is City Hall?"
+msgstr "É prefeitura?"
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_is_follower
 msgid "Is Follower"
 msgstr "É seguidor"
@@ -448,6 +517,12 @@ msgstr "É seguidor"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__is_reevaluation_required
 msgid "Is Reevaluation Required"
 msgstr "É necessária reavaliação"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__is_accountant
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__is_accountant
+msgid "Is accountant?"
+msgstr "É contador?"
 
 #. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_account_move
@@ -506,6 +581,11 @@ msgstr "Nome"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__need_validation
 msgid "Need Validation"
 msgstr "Precisa de validação"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
+msgid "Needs Rep Conference"
+msgstr "Requer conferência do representante"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__new_child_email
@@ -675,6 +755,19 @@ msgid "Product(s) %s are outside your assigned catalog."
 msgstr "Produto(s) %s está(ão) fora do catálogo atribuído a você."
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__capital_amount
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__capital_amount
+msgid "Publicly registered capital amount."
+msgstr "Capital social registrado publicamente."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/reports/sale_report.py:0
+#, python-format
+msgid "Quotation printing is blocked until the order is approved."
+msgstr "A impressão da cotação está bloqueada até o pedido ser aprovado."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__reason
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.tr_partner_change_request_view_form
 msgid "Reason"
@@ -730,6 +823,11 @@ msgid "Reviewers"
 msgstr "Revisores"
 
 #. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_report_sale_report_saleorder
+msgid "Sale Order Report"
+msgstr "Relatório de Pedido de Venda"
+
+#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_sale_order
 msgid "Sales Order"
 msgstr "Pedido de Venda"
@@ -775,6 +873,16 @@ msgstr "Catálogo do Representante"
 #: model:res.groups,name:tr_sales_rep_access.group_sales_rep_external
 msgid "Sales Rep External"
 msgstr "Representante Externo"
+
+#. module: tr_sales_rep_access
+#: model:res.groups,name:tr_sales_rep_access.group_sales_rep_checker
+msgid "Sales Rep Order Checker"
+msgstr "Conferente de Pedidos de Representante"
+
+#. module: tr_sales_rep_access
+#: model:tier.definition,name:tr_sales_rep_access.tier_def_sales_rep_order_conference
+msgid "Sales rep order conference"
+msgstr "Conferência de pedido do representante"
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -856,9 +964,37 @@ msgid "To Validate Message"
 msgstr "Mensagem para validar"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
+msgid ""
+"True when the order was created by an external sales rep and must pass the "
+"``Sales rep order conference`` tier before it can be confirmed. Admin / "
+"manager orders leave this flag False so ``base_tier_validation`` does not "
+"block their legitimate writes on confirm. Set by the ``create()`` override "
+"when the caller has the rep group; never written by hand."
+msgstr "Verdadeiro quando o pedido foi criado por um representante comercial externo e precisa passar pelo tier ``Conferência de pedido do representante`` antes de ser confirmado. Pedidos de admin / gerente mantêm esse flag como Falso para que o ``base_tier_validation`` não bloqueie as escritas legítimas ao confirmar. Definido pelo override de ``create()`` quando o usuário pertence ao grupo de representante; nunca escrito manualmente."
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__turnover_amount
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__turnover_amount
+msgid "Turnover Amount"
+msgstr "Faturamento"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__turnover_range_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__turnover_range_id
+msgid "Turnover range"
+msgstr "Faixa de faturamento"
+
+#. module: tr_sales_rep_access
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.tr_partner_change_request_view_search
 msgid "Type"
 msgstr "Tipo"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__union_entity_code
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__union_entity_code
+msgid "Union Entity code"
+msgstr "Código do sindicato"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__validated
@@ -889,3 +1025,13 @@ msgstr "Mensagens do site"
 #: model:ir.model.fields,help:tr_sales_rep_access.field_tr_partner_change_request__website_message_ids
 msgid "Website communication history"
 msgstr "Histórico de comunicação do site"
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_partner_form_sales_rep_readonly_active
+msgid "e.g. Brandom Freeman"
+msgstr "ex: Fulano da Silva"
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_partner_form_sales_rep_readonly_active
+msgid "e.g. Lumber Inc"
+msgstr "ex: Madeireira Ltda"

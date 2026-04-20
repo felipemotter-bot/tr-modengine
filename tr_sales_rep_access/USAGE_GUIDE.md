@@ -4,8 +4,8 @@ Módulo que dá acesso controlado ao backend Odoo para representantes comerciais
 Este guia é vivo: cresce a cada PR entregue do roadmap em
 `conversas_bots/plano_sales_rep_access.md`.
 
-Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente pro rep**
-(+ PR 1, 2, 3, 4a e 4b mergeadas).
+Status atual: **PR 6b — Tier de conferência e bloqueio de impressão do pedido do rep**
+(+ PR 1, 2, 3, 4a, 4b, 5 e 5b mergeadas).
 
 ---
 
@@ -22,8 +22,9 @@ Status atual: **PR 5 — Esconder campos não-operacionais sensíveis do cliente
 9. [Catálogo por agente (PR 2)](#9-catálogo-por-agente-pr-2)
 10. [Workflow Draft → Active de cliente novo (PR 3)](#10-workflow-draft--active-de-cliente-novo-pr-3)
 11. [Solicitações de alteração cadastral (PR 4a)](#11-solicitações-de-alteração-cadastral-pr-4a)
-12. [Roadmap — o que vem nas próximas PRs](#12-roadmap)
-13. [Solução de problemas](#13-solução-de-problemas)
+12. [Conferência do pedido e impressão (PR 6b)](#12-conferência-do-pedido-e-impressão-pr-6b)
+13. [Roadmap — o que vem nas próximas PRs](#13-roadmap)
+14. [Solução de problemas](#14-solução-de-problemas)
 
 ---
 
@@ -443,31 +444,92 @@ flui via related dinâmico). Se a whitelist crescer pra incluir snapshot fields 
 
 ---
 
-## 12. Roadmap
+## 12. Conferência do pedido e impressão (PR 6b)
+
+Todo pedido lançado pelo representante externo passa por uma **conferência operacional**
+antes de ser confirmado. Conferente valida estoque, configuração fiscal e prazo de
+entrega — **não** valida desconto comercial (isso é papel do Gerente/Diretor de Vendas
+via `tr_commercial_policy`).
+
+### Quem conferencia
+
+Usuário com o grupo **Conferente de Pedidos de Representante**
+(`tr_sales_rep_access.group_sales_rep_checker`). Ao criar o usuário, adicione também um
+grupo de acesso a `sale.order` (tipicamente `sales_team.group_sale_salesman`) — o grupo
+do conferente é **papel funcional**, não libera menu de Pedidos por si só.
+
+### Como funciona
+
+Quando o representante cria um pedido:
+
+1. Campo técnico `tr_rep_conference_required` fica `True` (setado automaticamente pelo
+   `create`, nunca preenchido manualmente).
+2. O sistema dispara automaticamente um **review pendente** do tier "Conferência de
+   pedido do representante", endereçado ao grupo Conferente.
+3. Se o pedido também envolver desconto além do limite do vendedor (desconto comercial
+   do `tr_commercial_policy`), tier Gerente/Diretor entra em paralelo.
+4. Conferente recebe e-mail de alerta (`notify_on_create` do tier_definition) e aprova
+   com 1 clique (`has_comment=False` — sem comentário obrigatório).
+
+Pedidos criados por admin/gerente diretamente (ex: migração, importação) **não** ativam
+a conferência. O fluxo é pensado pro rep externo.
+
+### Impressão da cotação antes do confirm
+
+Comportamento padrão do `sale_tier_validation` (quando o flag `sale_report_print_block`
+está ligado na empresa) bloqueia impressão de qualquer pedido que tenha review pendente.
+Esse módulo relaxa o bloqueio para o caso específico da conferência:
+
+- **Só Conferente pendente** → rep imprime a cotação. Essa tier valida operacional; não
+  vincula a Trento a preço/condição.
+- **Gerente ou Diretor pendente** → bloqueia. Imprimir uma cotação com desconto não
+  aprovado vincularia a empresa a um valor que ainda não foi autorizado.
+- **Nenhum tier pendente (`validation_status == 'validated'`)** → imprime normal.
+- **Pedido sem `tr_rep_conference_required`** (ex: pedido admin) → comportamento normal
+  do core, sem override.
+
+### Troubleshooting
+
+**Cenário**: Conferente aprovou, pedido ainda aparece como "não validado".
+
+Verifique se há tier Gerente/Diretor pendente. Rep pode ter gerado desconto acima do
+limite do perfil; o tier comercial roda em paralelo e precisa ser aprovado separadamente
+antes do pedido virar `validated`.
+
+**Cenário**: Admin/gerente quer forçar um pedido pela conferência.
+
+Setar manualmente `tr_rep_conference_required=True` no pedido e chamar
+`request_validation()`. Não há UI pra isso hoje (raro o suficiente pra não ter botão
+dedicado).
+
+---
+
+## 13. Roadmap
 
 Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_access.md`):
 
-| PR  | Conteúdo                                                               |
-| --- | ---------------------------------------------------------------------- |
-| 2   | ✅ Catálogo por agente (ver seção 9)                                   |
-| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)              |
-| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)            |
-| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11)     |
-| 5   | ✅ Hide server-side dos campos não-operacionais sensíveis do partner   |
-| 5b  | View-only hide de fiscais operacionais + readonly-active em cadastrais |
-| 6   | Snapshot + tiers + `tr_rep_notes` + override de print no pedido        |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,                     |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,               |
-|     | `tr_pricelist_report`                                                  |
-| 8   | Chatter restrito (RPC test + rules + override de fallback)             |
-| 9   | Estoque totalmente invisível                                           |
-| 10  | Tradução pt_BR + docs finais                                           |
+| PR  | Conteúdo                                                             |
+| --- | -------------------------------------------------------------------- |
+| 2   | ✅ Catálogo por agente (ver seção 9)                                 |
+| 3   | ✅ Workflow Draft → Active de cliente novo (ver seção 10)            |
+| 4a  | ✅ `tr.partner.change.request` + tier + view (ver seção 11)          |
+| 4b  | ✅ Bloqueio de write direto em `res.partner` Active (ver seção 11)   |
+| 5   | ✅ Hide server-side dos campos não-operacionais sensíveis do partner |
+| 5b  | ✅ Readonly-active de contact fields no form do partner              |
+| 6a  | `tr_rep_notes` field no sale.order (PR #21 aberta)                   |
+| 6b  | ✅ Tier Conferente + override de print block (ver seção 12)          |
+| 7   | Bloqueios server-side de `eng_partner_sales_info`,                   |
+|     | `sale_order_line_price_history`, `sale_last_price_info`,             |
+|     | `tr_pricelist_report`                                                |
+| 8   | Chatter restrito (RPC test + rules + override de fallback)           |
+| 9   | Estoque totalmente invisível                                         |
+| 10  | Tradução pt_BR + docs finais                                         |
 
 Cada PR incrementa este guia na seção correspondente.
 
 ---
 
-## 13. Solução de problemas
+## 14. Solução de problemas
 
 ### "Não vejo nenhum cliente"
 
