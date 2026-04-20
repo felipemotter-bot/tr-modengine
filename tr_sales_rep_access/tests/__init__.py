@@ -16,3 +16,4 @@ from . import test_rep_partner_block
 from . import test_rep_partner_views
 from . import test_rep_partner_readonly
 from . import test_rep_notes
+from . import test_tier_conference

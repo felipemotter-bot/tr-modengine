@@ -29,6 +29,31 @@ msgid ""
 msgstr "\n            Representante comercial externo. Vê apenas os parceiros em que            é agente comercial (via commercial_partner_id.agent_ids) e os            pedidos de venda / faturas em que é o responsável registrado.            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são            declaradas explicitamente para este grupo.        "
 
 #. module: tr_sales_rep_access
+#: model:res.groups,comment:tr_sales_rep_access.group_sales_rep_checker
+msgid ""
+"\n"
+"            Operational reviewer for orders placed by external sales\n"
+"            representatives. Validates stock availability, fiscal\n"
+"            setup and delivery timing before the order is confirmed.\n"
+"            Does NOT approve pricing discounts — that role belongs to\n"
+"            Sales Manager / Director. Assign this group to the\n"
+"            checker user alongside a sale.order access group (e.g.\n"
+"            sales_team.group_sale_salesman) so the checker can see\n"
+"            the orders they need to validate.\n"
+"        "
+msgstr ""
+"\n"
+"            Revisor operacional de pedidos lançados por representantes\n"
+"            comerciais externos. Valida disponibilidade de estoque,\n"
+"            configuração fiscal e prazo de entrega antes do pedido ser\n"
+"            confirmado. NÃO aprova descontos comerciais — esse papel é\n"
+"            do Gerente / Diretor de Vendas. Atribua este grupo ao\n"
+"            usuário conferente junto com um grupo de acesso ao\n"
+"            sale.order (ex: sales_team.group_sale_salesman) para que\n"
+"            o conferente veja os pedidos que precisa validar.\n"
+"        "
+
+#. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
@@ -563,6 +588,11 @@ msgid "Need Validation"
 msgstr "Precisa de validação"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
+msgid "Needs Rep Conference"
+msgstr "Requer conferência do representante"
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__new_child_email
 msgid "New Child Email"
 msgstr "E-mail do novo contato"
@@ -744,6 +774,13 @@ msgid "Publicly registered capital amount."
 msgstr "Capital social registrado publicamente."
 
 #. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/reports/sale_report.py:0
+#, python-format
+msgid "Quotation printing is blocked until the order is approved."
+msgstr "A impressão da cotação está bloqueada até o pedido ser aprovado."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__reason
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.tr_partner_change_request_view_form
 msgid "Reason"
@@ -799,6 +836,11 @@ msgid "Reviewers"
 msgstr "Revisores"
 
 #. module: tr_sales_rep_access
+#: model:ir.model,name:tr_sales_rep_access.model_report_sale_report_saleorder
+msgid "Sale Order Report"
+msgstr "Relatório de Pedido de Venda"
+
+#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_sale_order
 msgid "Sales Order"
 msgstr "Pedido de Venda"
@@ -850,6 +892,16 @@ msgstr "Representante Externo"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_notes
 msgid "Sales Rep Notes"
 msgstr "Observações do Representante"
+
+#. module: tr_sales_rep_access
+#: model:res.groups,name:tr_sales_rep_access.group_sales_rep_checker
+msgid "Sales Rep Order Checker"
+msgstr "Conferente de Pedidos de Representante"
+
+#. module: tr_sales_rep_access
+#: model:tier.definition,name:tr_sales_rep_access.tier_def_sales_rep_order_conference
+msgid "Sales rep order conference"
+msgstr "Conferência de pedido do representante"
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -931,6 +983,16 @@ msgid "To Validate Message"
 msgstr "Mensagem para validar"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
+msgid ""
+"True when the order was created by an external sales rep and must pass the "
+"``Sales rep order conference`` tier before it can be confirmed. Admin / "
+"manager orders leave this flag False so ``base_tier_validation`` does not "
+"block their legitimate writes on confirm. Set by the ``create()`` override "
+"when the caller has the rep group; never written by hand."
+msgstr "Verdadeiro quando o pedido foi criado por um representante comercial externo e precisa passar pelo tier ``Conferência de pedido do representante`` antes de ser confirmado. Pedidos de admin / gerente mantêm esse flag como Falso para que o ``base_tier_validation`` não bloqueie as escritas legítimas ao confirmar. Definido pelo override de ``create()`` quando o usuário pertence ao grupo de representante; nunca escrito manualmente."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__turnover_amount
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__turnover_amount
 msgid "Turnover Amount"
@@ -982,3 +1044,13 @@ msgstr "Mensagens do site"
 #: model:ir.model.fields,help:tr_sales_rep_access.field_tr_partner_change_request__website_message_ids
 msgid "Website communication history"
 msgstr "Histórico de comunicação do site"
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_partner_form_sales_rep_readonly_active
+msgid "e.g. Brandom Freeman"
+msgstr "ex: Fulano da Silva"
+
+#. module: tr_sales_rep_access
+#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_partner_form_sales_rep_readonly_active
+msgid "e.g. Lumber Inc"
+msgstr "ex: Madeireira Ltda"

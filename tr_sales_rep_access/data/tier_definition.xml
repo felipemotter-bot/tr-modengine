@@ -50,4 +50,45 @@
         <field name="notify_on_create" eval="True" />
         <field name="active" eval="True" />
     </record>
+
+    <!--
+        Operational conference tier for every sale.order placed by a
+        sales rep. The rep's create() override calls
+        request_validation() right after super(), so reviews show up
+        immediately for the Sales Rep Order Checker group. Runs in
+        parallel with the discount approval tiers of
+        tr_commercial_policy (Manager / Director), which fire on the
+        same orders when ``discount_approval_level`` demands it.
+
+        has_comment=False because the conference is a fast
+        operational 1-click approval — the discussion happens in
+        chat/phone before the reviewer gets here. notify_on_create
+        dispatches the e-mail alert when the review lands, so the
+        checker sees new rep orders without polling the list.
+    -->
+    <record id="tier_def_sales_rep_order_conference" model="tier.definition">
+        <field name="name">Sales rep order conference</field>
+        <field name="model_id" ref="sale.model_sale_order" />
+        <field name="review_type">group</field>
+        <field
+      name="reviewer_group_id"
+      ref="tr_sales_rep_access.group_sales_rep_checker"
+    />
+        <field name="definition_type">domain</field>
+        <!--
+            Domain keyed on ``tr_rep_conference_required`` (not on
+            ``sales_rep_partner_id``) so the tier only fires for
+            orders created by rep users. Admin-created orders for rep
+            customers end up with a sales_rep_partner_id snapshot but
+            ``tr_rep_conference_required = False``, bypassing the
+            tier — keeps base_tier_validation from freezing admin
+            writes on internal orders.
+        -->
+        <field
+      name="definition_domain"
+    >[('tr_rep_conference_required', '=', True)]</field>
+        <field name="has_comment" eval="False" />
+        <field name="notify_on_create" eval="True" />
+        <field name="active" eval="True" />
+    </record>
 </odoo>
