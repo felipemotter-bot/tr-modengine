@@ -29,31 +29,6 @@ msgid ""
 msgstr "\n            Representante comercial externo. Vê apenas os parceiros em que            é agente comercial (via commercial_partner_id.agent_ids) e os            pedidos de venda / faturas em que é o responsável registrado.            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são            declaradas explicitamente para este grupo.        "
 
 #. module: tr_sales_rep_access
-#: model:res.groups,comment:tr_sales_rep_access.group_sales_rep_checker
-msgid ""
-"\n"
-"            Operational reviewer for orders placed by external sales\n"
-"            representatives. Validates stock availability, fiscal\n"
-"            setup and delivery timing before the order is confirmed.\n"
-"            Does NOT approve pricing discounts — that role belongs to\n"
-"            Sales Manager / Director. Assign this group to the\n"
-"            checker user alongside a sale.order access group (e.g.\n"
-"            sales_team.group_sale_salesman) so the checker can see\n"
-"            the orders they need to validate.\n"
-"        "
-msgstr ""
-"\n"
-"            Revisor operacional de pedidos lançados por representantes\n"
-"            comerciais externos. Valida disponibilidade de estoque,\n"
-"            configuração fiscal e prazo de entrega antes do pedido ser\n"
-"            confirmado. NÃO aprova descontos comerciais — esse papel é\n"
-"            do Gerente / Diretor de Vendas. Atribua este grupo ao\n"
-"            usuário conferente junto com um grupo de acesso ao\n"
-"            sale.order (ex: sales_team.group_sale_salesman) para que\n"
-"            o conferente veja os pedidos que precisa validar.\n"
-"        "
-
-#. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
@@ -122,6 +97,12 @@ msgid "Allowed Product Categories"
 msgstr "Categorias de Produto Permitidas"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__analysis_message
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__analysis_message
+msgid "Analysis Message"
+msgstr "Mensagem de análise"
+
+#. module: tr_sales_rep_access
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.tr_partner_change_request_view_form
 msgid "Approve"
 msgstr "Aprovar"
@@ -156,6 +137,78 @@ msgstr "Como representante, você não pode alterar diretamente um cliente Ativo
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_attachment_count
 msgid "Attachment Count"
 msgstr "Contagem de anexos"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_invoiced
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_invoiced
+msgid "Average Invoiced"
+msgstr "Faturamento médio"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_invoiced_no_discrepancies
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_invoiced_no_discrepancies
+msgid "Average Invoiced (No Discrepancies)"
+msgstr "Faturamento médio (sem discrepâncias)"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_ordered
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_ordered
+msgid "Average Ordered"
+msgstr "Valor médio de pedidos"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_ordered_no_discrepancies
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_ordered_no_discrepancies
+msgid "Average Ordered (No Discrepancies)"
+msgstr "Valor médio de pedidos (sem discrepâncias)"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_time_between_invoices
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_time_between_invoices
+msgid "Average Time Between Invoices (Days)"
+msgstr "Tempo médio entre faturas (dias)"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__average_time_between_orders
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__average_time_between_orders
+msgid "Average Time Between Orders (Days)"
+msgstr "Tempo médio entre pedidos (dias)"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_invoiced_no_discrepancies
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_invoiced_no_discrepancies
+msgid "Average invoice amount excluding outliers"
+msgstr "Valor médio de fatura excluindo outliers"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_invoiced
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_invoiced
+msgid "Average invoice amount for this customer"
+msgstr "Valor médio de fatura deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_time_between_invoices
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_time_between_invoices
+msgid "Average number of days between invoices"
+msgstr "Número médio de dias entre faturas"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_time_between_orders
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_time_between_orders
+msgid "Average number of days between sale orders"
+msgstr "Número médio de dias entre pedidos"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_ordered_no_discrepancies
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_ordered_no_discrepancies
+msgid "Average order amount excluding outliers"
+msgstr "Valor médio de pedido excluindo outliers"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__average_ordered
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__average_ordered
+msgid "Average sale order amount for this customer"
+msgstr "Valor médio de pedido deste cliente"
 
 #. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_base
@@ -372,6 +425,36 @@ msgid ""
 msgstr "Cliente %s ainda não está ativo. É preciso aprová-lo antes de lançar pedidos."
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_invoice_date
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_invoice_date
+msgid "Date of the customer's most recent invoice"
+msgstr "Data da fatura mais recente deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_order_date
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_order_date
+msgid "Date of the customer's most recent sale order"
+msgstr "Data do pedido mais recente deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_open_quotation_date
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_open_quotation_date
+msgid "Date of the most recent draft/sent quotation"
+msgstr "Data da cotação em aberto mais recente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__days_since_last_invoice
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__days_since_last_invoice
+msgid "Days Since Last Invoice"
+msgstr "Dias desde a última fatura"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__days_since_last_order
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__days_since_last_order
+msgid "Days Since Last Order"
+msgstr "Dias desde o último pedido"
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_config_settings__tr_sales_rep_default_category_ids
 msgid "Default Allowed Categories for New Agents"
 msgstr "Categorias Permitidas Padrão para Novos Agentes"
@@ -498,11 +581,6 @@ msgid "If checked, some messages have a delivery error."
 msgstr "Se marcado, algumas mensagens têm erro de entrega."
 
 #. module: tr_sales_rep_access
-#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.view_sale_order_form_sales_rep_access
-msgid "Internal notes for the sales manager..."
-msgstr "Observações internas para o gerente comercial..."
-
-#. module: tr_sales_rep_access
 #: model:ir.model.fields.selection,name:tr_sales_rep_access.selection__tr_partner_change_request__new_child_type__invoice
 msgid "Invoice Address"
 msgstr "Endereço de faturamento"
@@ -535,10 +613,52 @@ msgid "Journal Entry"
 msgstr "Lançamento Contábil"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_invoice_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_invoice_id
+msgid "Last Invoice"
+msgstr "Última fatura"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_invoice_date
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_invoice_date
+msgid "Last Invoice Date"
+msgstr "Data da última fatura"
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request____last_update
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request_line____last_update
 msgid "Last Modified on"
 msgstr "Última modificação em"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_open_quotation_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_open_quotation_id
+msgid "Last Open Quotation"
+msgstr "Última cotação em aberto"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_order_id
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_order_id
+msgid "Last Order"
+msgstr "Último pedido"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_order_date
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_order_date
+msgid "Last Order Date"
+msgstr "Data do último pedido"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_order_status
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_order_status
+msgid "Last Order Status"
+msgstr "Status do último pedido"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__last_open_quotation_date
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__last_open_quotation_date
+msgid "Last Quotation Date"
+msgstr "Data da última cotação"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__write_uid
@@ -551,6 +671,12 @@ msgstr "Última atualização por"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request_line__write_date
 msgid "Last Updated on"
 msgstr "Última atualização em"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_order_id
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_order_id
+msgid "Last sale order of this customer"
+msgstr "Último pedido deste cliente"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__line_ids
@@ -573,6 +699,12 @@ msgid "Messages"
 msgstr "Mensagens"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_invoice_id
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_invoice_id
+msgid "Most recent invoice of this customer"
+msgstr "Fatura mais recente deste cliente"
+
+#. module: tr_sales_rep_access
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.tr_partner_change_request_view_search
 msgid "My requests"
 msgstr "Minhas solicitações"
@@ -586,11 +718,6 @@ msgstr "Nome"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__need_validation
 msgid "Need Validation"
 msgstr "Precisa de validação"
-
-#. module: tr_sales_rep_access
-#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
-msgid "Needs Rep Conference"
-msgstr "Requer conferência do representante"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__new_child_email
@@ -656,6 +783,30 @@ msgid "Number of Actions"
 msgstr "Número de ações"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__invoice_count
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__invoice_count
+msgid "Number of Invoices"
+msgstr "Número de faturas"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__order_count
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__order_count
+msgid "Number of Orders"
+msgstr "Número de pedidos"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__days_since_last_invoice
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__days_since_last_invoice
+msgid "Number of days since the most recent invoice"
+msgstr "Dias desde a fatura mais recente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__days_since_last_order
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__days_since_last_order
+msgid "Number of days since the most recent sale order"
+msgstr "Dias desde o pedido mais recente"
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_has_error_counter
 msgid "Number of errors"
 msgstr "Número de erros"
@@ -713,12 +864,10 @@ msgid "Only rejected or cancelled change requests can be deleted."
 msgstr "Apenas solicitações rejeitadas ou canceladas podem ser excluídas."
 
 #. module: tr_sales_rep_access
-#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__tr_rep_notes
-msgid ""
-"Operational notes from the sales representative about this order. Not "
-"printed on the PDF; intended for internal coordination with the sales "
-"manager."
-msgstr "Observações operacionais do representante sobre este pedido. Não impressas no PDF; destinadas à coordenação interna com o gerente comercial."
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__has_open_quotation
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__has_open_quotation
+msgid "Open Quotation Exists"
+msgstr "Existe cotação em aberto"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields.selection,name:tr_sales_rep_access.selection__tr_partner_change_request__new_child_type__other
@@ -772,13 +921,6 @@ msgstr "Produto(s) %s está(ão) fora do catálogo atribuído a você."
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__capital_amount
 msgid "Publicly registered capital amount."
 msgstr "Capital social registrado publicamente."
-
-#. module: tr_sales_rep_access
-#. odoo-python
-#: code:addons/tr_sales_rep_access/reports/sale_report.py:0
-#, python-format
-msgid "Quotation printing is blocked until the order is approved."
-msgstr "A impressão da cotação está bloqueada até o pedido ser aprovado."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__reason
@@ -836,11 +978,6 @@ msgid "Reviewers"
 msgstr "Revisores"
 
 #. module: tr_sales_rep_access
-#: model:ir.model,name:tr_sales_rep_access.model_report_sale_report_saleorder
-msgid "Sale Order Report"
-msgstr "Relatório de Pedido de Venda"
-
-#. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_sale_order
 msgid "Sales Order"
 msgstr "Pedido de Venda"
@@ -858,7 +995,6 @@ msgstr "Linha do Pedido de Venda"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_account_payment__sales_rep_partner_id
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__sales_rep_partner_id
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__sales_rep_partner_id
-#: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.view_sale_order_form_sales_rep_access
 #, python-format
 msgid "Sales Rep"
 msgstr "Representante"
@@ -889,26 +1025,20 @@ msgid "Sales Rep External"
 msgstr "Representante Externo"
 
 #. module: tr_sales_rep_access
-#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__tr_rep_notes
-msgid "Sales Rep Notes"
-msgstr "Observações do Representante"
-
-#. module: tr_sales_rep_access
-#: model:res.groups,name:tr_sales_rep_access.group_sales_rep_checker
-msgid "Sales Rep Order Checker"
-msgstr "Conferente de Pedidos de Representante"
-
-#. module: tr_sales_rep_access
-#: model:tier.definition,name:tr_sales_rep_access.tier_def_sales_rep_order_conference
-msgid "Sales rep order conference"
-msgstr "Conferência de pedido do representante"
-
-#. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/base.py:0
 #, python-format
 msgid "Sales rep users are not allowed to export data."
 msgstr "Usuários representantes não podem exportar dados."
+
+#. module: tr_sales_rep_access
+#. odoo-python
+#: code:addons/tr_sales_rep_access/models/tr_pricelist_report.py:0
+#, python-format
+msgid ""
+"Sales reps are not allowed to generate the partner price list report — the "
+"wizard would expose products outside the rep's allowed catalog."
+msgstr "Representantes não podem gerar o relatório de lista de preços do parceiro — o assistente expõe produtos fora do catálogo permitido ao representante."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -952,6 +1082,24 @@ msgid ""
 msgstr "Transições de estado em uma solicitação só são permitidas via action_approve / action_reject / action_cancel."
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_order_status
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__last_order_status
+msgid "Status of the customer's most recent sale order"
+msgstr "Status do pedido mais recente deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__total_invoiced
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__total_invoiced
+msgid "Sum of all invoice amounts for this customer"
+msgstr "Soma de todos os valores faturados deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__total_ordered
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__total_ordered
+msgid "Sum of all sale order amounts for this customer"
+msgstr "Soma de todos os valores de pedidos deste cliente"
+
+#. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request.py:0
 #, python-format
@@ -983,20 +1131,34 @@ msgid "To Validate Message"
 msgstr "Mensagem para validar"
 
 #. module: tr_sales_rep_access
-#: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__tr_rep_conference_required
-msgid ""
-"True when the order was created by an external sales rep and must pass the "
-"``Sales rep order conference`` tier before it can be confirmed. Admin / "
-"manager orders leave this flag False so ``base_tier_validation`` does not "
-"block their legitimate writes on confirm. Set by the ``create()`` override "
-"when the caller has the rep group; never written by hand."
-msgstr "Verdadeiro quando o pedido foi criado por um representante comercial externo e precisa passar pelo tier ``Conferência de pedido do representante`` antes de ser confirmado. Pedidos de admin / gerente mantêm esse flag como Falso para que o ``base_tier_validation`` não bloqueie as escritas legítimas ao confirmar. Definido pelo override de ``create()`` quando o usuário pertence ao grupo de representante; nunca escrito manualmente."
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__total_invoiced
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__total_invoiced
+msgid "Total Invoiced"
+msgstr "Total faturado"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__total_ordered
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__total_ordered
+msgid "Total Ordered"
+msgstr "Total pedido"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__invoice_count
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__invoice_count
+msgid "Total number of invoices for this customer"
+msgstr "Número total de faturas deste cliente"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__order_count
+#: model:ir.model.fields,help:tr_sales_rep_access.field_res_users__order_count
+msgid "Total number of sale orders for this customer"
+msgstr "Número total de pedidos deste cliente"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__turnover_amount
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__turnover_amount
 msgid "Turnover Amount"
-msgstr "Faturamento"
+msgstr "Faturamento anual"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__turnover_range_id

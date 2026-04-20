@@ -115,6 +115,84 @@ class ResPartner(models.Model):
         ),
     )
 
+    # -----------------------------------------------------------------
+    # PR 7 commit 1 — ``eng_partner_sales_info`` server-side hide.
+    #
+    # The companion module exposes 21 aggregated sales-statistics
+    # fields on ``res.partner`` (last_order_id, order_count,
+    # total_ordered, average_ordered, days_since_last_order, etc.).
+    # Upstream already hides the analysis tab via
+    # ``eng_partner_sales_info.group_partner_sales_analysis``, but
+    # that is view-only — the fields stayed open to RPC read /
+    # fields_get / search. Adding field-level ``groups=`` that
+    # excludes the rep closes the RPC path. DA-6: never trust
+    # view-level groups as security.
+    # -----------------------------------------------------------------
+
+    last_order_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_order_date = fields.Date(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_order_status = fields.Char(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    order_count = fields.Integer(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    total_ordered = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_ordered = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_ordered_no_discrepancies = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_time_between_orders = fields.Float(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    days_since_last_order = fields.Integer(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_invoice_date = fields.Date(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    invoice_count = fields.Integer(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    total_invoiced = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_invoiced = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_invoiced_no_discrepancies = fields.Monetary(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    average_time_between_invoices = fields.Float(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_invoice_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    days_since_last_invoice = fields.Integer(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    analysis_message = fields.Text(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    has_open_quotation = fields.Boolean(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_open_quotation_id = fields.Many2one(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+    last_open_quotation_date = fields.Date(
+        groups="!tr_sales_rep_access.group_sales_rep_external",
+    )
+
     # PR 5 — server-side hide: non-operational sensitive fields that
     # rep should not read nor write via RPC. Fields are redeclared
     # here only to add ``groups=`` restriction; the original
@@ -344,3 +422,26 @@ class ResPartner(models.Model):
             return allowed
         excluded = Category.search([("id", "child_of", self.excluded_category_ids.ids)])
         return allowed - excluded
+
+    # -----------------------------------------------------------------
+    # PR 7 commit 3 — ``tr_pricelist_report`` server-side guard.
+    #
+    # Single chokepoint: ``action_print_pricelist_from_menu`` in
+    # upstream already delegates to this method, so guarding here
+    # covers both the header button on the partner form and the
+    # action-menu server binding (upstream exposes this method with
+    # ``binding_model_id = res.partner`` on list/form view types).
+    # The view hide of the button is defense in depth only; this
+    # server-side guard is what actually blocks the rep.
+    # -----------------------------------------------------------------
+
+    def action_print_pricelist(self):
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            raise AccessError(
+                _(
+                    "Sales reps are not allowed to generate the partner "
+                    "price list report — the wizard would expose products "
+                    "outside the rep's allowed catalog."
+                )
+            )
+        return super().action_print_pricelist()

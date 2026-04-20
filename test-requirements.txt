@@ -3,6 +3,7 @@ lxml<5.2
 -e git+https://github.com/Engenere/python-sped.git#egg=python-sped
 # Direct dependencies
 odoo-addon-eng_punctuality_discount @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_punctuality_discount
+odoo-addon-eng_partner_sales_info @ git+https://github.com/Engenere/engenere-addons.git@16.0#subdirectory=eng_partner_sales_info
 odoo-addon-engenere_commission @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_commission
 odoo-addon-engenere_dummy_br_coa_dependency @ git+https://${GH_PAT}@github.com/Engenere/engenere-addons-develop.git@16.0#subdirectory=engenere_dummy_br_coa_dependency
 odoo-addon-trento_sale_usability @ git+https://${GH_PAT}@github.com/Engenere/addons-trento.git@16.0#subdirectory=trento_sale_usability

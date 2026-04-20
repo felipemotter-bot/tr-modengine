@@ -316,6 +316,52 @@ redeclaration needs the original field to exist at registry build time.
   depends on the other tiers → rep prints the quotation while only Conference is
   pending; print is blocked while Manager/Director is pending.
 
+## Server-side blocks in companion modules (PR 7)
+
+- **`eng_partner_sales_info`**: the 21 aggregated sales stats fields on `res.partner`
+  (last_order_id, order_count, total_ordered, average_ordered, etc.) are redeclared with
+  `groups="!tr_sales_rep_access.group_sales_rep_external"` in
+  `models/eng_partner_sales_info.py`. Upstream already hides the analysis tab via
+  `eng_partner_sales_info.group_partner_sales_analysis`, but that is view-only — the
+  field-level `groups=` closes the RPC read/fields_get path. DA-6 of the plan: never
+  trust view-level groups as security.
+- **`sale_order_line_price_history`**: two widget fields are hidden from the rep in
+  `views/sale_order_line_price_history_views.xml`. On the sale order line tree/kanban,
+  the `sale_line_price_history_widget` is the active surface (primary stop). Inside the
+  history wizard, the `set_price_to_line_widget` hide is defense in depth — today the
+  rep is blocked one layer earlier by the upstream ACL on
+  `sale.order.line.price.history`, which excludes the rep group. If a downstream module
+  opens that ACL, the view hide keeps the set-price action unreachable.
+- **`tr_pricelist_report`**: `models/tr_pricelist_report.py` overrides
+  `res.partner.action_print_pricelist` and raises `AccessError` for the rep group.
+  Covers both the "Print Price List" header button and the action-menu server binding
+  (which upstream exposes with `binding_model_id = res.partner`), because
+  `action_print_pricelist_from_menu` delegates to the guarded method. View-level hide of
+  the header button is defense in depth.
+
+### Audit notes
+
+- **`server_action_mass_edit`**: the wizard is ACL'd to `base.group_user`, so the rep
+  inherits read access to it transitively. In the current stack there is no
+  `ir.actions.server` with `state='mass_edit'` configured outside the module itself, so
+  the rep has no practical UI entrypoint to mass-edit anything. **Revisit when a
+  mass-edit action is added**: the real risk downstream is the write-guards on
+  `res.partner` (PR 4b) and `sale.order` (PR 1/6b) — those continue to reject
+  cross-partner edits, so the wizard would fail per-record rather than leak data.
+- **`groups_restrict_price_change`**: not installed in this stack. No action needed.
+- **`base.group_allow_export`**: rep group does not imply it — core blocks
+  `export_data()` already, and PR 1 added a defense-in-depth override in
+  `models/base.py` that raises `AccessError` explicitly. Covered by PR 1 tests.
+- **Custom Trento reports**: `trento_report_invoice` is gated by an accounting group the
+  rep never joins (DA-2); `trento_report_sale` follows the sale.order record rule via PR
+  1; `trento_report_utils` is infrastructure and exposes no data paths. No server-side
+  change needed in PR 7 for these.
+- **`test_rep_group_audit.py`** keeps a stable regression on the membership that
+  actually matters: the rep never joins
+  `eng_partner_sales_info.group_partner_sales_analysis`. The mass-edit case is not
+  testable stably because it depends on the runtime action fixture; the risk is
+  documented here instead.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
@@ -335,7 +381,8 @@ redeclaration needs the original field to exist at registry build time.
 - `tr_rep_notes` free-text field on `sale.order` → PR 6a (see above).
 - Conference tier + print block override on `sale.order` → PR 6b (see above).
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,
-  `sale_last_price_info`, `tr_pricelist_report` → PR 7.
+  `tr_pricelist_report` → PR 7 (see above). `sale_last_price_info` is covered by the
+  sale.order record rule from PR 1 — no extra code needed.
 - Chatter restriction (RPC + fallback overrides) → PR 8.
 - Stock invisibility → PR 9.
 - Final translation/docs → PR 10.
