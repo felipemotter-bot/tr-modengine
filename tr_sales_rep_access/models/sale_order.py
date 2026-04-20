@@ -28,12 +28,61 @@ class SaleOrder(models.Model):
             "after draft."
         ),
     )
+    tr_rep_notes = fields.Text(
+        string="Sales Rep Notes",
+        help=(
+            "Operational notes from the sales representative about this "
+            "order. Not printed on the PDF; intended for internal "
+            "coordination with the sales manager."
+        ),
+    )
+    tr_rep_conference_required = fields.Boolean(
+        string="Needs Rep Conference",
+        default=False,
+        copy=False,
+        index=True,
+        help=(
+            "True when the order was created by an external sales rep "
+            "and must pass the ``Sales rep order conference`` tier "
+            "before it can be confirmed. Admin / manager orders leave "
+            "this flag False so ``base_tier_validation`` does not "
+            "block their legitimate writes on confirm. Set by the "
+            "``create()`` override when the caller has the rep group; "
+            "never written by hand."
+        ),
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
+        is_rep = self.env.user.has_group(REP_GROUP_XMLID)
         for vals in vals_list:
             self._sales_rep_prepare_create_vals(vals)
-        return super().create(vals_list)
+            if is_rep:
+                # PR 6b — rep-created orders must carry the conference
+                # flag so the tier definition's domain fires for them
+                # only. Force True here (not ``setdefault``) so a rep
+                # cannot bypass the tier by passing
+                # ``tr_rep_conference_required=False`` in the vals
+                # via RPC/import. Admin / manager / imports keep
+                # their explicit value (defaults to False), which
+                # keeps ``base_tier_validation`` from freezing
+                # legitimate internal writes.
+                vals["tr_rep_conference_required"] = True
+        records = super().create(vals_list)
+        # PR 6b — ``notify_on_create`` on the tier definition does
+        # nothing on its own; reviews only appear after an explicit
+        # ``request_validation()`` call (same pattern as PR 3's
+        # partner draft flow). Kept without ``sudo()`` so
+        # ``tier.review.requested_by`` points at the acting rep,
+        # preserving the audit trail — the base ACL on
+        # ``tier.review`` is global (see
+        # ``base_tier_validation/security/ir.model.access.csv``),
+        # so the rep can create reviews without needing sudo.
+        if is_rep:
+            rep_orders = records.filtered(lambda o: o.tr_rep_conference_required)
+            if rep_orders:
+                rep_orders.request_validation()
+        return records
 
     def write(self, vals):
         self._sales_rep_prepare_write_vals(vals)

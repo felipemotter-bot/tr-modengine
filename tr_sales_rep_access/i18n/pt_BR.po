@@ -26,9 +26,7 @@ msgid ""
 "            Does NOT extend Sales/Account stock groups — ACLs are declared\n"
 "            explicitly for this group.\n"
 "        "
-msgstr ""
-"\n"
-"            Representante comercial externo. Vê apenas os parceiros em que            é agente comercial (via commercial_partner_id.agent_ids) e os            pedidos de venda / faturas em que é o responsável registrado.            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são            declaradas explicitamente para este grupo.        "
+msgstr "\n            Representante comercial externo. Vê apenas os parceiros em que            é agente comercial (via commercial_partner_id.agent_ids) e os            pedidos de venda / faturas em que é o responsável registrado.            NÃO herda grupos padrão de Vendas/Contabilidade — as ACLs são            declaradas explicitamente para este grupo.        "
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -52,9 +50,7 @@ msgstr "(desconhecido)"
 msgid ""
 "A customer created by a sales representative must be assigned to the acting "
 "representative. You cannot set a different agent on a new customer."
-msgstr ""
-"Um cliente criado por um representante deve estar atribuído ao próprio "
-"representante. Você não pode definir outro agente em um cliente novo."
+msgstr "Um cliente criado por um representante deve estar atribuído ao próprio representante. Você não pode definir outro agente em um cliente novo."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -63,9 +59,7 @@ msgstr ""
 msgid ""
 "A field update request cannot carry new contact data; use a new_child "
 "request for that."
-msgstr ""
-"Uma solicitação de alteração não pode carregar dados de novo contato; use "
-"uma solicitação new_child para isso."
+msgstr "Uma solicitação de alteração não pode carregar dados de novo contato; use uma solicitação new_child para isso."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -73,9 +67,7 @@ msgstr ""
 #, python-format
 msgid ""
 "A field update request must have at least one line describing the change."
-msgstr ""
-"Uma solicitação de alteração deve ter pelo menos uma linha descrevendo a "
-"mudança."
+msgstr "Uma solicitação de alteração deve ter pelo menos uma linha descrevendo a mudança."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -84,9 +76,7 @@ msgstr ""
 msgid ""
 "A new contact request cannot carry field update lines; use a field_update "
 "request for that."
-msgstr ""
-"Uma solicitação de novo contato não pode carregar linhas de alteração de "
-"campo; use uma solicitação field_update para isso."
+msgstr "Uma solicitação de novo contato não pode carregar linhas de alteração de campo; use uma solicitação field_update para isso."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -141,10 +131,7 @@ msgid ""
 "As a sales representative, you cannot modify an Active customer directly. "
 "Use the 'Request field update' or 'Request new contact' buttons to open a "
 "change request for the Sales Manager to approve."
-msgstr ""
-"Como representante, você não pode alterar diretamente um cliente Ativo. Use "
-"os botões 'Solicitar alteração' ou 'Solicitar novo contato' para abrir uma "
-"solicitação para o Gerente de Vendas aprovar."
+msgstr "Como representante, você não pode alterar diretamente um cliente Ativo. Use os botões 'Solicitar alteração' ou 'Solicitar novo contato' para abrir uma solicitação para o Gerente de Vendas aprovar."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_attachment_count
@@ -226,7 +213,7 @@ msgstr "Valor médio de pedido deste cliente"
 #. module: tr_sales_rep_access
 #: model:ir.model,name:tr_sales_rep_access.model_base
 msgid "Base"
-msgstr ""
+msgstr "Base"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__crc_code
@@ -262,17 +249,14 @@ msgstr "Cancelada"
 #, python-format
 msgid ""
 "Cannot add a line to a change request that is not in the pending state."
-msgstr ""
-"Não é possível adicionar linha a uma solicitação que não está pendente."
+msgstr "Não é possível adicionar linha a uma solicitação que não está pendente."
 
 #. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
 msgid "Cannot change %(field)s on %(orders)s: order is no longer in draft."
-msgstr ""
-"Não é possível alterar %(field)s em %(orders)s: o pedido não está mais em "
-"rascunho."
+msgstr "Não é possível alterar %(field)s em %(orders)s: o pedido não está mais em rascunho."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -281,18 +265,14 @@ msgstr ""
 msgid ""
 "Cannot change fields %(fields)s on a change request that is not in the "
 "pending state (current state: %(state)s)."
-msgstr ""
-"Não é possível alterar os campos %(fields)s em uma solicitação que não está "
-"pendente (estado atual: %(state)s)."
+msgstr "Não é possível alterar os campos %(fields)s em uma solicitação que não está pendente (estado atual: %(state)s)."
 
 #. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
 msgid "Cannot confirm order %(order)s: customer %(customer)s is not active."
-msgstr ""
-"Não é possível confirmar o pedido %(order)s: cliente %(customer)s não está "
-"ativo."
+msgstr "Não é possível confirmar o pedido %(order)s: cliente %(customer)s não está ativo."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -309,10 +289,7 @@ msgstr "Não é possível editar linha de uma solicitação que não está pende
 msgid ""
 "Cannot modify audit fields %(fields)s on a change request — they are set at "
 "create and pin the record to its author and scope."
-msgstr ""
-"Não é possível modificar os campos de auditoria %(fields)s em uma "
-"solicitação de alteração — eles são definidos na criação e vinculam o "
-"registro ao seu autor e escopo."
+msgstr "Não é possível modificar os campos de auditoria %(fields)s em uma solicitação de alteração — eles são definidos na criação e vinculam o registro ao seu autor e escopo."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -321,9 +298,7 @@ msgstr ""
 msgid ""
 "Cannot modify processed_partner_id — it is only written by action_approve "
 "when creating a new child contact."
-msgstr ""
-"Não é possível modificar processed_partner_id — ele é gravado apenas por "
-"action_approve ao criar um novo contato filho."
+msgstr "Não é possível modificar processed_partner_id — ele é gravado apenas por action_approve ao criar um novo contato filho."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -331,8 +306,7 @@ msgstr ""
 #, python-format
 msgid ""
 "Cannot remove a line of a change request that is not in the pending state."
-msgstr ""
-"Não é possível remover linha de uma solicitação que não está pendente."
+msgstr "Não é possível remover linha de uma solicitação que não está pendente."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__capital_amount
@@ -352,10 +326,7 @@ msgid ""
 "Categories assigned to the Allowed Product Categories of every new agent "
 "partner (agent=True) created without an explicit value. Does not "
 "retroactively update existing agents."
-msgstr ""
-"Categorias atribuídas à Categorias de Produto Permitidas de todo novo "
-"parceiro agente (agent=True) criado sem um valor explícito. Não atualiza "
-"retroativamente agentes existentes."
+msgstr "Categorias atribuídas à Categorias de Produto Permitidas de todo novo parceiro agente (agent=True) criado sem um valor explícito. Não atualiza retroativamente agentes existentes."
 
 #. module: tr_sales_rep_access
 #: model_terms:ir.ui.view,arch_db:tr_sales_rep_access.res_config_settings_view_form
@@ -364,9 +335,7 @@ msgid ""
 "                                Allowed Product Categories of every new\n"
 "                                agent partner. Does not retroactively update\n"
 "                                existing agents."
-msgstr ""
-"Categorias atribuídas automaticamente à Categorias de Produto Permitidas de "
-"todo novo parceiro agente. Não atualiza retroativamente agentes existentes."
+msgstr "Categorias atribuídas automaticamente à Categorias de Produto Permitidas de todo novo parceiro agente. Não atualiza retroativamente agentes existentes."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__excluded_category_ids
@@ -374,9 +343,7 @@ msgstr ""
 msgid ""
 "Categories explicitly excluded from the allowed scope, including their "
 "descendants. Use to carve out a subtree while keeping its parent in allowed."
-msgstr ""
-"Categorias explicitamente excluídas do escopo permitido, incluindo suas "
-"subcategorias. Use para recortar uma subárvore mantendo o pai em permitidas."
+msgstr "Categorias explicitamente excluídas do escopo permitido, incluindo suas subcategorias. Use para recortar uma subárvore mantendo o pai em permitidas."
 
 #. module: tr_sales_rep_access
 #: model:ir.actions.act_window,name:tr_sales_rep_access.action_tr_partner_change_request
@@ -391,9 +358,7 @@ msgstr "Solicitações de alteração"
 msgid ""
 "Commercial agent responsible for this invoice, propagated from the "
 "originating sale order snapshot."
-msgstr ""
-"Agente comercial responsável por esta fatura, propagado do registro do "
-"pedido de venda de origem."
+msgstr "Agente comercial responsável por esta fatura, propagado do registro do pedido de venda de origem."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_sale_order__sales_rep_partner_id
@@ -401,10 +366,7 @@ msgid ""
 "Commercial agent responsible for this order, captured at creation from the "
 "customer's agent_ids. Re-synced if the customer changes while the order is "
 "in draft. Immutable after draft."
-msgstr ""
-"Agente comercial responsável por este pedido, capturado na criação a partir "
-"de agent_ids do cliente. Ressincronizado se o cliente mudar enquanto o "
-"pedido está em rascunho. Imutável depois de sair do rascunho."
+msgstr "Agente comercial responsável por este pedido, capturado na criação a partir de agent_ids do cliente. Ressincronizado se o cliente mudar enquanto o pedido está em rascunho. Imutável depois de sair do rascunho."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__company_size
@@ -460,9 +422,7 @@ msgstr "Cliente"
 #, python-format
 msgid ""
 "Customer %s is not active yet. It must be approved before placing orders."
-msgstr ""
-"Cliente %s ainda não está ativo. É preciso aprová-lo antes de lançar "
-"pedidos."
+msgstr "Cliente %s ainda não está ativo. É preciso aprová-lo antes de lançar pedidos."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_invoice_date
@@ -527,9 +487,7 @@ msgstr "Campo"
 #, python-format
 msgid ""
 "Field %(field)s expects a reference to %(expected)s, got %(actual)s instead."
-msgstr ""
-"O campo %(field)s espera uma referência a %(expected)s, mas recebeu "
-"%(actual)s."
+msgstr "O campo %(field)s espera uma referência a %(expected)s, mas recebeu %(actual)s."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -538,17 +496,14 @@ msgstr ""
 msgid ""
 "Field %(field)s is not allowed in a partner change request. The whitelist "
 "is: %(whitelist)s."
-msgstr ""
-"O campo %(field)s não é permitido em uma solicitação de alteração. A "
-"whitelist é: %(whitelist)s."
+msgstr "O campo %(field)s não é permitido em uma solicitação de alteração. A whitelist é: %(whitelist)s."
 
 #. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request_line.py:0
 #, python-format
 msgid "Field %s expects a reference value; the text field must stay empty."
-msgstr ""
-"O campo %s espera um valor de referência; o campo de texto deve ficar vazio."
+msgstr "O campo %s espera um valor de referência; o campo de texto deve ficar vazio."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -562,8 +517,7 @@ msgstr "O campo %s espera um valor de referência; use o campo de referência."
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request_line.py:0
 #, python-format
 msgid "Field %s expects a text value; the reference field must stay empty."
-msgstr ""
-"O campo %s espera um valor de texto; o campo de referência deve ficar vazio."
+msgstr "O campo %s espera um valor de texto; o campo de referência deve ficar vazio."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request_line__field_ttype
@@ -614,7 +568,7 @@ msgstr "Tem mensagem"
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__id
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request_line__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_tr_partner_change_request__message_needaction
@@ -893,16 +847,14 @@ msgstr "Apenas solicitações pendentes podem ser aprovadas (estado atual: %s)."
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request.py:0
 #, python-format
 msgid "Only pending change requests can be cancelled (current state: %s)."
-msgstr ""
-"Apenas solicitações pendentes podem ser canceladas (estado atual: %s)."
+msgstr "Apenas solicitações pendentes podem ser canceladas (estado atual: %s)."
 
 #. module: tr_sales_rep_access
 #. odoo-python
 #: code:addons/tr_sales_rep_access/models/tr_partner_change_request.py:0
 #, python-format
 msgid "Only pending change requests can be rejected (current state: %s)."
-msgstr ""
-"Apenas solicitações pendentes podem ser rejeitadas (estado atual: %s)."
+msgstr "Apenas solicitações pendentes podem ser rejeitadas (estado atual: %s)."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -955,10 +907,7 @@ msgid ""
 "Product categories the rep is allowed to sell from. Descendants are "
 "implicitly included; combined with excluded_category_ids to compute the "
 "effective scope."
-msgstr ""
-"Categorias de produto que o representante pode vender. Subcategorias são "
-"incluídas implicitamente; combinadas com excluded_category_ids para calcular"
-" o escopo efetivo."
+msgstr "Categorias de produto que o representante pode vender. Subcategorias são incluídas implicitamente; combinadas com excluded_category_ids para calcular o escopo efetivo."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -1057,9 +1006,7 @@ msgstr "Representante"
 msgid ""
 "Sales Rep %(rep)s does not match the commercial agent of customer "
 "%(customer)s."
-msgstr ""
-"O Representante %(rep)s não corresponde ao agente comercial do cliente "
-"%(customer)s."
+msgstr "O Representante %(rep)s não corresponde ao agente comercial do cliente %(customer)s."
 
 #. module: tr_sales_rep_access
 #: model:ir.module.category,name:tr_sales_rep_access.module_category_sales_rep_access
@@ -1091,9 +1038,7 @@ msgstr "Usuários representantes não podem exportar dados."
 msgid ""
 "Sales reps are not allowed to generate the partner price list report — the "
 "wizard would expose products outside the rep's allowed catalog."
-msgstr ""
-"Representantes não podem gerar o relatório de lista de preços do parceiro — "
-"o assistente expõe produtos fora do catálogo permitido ao representante."
+msgstr "Representantes não podem gerar o relatório de lista de preços do parceiro — o assistente expõe produtos fora do catálogo permitido ao representante."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -1102,9 +1047,7 @@ msgstr ""
 msgid ""
 "Sales reps can only modify quotation lines in draft. Line(s) %s belong to an"
 " order past draft."
-msgstr ""
-"Representantes só podem modificar linhas de cotação em rascunho. A(s) "
-"linha(s) %s pertence(m) a um pedido que não está mais em rascunho."
+msgstr "Representantes só podem modificar linhas de cotação em rascunho. A(s) linha(s) %s pertence(m) a um pedido que não está mais em rascunho."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -1112,9 +1055,7 @@ msgstr ""
 #, python-format
 msgid ""
 "Sales reps can only modify quotations in draft. Order(s) %s are past draft."
-msgstr ""
-"Representantes só podem modificar cotações em rascunho. O(s) pedido(s) %s "
-"não está(ão) mais em rascunho."
+msgstr "Representantes só podem modificar cotações em rascunho. O(s) pedido(s) %s não está(ão) mais em rascunho."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_tr_partner_change_request__sales_rep_partner_id
@@ -1122,10 +1063,7 @@ msgid ""
 "Snapshot of the acting rep's partner (taken from "
 "``requested_by.partner_id``). Used by the record rule to isolate requests "
 "between reps."
-msgstr ""
-"Snapshot do parceiro do representante em atuação (obtido de "
-"``requested_by.partner_id``). Usado pelo record rule para isolar "
-"solicitações entre representantes."
+msgstr "Snapshot do parceiro do representante em atuação (obtido de ``requested_by.partner_id``). Usado pelo record rule para isolar solicitações entre representantes."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__state
@@ -1141,9 +1079,7 @@ msgstr "Estado"
 msgid ""
 "State transitions on a change request are only allowed via action_approve / "
 "action_reject / action_cancel."
-msgstr ""
-"Transições de estado em uma solicitação só são permitidas via action_approve"
-" / action_reject / action_cancel."
+msgstr "Transições de estado em uma solicitação só são permitidas via action_approve / action_reject / action_cancel."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_res_partner__last_order_status
@@ -1170,9 +1106,7 @@ msgstr "Soma de todos os valores de pedidos deste cliente"
 msgid ""
 "There is already a pending change request for customer %s. Cancel it first "
 "if you want to open a new one."
-msgstr ""
-"Já existe uma solicitação pendente para o cliente %s. Cancele-a antes de "
-"abrir uma nova."
+msgstr "Já existe uma solicitação pendente para o cliente %s. Cancele-a antes de abrir uma nova."
 
 #. module: tr_sales_rep_access
 #. odoo-python
@@ -1189,10 +1123,7 @@ msgid ""
 "This model does not support tier definitions with has_comment=True. Uncheck "
 "it on the tier.definition or extend action_approve / action_reject to "
 "propagate the wizard action returned by the mixin."
-msgstr ""
-"Este modelo não suporta definições de tier com has_comment=True. Desmarque "
-"na tier.definition ou estenda action_approve / action_reject para propagar a"
-" ação do wizard retornada pelo mixin."
+msgstr "Este modelo não suporta definições de tier com has_comment=True. Desmarque na tier.definition ou estenda action_approve / action_reject para propagar a ação do wizard retornada pelo mixin."
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__to_validate_message
