@@ -618,9 +618,10 @@ Features planejadas para próximas PRs (ver `conversas_bots/plano_sales_rep_acce
 | 5b  | ✅ Readonly-active de contact fields no form do partner              |
 | 6a  | ✅ `tr_rep_notes` no pedido (ver seção 12)                           |
 | 6b  | ✅ Tier Conferente + override de print block (ver seção 13)          |
-| 7   | Bloqueios server-side de `eng_partner_sales_info`,                   |
-|     | `sale_order_line_price_history`, `sale_last_price_info`,             |
-|     | `tr_pricelist_report`                                                |
+| 7   | ✅ Bloqueios server-side de `eng_partner_sales_info`,                |
+|     | `sale_order_line_price_history`, `tr_pricelist_report` (ver          |
+|     | seção 14). `sale_last_price_info` fica coberto pela record           |
+|     | rule do PR 1 — sem código adicional.                                 |
 | 8   | Chatter restrito (RPC test + rules + override de fallback)           |
 | 9   | Estoque totalmente invisível                                         |
 | 10  | Tradução pt_BR + docs finais                                         |

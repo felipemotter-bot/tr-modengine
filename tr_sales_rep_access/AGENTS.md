@@ -381,7 +381,8 @@ redeclaration needs the original field to exist at registry build time.
 - `tr_rep_notes` free-text field on `sale.order` → PR 6a (see above).
 - Conference tier + print block override on `sale.order` → PR 6b (see above).
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,
-  `sale_last_price_info`, `tr_pricelist_report` → PR 7.
+  `tr_pricelist_report` → PR 7 (see above). `sale_last_price_info` is covered by the
+  sale.order record rule from PR 1 — no extra code needed.
 - Chatter restriction (RPC + fallback overrides) → PR 8.
 - Stock invisibility → PR 9.
 - Final translation/docs → PR 10.
