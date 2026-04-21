@@ -20,6 +20,8 @@ class ProductTemplate(models.Model):
 
     def _apply_ir_rules(self, query, mode="read"):
         res = super()._apply_ir_rules(query, mode)
+        if mode != "read" or self.env.su:
+            return res
         _apply_rep_catalog_query(self.env, query, self._table)
         return res
 

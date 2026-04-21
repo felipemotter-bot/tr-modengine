@@ -183,6 +183,48 @@ class TestCatalogCheckAccessRuleCoverage(SalesRepAccessTestCommon):
             "read"
         )
 
+    # ------------------------------------------------------------------
+    # product.category — _search no-visible path (line 32)
+    # ------------------------------------------------------------------
+
+    def test_empty_rep_category_search_returns_nothing(self):
+        """_search with no-catalog rep returns nothing (id=False domain)."""
+        found = self.env["product.category"].with_user(self.user_empty).search([])
+        self.assertFalse(found)
+
+    # ------------------------------------------------------------------
+    # product.category — _apply_ir_rules no-visible path (lines 50-51)
+    # ------------------------------------------------------------------
+
+    def test_empty_rep_cannot_read_product_category_stored_field(self):
+        """Rep with empty catalog gets AccessError reading product.category."""
+        with self.assertRaises(AccessError):
+            self.cat_allowed.with_user(self.user_empty).read(["name"])
+
+    # ------------------------------------------------------------------
+    # product.category — check_access_rule no-visible paths (74-80)
+    # ------------------------------------------------------------------
+
+    def test_empty_rep_check_access_rule_product_category_raises(self):
+        """check_access_rule raises for rep with no visible product.category."""
+        with self.assertRaises(AccessError):
+            self.cat_allowed.with_user(self.user_empty).check_access_rule("read")
+
+    def test_empty_rep_check_access_rule_empty_category_passes(self):
+        """check_access_rule on empty category recordset with no-catalog rep."""
+        self.env["product.category"].with_user(self.user_empty).check_access_rule(
+            "read"
+        )
+
+    # ------------------------------------------------------------------
+    # product.category — check_access_rule forbidden path (lines 81-95)
+    # ------------------------------------------------------------------
+
+    def test_rep_check_access_rule_forbidden_product_category(self):
+        """check_access_rule raises for forbidden product.category."""
+        with self.assertRaises(AccessError):
+            self.cat_other.with_user(self.user_u1).check_access_rule("read")
+
 
 @tagged("post_install", "-at_install")
 class TestCatalogCategoryAncestor(SalesRepAccessTestCommon):
