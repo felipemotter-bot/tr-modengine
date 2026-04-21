@@ -27,25 +27,24 @@ class TestRepChatter(SalesRepAccessTestCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.order = (
-            cls.env["sale.order"]
-            .with_user(cls.user_u1)
-            .create(
-                {
-                    "partner_id": cls.customer_c1.id,
-                    "order_line": [
-                        (
-                            0,
-                            0,
-                            {
-                                "product_id": cls.product.id,
-                                "product_uom_qty": 1.0,
-                                "price_unit": 100.0,
-                            },
-                        )
-                    ],
-                }
-            )
+        # Create as admin so that recompute cycles (e.g.
+        # _compute_condition_discounts) do not pass through the rep write
+        # override and cause flush_all() issues in subsequent test setUps.
+        cls.order = cls.env["sale.order"].create(
+            {
+                "partner_id": cls.customer_c1.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": cls.product.id,
+                            "product_uom_qty": 1.0,
+                            "price_unit": 100.0,
+                        },
+                    ),
+                ],
+            }
         )
 
     def test_rep_cannot_read_message_ids_on_sale_order(self):
@@ -83,6 +82,83 @@ class TestRepChatter(SalesRepAccessTestCommon):
             len(msg_after),
             len(msg_before),
             "Rep write must not produce tracking messages in the chatter",
+        )
+
+    def test_rep_cannot_read_message_ids_on_partner(self):
+        for fname in _CHATTER_FIELDS:
+            with self.assertRaises(
+                AccessError,
+                msg=f"Rep must not be able to read {fname} on res.partner",
+            ):
+                self.customer_c1.with_user(self.user_u1).read([fname])
+
+    def test_rep_message_ids_not_in_fields_get_partner(self):
+        info = self.env["res.partner"].with_user(self.user_u1).fields_get()
+        leaked = [f for f in _CHATTER_FIELDS if f in info]
+        self.assertFalse(
+            leaked,
+            f"fields_get must not expose chatter fields for rep on partner, leaked: {leaked}",
+        )
+
+    def test_rep_cannot_read_message_ids_on_account_move(self):
+        invoice = self._make_invoice(self.customer_c1, rep_agent=self.agent_a1)
+        for fname in _CHATTER_FIELDS:
+            with self.assertRaises(
+                AccessError,
+                msg=f"Rep must not be able to read {fname} on account.move",
+            ):
+                invoice.with_user(self.user_u1).read([fname])
+
+    def test_rep_message_ids_not_in_fields_get_account_move(self):
+        info = self.env["account.move"].with_user(self.user_u1).fields_get()
+        leaked = [f for f in _CHATTER_FIELDS if f in info]
+        self.assertFalse(
+            leaked,
+            f"fields_get must not expose chatter fields for rep on account.move, leaked: {leaked}",
+        )
+
+    def test_chatter_div_absent_from_sale_order_form_for_rep(self):
+        arch = (
+            self.env["sale.order"]
+            .with_user(self.user_u1)
+            .fields_view_get(view_type="form")["arch"]
+        )
+        self.assertNotIn(
+            "oe_chatter",
+            arch,
+            "oe_chatter div must be stripped from sale.order form arch for rep",
+        )
+
+    def test_chatter_div_present_in_sale_order_form_for_admin(self):
+        arch = self.env["sale.order"].sudo().fields_view_get(view_type="form")["arch"]
+        self.assertIn(
+            "oe_chatter",
+            arch,
+            "oe_chatter div must remain in sale.order form arch for admin",
+        )
+
+    def test_chatter_div_absent_from_partner_form_for_rep(self):
+        arch = (
+            self.env["res.partner"]
+            .with_user(self.user_u1)
+            .fields_view_get(view_type="form")["arch"]
+        )
+        self.assertNotIn(
+            "oe_chatter",
+            arch,
+            "oe_chatter div must be stripped from res.partner form arch for rep",
+        )
+
+    def test_chatter_div_absent_from_account_move_form_for_rep(self):
+        arch = (
+            self.env["account.move"]
+            .with_user(self.user_u1)
+            .fields_view_get(view_type="form")["arch"]
+        )
+        self.assertNotIn(
+            "oe_chatter",
+            arch,
+            "oe_chatter div must be stripped from account.move form arch for rep",
         )
 
     def test_rep_can_create_activity(self):
