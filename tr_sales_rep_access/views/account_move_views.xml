@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- PR 8 — hide chatter for reps on invoice form (defense in depth). -->
+    <record id="account_move_form_hide_chatter_rep" model="ir.ui.view">
+        <field name="name">account.move.form.hide.chatter.rep</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_chatter')]" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -60,6 +60,7 @@
         "views/sale_order_views.xml",
         "views/sale_order_line_price_history_views.xml",
         "views/tr_pricelist_report_views.xml",
+        "views/account_move_views.xml",
         "views/res_partner_views.xml",
         "views/res_config_settings_views.xml",
     ],
