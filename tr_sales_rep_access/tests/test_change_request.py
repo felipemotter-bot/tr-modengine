@@ -1,8 +1,11 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from psycopg2 import IntegrityError
+
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import tagged
+from odoo.tools import mute_logger
 
 from .common import SalesRepAccessTestCommon
 
@@ -122,18 +125,22 @@ class TestChangeRequest(SalesRepAccessTestCommon):
                 (0, 0, {"field_id": self.phone_field.id, "new_value_char": "a"}),
             ],
         )
-        with self.assertRaises(ValidationError):
-            self._create_field_update_request(
-                self.user_u1,
-                self.customer_c1,
-                [
-                    (
-                        0,
-                        0,
-                        {"field_id": self.email_field.id, "new_value_char": "x@y.com"},
-                    ),
-                ],
-            )
+        with mute_logger("odoo.sql_db"):
+            with self.assertRaises(IntegrityError), self.cr.savepoint():
+                self._create_field_update_request(
+                    self.user_u1,
+                    self.customer_c1,
+                    [
+                        (
+                            0,
+                            0,
+                            {
+                                "field_id": self.email_field.id,
+                                "new_value_char": "x@y.com",
+                            },
+                        ),
+                    ],
+                )
 
     def test_rep_can_cancel_and_create_new_request(self):
         first = self._create_field_update_request(
@@ -145,6 +152,9 @@ class TestChangeRequest(SalesRepAccessTestCommon):
         )
         first.with_user(self.user_u1).action_cancel()
         self.assertEqual(first.state, "cancelled")
+        # Flush first.state=cancelled to DB before second INSERT so the
+        # partial unique index (state='pending') does not see a false duplicate.
+        self.env.flush_all()
         second = self._create_field_update_request(
             self.user_u1,
             self.customer_c1,
@@ -745,7 +755,11 @@ class TestChangeRequest(SalesRepAccessTestCommon):
             self.assertFalse(
                 visible, "Foreign pending must be hidden from U1 by the rule."
             )
-            with self.assertRaises(ValidationError):
+            # The partial unique index fires before the Python constraint,
+            # raising IntegrityError. Odoo's assertRaises wraps the block in
+            # a savepoint automatically, so the transaction stays usable for
+            # the finally block.
+            with self.assertRaises(IntegrityError):
                 self._create_field_update_request(
                     self.user_u1,
                     self.customer_c1,
@@ -1048,3 +1062,50 @@ class TestChangeRequest(SalesRepAccessTestCommon):
         req.with_user(self._admin()).action_approve()
         with self.assertRaises(AccessError):
             req.with_user(self._admin()).unlink()
+
+    def test_cannot_create_two_pending_requests_for_same_partner(self):
+        """DB index (primary guard) rejects a second pending request for the same partner.
+
+        The partial unique index created by _auto_init fires at INSERT time,
+        before the Python @api.constrains callback. The Python constraint is the
+        second line of defense (covers deferred/cross-transaction cases that the
+        index cannot). Both raise on the duplicate, so the test accepts either.
+        """
+        self._create_field_update_request(
+            self.user_u1,
+            self.customer_c1,
+            [
+                (
+                    0,
+                    0,
+                    {"field_id": self.phone_field.id, "new_value_char": "+55 11 0001"},
+                )
+            ],
+        )
+        with mute_logger("odoo.sql_db"):
+            with self.assertRaises(IntegrityError), self.cr.savepoint():
+                self._create_field_update_request(
+                    self.user_u1,
+                    self.customer_c1,
+                    [
+                        (
+                            0,
+                            0,
+                            {
+                                "field_id": self.phone_field.id,
+                                "new_value_char": "+55 11 0002",
+                            },
+                        )
+                    ],
+                )
+
+    def test_unique_pending_index_exists(self):
+        """The partial unique index must be present after _auto_init."""
+        self.env.cr.execute(
+            "SELECT indexname FROM pg_indexes WHERE indexname = %s",
+            ("tr_partner_change_request_unique_pending_per_partner",),
+        )
+        self.assertTrue(
+            self.env.cr.fetchone(),
+            "Partial unique index for pending change requests not found in pg_indexes",
+        )

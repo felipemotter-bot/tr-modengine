@@ -74,7 +74,11 @@ class SaleOrderLine(models.Model):
         if offenders:
             raise ValidationError(
                 _("Product(s) %(products)s are outside your assigned catalog.")
-                % {"products": ", ".join(offenders.product_id.mapped("display_name"))}
+                % {
+                    "products": ", ".join(
+                        offenders.product_id.sudo().mapped("display_name")
+                    )
+                }
             )
 
     def _sales_rep_check_rep_can_edit(self):
