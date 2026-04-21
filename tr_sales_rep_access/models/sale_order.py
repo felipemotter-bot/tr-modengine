@@ -7,6 +7,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
+_GROUPS_NO_REP = "!tr_sales_rep_access.group_sales_rep_external"
 
 _logger = logging.getLogger(__name__)
 
@@ -52,15 +53,23 @@ class SaleOrder(models.Model):
         ),
     )
 
-    # PR 8 — chatter hidden for reps.  field-level groups= closes the
+    # PR 8 / PR 12 — chatter hidden for reps.  field-level groups= closes the
     # RPC read path (fields_get / read) without touching mail.message
     # ACLs globally (which would break mail.activity creation).
-    message_ids = fields.One2many(
-        groups="!tr_sales_rep_access.group_sales_rep_external",
-    )
-    message_follower_ids = fields.One2many(
-        groups="!tr_sales_rep_access.group_sales_rep_external",
-    )
+    # PR 12 extends the block to all auxiliary mail.thread fields so that
+    # metadata (follower list, attachment count, needaction counters) is
+    # also invisible via direct RPC read / fields_get.
+    message_ids = fields.One2many(groups=_GROUPS_NO_REP)
+    message_follower_ids = fields.One2many(groups=_GROUPS_NO_REP)
+    message_is_follower = fields.Boolean(groups=_GROUPS_NO_REP)
+    message_partner_ids = fields.Many2many(groups=_GROUPS_NO_REP)
+    has_message = fields.Boolean(groups=_GROUPS_NO_REP)
+    message_needaction = fields.Boolean(groups=_GROUPS_NO_REP)
+    message_needaction_counter = fields.Integer(groups=_GROUPS_NO_REP)
+    message_has_error = fields.Boolean(groups=_GROUPS_NO_REP)
+    message_has_error_counter = fields.Integer(groups=_GROUPS_NO_REP)
+    message_attachment_count = fields.Integer(groups=_GROUPS_NO_REP)
+    website_message_ids = fields.One2many(groups=_GROUPS_NO_REP)
 
     @api.model_create_multi
     def create(self, vals_list):
