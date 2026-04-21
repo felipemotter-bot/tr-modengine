@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Hide pricelist prices from the product configurator wizard.
+         Prices shown here come from the pricelist and do not reflect
+         the commercial policy (reference price + seller discount).
+         The correct price_unit is applied to the order line after
+         the product is confirmed. -->
+
+    <template
+    id="configure_hide_price"
+    inherit_id="sale_product_configurator.configure"
+  >
+        <xpath expr="//h2" position="attributes">
+            <attribute name="class">d-none</attribute>
+        </xpath>
+    </template>
+
+    <template
+    id="configure_optional_products_hide_price"
+    inherit_id="sale_product_configurator.configure_optional_products"
+  >
+        <xpath expr="//th[hasclass('td-price')]" position="attributes">
+            <attribute name="class">td-price d-none</attribute>
+        </xpath>
+        <xpath expr="//td[hasclass('td-price')]" position="attributes">
+            <attribute name="class">td-price d-none</attribute>
+        </xpath>
+    </template>
+
+    <template
+    id="optional_product_items_hide_price"
+    inherit_id="sale_product_configurator.optional_product_items"
+  >
+        <xpath expr="//td[hasclass('td-price')]" position="attributes">
+            <attribute name="class">td-price d-none</attribute>
+        </xpath>
+    </template>
+</odoo>
