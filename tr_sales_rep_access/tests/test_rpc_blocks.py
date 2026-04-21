@@ -60,3 +60,17 @@ class TestRpcBlocks(SalesRepAccessTestCommon):
         order.action_confirm()
         with self.assertRaises(AccessError):
             line.with_user(self.user_u1).unlink()
+
+    def test_rep_cannot_create_line_on_confirmed_order(self):
+        """Rep cannot add a new line to an already-confirmed order via RPC."""
+        order = self._make_order(self.customer_c1)
+        order.action_confirm()
+        with self.assertRaises(AccessError):
+            self.env["sale.order.line"].with_user(self.user_u1).create(
+                {
+                    "order_id": order.id,
+                    "product_id": self.product.id,
+                    "product_uom_qty": 1.0,
+                    "price_unit": 50.0,
+                }
+            )

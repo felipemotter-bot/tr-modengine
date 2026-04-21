@@ -42,6 +42,41 @@ class TestSecurity(SalesRepAccessTestCommon):
             "Rep user must NOT be in base.group_allow_export.",
         )
 
+    def test_rep_user_not_in_forbidden_groups(self):
+        """Rep users must not belong to any sensitive group via direct membership.
+
+        Complements test_group_implies_only_base_user (which checks static
+        implied_ids). A future module could add the rep user to a group via
+        res.users.groups_id without touching implied_ids — this test catches
+        that regression at the user level.
+
+        stock.group_stock_user is included because PR 9 relies on the rep
+        not being in that group to keep the Inventory tab, smart buttons
+        and stock menus hidden.
+        """
+        forbidden_xmlids = [
+            "sales_team.group_sale_salesman",
+            "account.group_account_invoice",
+            "account.group_account_readonly",
+            "base.group_allow_export",
+            "base.group_system",
+            "stock.group_stock_user",
+            "stock.group_stock_manager",
+            "eng_partner_sales_info.group_partner_sales_analysis",
+        ]
+        for xmlid in forbidden_xmlids:
+            group = self.env.ref(xmlid)
+            self.assertNotIn(
+                group,
+                self.user_u1.groups_id,
+                f"Rep user_u1 must NOT be a member of {xmlid}.",
+            )
+            self.assertNotIn(
+                group,
+                self.user_u2.groups_id,
+                f"Rep user_u2 must NOT be a member of {xmlid}.",
+            )
+
     def test_rep_cannot_unlink_sale_order(self):
         """ACL blocks rep from unlink of sale.order."""
         order = self._make_order(self.customer_c1)

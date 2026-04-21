@@ -834,6 +834,35 @@ class TestChangeRequest(SalesRepAccessTestCommon):
         finally:
             extra.active = False
 
+    def test_cancel_does_not_set_done_by_on_force_closed_reviews(self):
+        """_close_pending_reviews must not record the canceller as done_by.
+
+        When a rep cancels a request that has reviews from a tier they are
+        not a reviewer of (e.g. a Manager tier), setting done_by=rep would
+        make the audit trail show the rep as having rejected a Manager review.
+        done_by must be False for force-closed reviews.
+
+        Note: after action_cancel() the mixin deletes all reviews
+        (_allow_to_remove_reviews returns True for _cancel_state), so we
+        call _close_pending_reviews directly to inspect done_by before the
+        deletion happens.
+        """
+        extra = self._make_extra_tier()
+        try:
+            req = self._create_field_update_request(
+                self.user_u1,
+                self.customer_c1,
+                [
+                    (0, 0, {"field_id": self.phone_field.id, "new_value_char": "x"}),
+                ],
+            )
+            self.assertEqual(len(req.review_ids), 2)
+            req._close_pending_reviews()
+            for review in req.review_ids:
+                self.assertFalse(review.done_by)
+        finally:
+            extra.active = False
+
     # ------------------------------------------------------------------
     # Happy path write/unlink on pending lines (super() branches)
     # ------------------------------------------------------------------

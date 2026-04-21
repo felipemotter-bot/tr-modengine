@@ -7,10 +7,9 @@ from odoo.exceptions import UserError
 from odoo.tests import tagged
 
 from odoo.addons.tr_sales_rep_access.reports import sale_report
+from odoo.addons.tr_sales_rep_access.reports.sale_report import CONFERENCE_TIER_XMLID
 
 from .common import SalesRepAccessTestCommon
-
-CONFERENCE_TIER_XMLID = "tr_sales_rep_access.tier_def_sales_rep_order_conference"
 
 
 @tagged("post_install", "-at_install")
