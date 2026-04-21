@@ -25,7 +25,13 @@ class ExtraDiscountPopoverContent extends Component {
   }
 
   onDiscountInput(ev) {
-    this.state.extraDiscountText = ev.target.value;
+    let val = ev.target.value.replace(/\./g, ",");
+    const parts = val.split(",");
+    if (parts.length > 2) {
+      val = parts[0] + "," + parts.slice(1).join("");
+    }
+    ev.target.value = val;
+    this.state.extraDiscountText = val;
   }
 
   _parseDiscount() {
