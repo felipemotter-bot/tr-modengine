@@ -362,6 +362,47 @@ redeclaration needs the original field to exist at registry build time.
   testable stably because it depends on the runtime action fixture; the risk is
   documented here instead.
 
+## Chatter restriction (PR 8)
+
+Rep cannot read message threads, see followers, or receive tracking notifications on
+`sale.order`, `res.partner` and `account.move`.
+
+- **Field redeclarations** in `models/sale_order.py`, `models/res_partner.py` and
+  `models/account_move.py`: `message_ids` and `message_follower_ids` redeclared with
+  `groups="!tr_sales_rep_access.group_sales_rep_external"`. The ORM filters them out of
+  `fields_get`, `read` and `write` for reps.
+- **`mail_notrack=True` context**: `sale.order.create()`, `sale.order.write()` and
+  `res.partner.create()` overrides inject `mail_notrack=True` when the acting user is a
+  rep. This prevents Odoo from calling `_message_log_fields` and creating tracking
+  messages that would reference fields blocked for reps.
+- **View-level `oe_chatter` hide** on `sale.order` form view: the chatter `div` is set
+  `invisible="1"` via `groups=!rep`. Defense in depth — the server-side field block
+  already denies RPC access; this is so the UI renders cleanly.
+- **`website_message_ids` is NOT redeclared** — it only appears in
+  `REP_ACTIVE_WRITE_ALLOWLIST` (the PR 4b allowlist). The field is a computed/related on
+  `mail.thread` pointing to website messages; hiding it server-side would interfere with
+  internal write flows. Not needed: reps have no website-facing context.
+
+## Stock invisibility (PR 9)
+
+Rep cannot see any quantity/availability data on products — no on-hand, no forecasted,
+no incoming/outgoing. These are internal logistics metrics not relevant to the rep's
+ordering flow.
+
+- **Field redeclarations** in `models/product_template.py` and
+  `models/product_product.py`: `qty_available`, `virtual_available`, `incoming_qty` and
+  `outgoing_qty` redeclared with
+  `groups="!tr_sales_rep_access.group_sales_rep_external"`. The ORM filters them out of
+  `fields_get` and `read` for reps.
+- **`display_qty_widget`** (a compute on `product.template` that the OWL stock forecast
+  widget inspects to decide whether to render): because `qty_available` etc. are blocked
+  at field level, the ORM excludes `display_qty_widget` from the RPC response too. The
+  OWL template receives the field as absent/undefined, causing the widget to render as
+  invisible without any extra view override. This is a structural consequence of the
+  groups= mechanism — not an explicit False assignment.
+- **No view overrides needed**: the groups= block on the underlying qty fields is
+  sufficient. The widget self-disables when its dependencies are absent.
+
 ## Out of scope for this PR (planned in later PRs)
 
 - Catalog restriction by category on agent → PR 2 (implemented, see above).
@@ -383,9 +424,9 @@ redeclaration needs the original field to exist at registry build time.
 - Server-side blocks on `eng_partner_sales_info`, `sale_order_line_price_history`,
   `tr_pricelist_report` → PR 7 (see above). `sale_last_price_info` is covered by the
   sale.order record rule from PR 1 — no extra code needed.
-- Chatter restriction (RPC + fallback overrides) → PR 8.
-- Stock invisibility → PR 9.
-- Final translation/docs → PR 10.
+- Chatter restriction → PR 8 (implemented, see above).
+- Stock invisibility → PR 9 (implemented, see above).
+- Final translation/docs → PR 10 (this PR).
 
 ## Residual notes (tracked for later PRs)
 

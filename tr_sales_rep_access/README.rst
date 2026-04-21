@@ -8,11 +8,12 @@ Sales Rep Access
 
 |badge1|
 
-External sales rep access module. Introduces an isolated security
-group (``group_sales_rep_external``) and snapshot-based record rules
-so that external reps only see the partners, quotations and invoices
-within their own scope, while preserving history when the commercial
-agent of a customer changes.
+Complete security module for external sales representatives. Introduces
+an isolated security group, snapshot-based record rules, catalog
+restriction, partner-draft approval workflow, change-request model,
+chatter restriction, stock invisibility and tier-based order
+conference — so that external reps only see and operate their own
+scope while internal users are unaffected.
 
 **Table of contents**
 
@@ -22,36 +23,72 @@ agent of a customer changes.
 Overview
 ========
 
-This module is the foundation for giving external sales
-representatives access to the Odoo backend. It focuses strictly on
-security primitives:
+This module gives external sales representatives controlled access to
+the Odoo backend. The full feature set, delivered across PRs 1–9:
+
+**Security foundation (PR 1)**
 
 - A dedicated group ``group_sales_rep_external`` that implies only
-  ``base.group_user`` (no Sales/Account defaults to avoid accidental
-  access to records without responsible).
+  ``base.group_user`` (no Sales/Account defaults).
 - A snapshot field ``sales_rep_partner_id`` on ``sale.order`` and
-  ``account.move`` that captures the rep responsible for the
-  document at creation and is propagated from quotation to invoice
-  via ``_prepare_invoice``.
-- Record rules that apply the snapshot (and the partner's
-  ``agent_ids`` M2M) to filter visibility. ``res.partner`` uses a
-  per-group open rule plus a global rule with a conditional
-  ``user.has_group(...)`` domain to neutralise the permissive core
-  ``res_partner_rule_private_employee``; ``sale.order``,
-  ``sale.order.line``, ``account.move`` and ``account.move.line``
-  use a simple per-group rule by snapshot.
-- Python overrides in ``sale.order`` and ``sale.order.line``
-  blocking ``write``/``unlink`` past draft for rep users (not a
-  state-based rule, because ``sale_stock`` performs legitimate
-  internal writes on confirmed orders that a rule would wrongly
-  block).
-- A defense-in-depth override of ``models.BaseModel.export_data``
-  that raises ``AccessError`` for rep users.
+  ``account.move``, propagated to invoices via ``_prepare_invoice``.
+- Record rules filtering partners, orders, order lines, invoices and
+  invoice lines by snapshot / ``agent_ids``.
+- Python overrides blocking ``write``/``unlink`` past draft for rep
+  users; defense-in-depth ``export_data`` override.
 
-Everything else (catalog restriction, partner-draft workflow,
-change-request model, tier print block, chatter restriction,
-stock invisibility, etc.) is implemented in later PRs of the
-``tr_sales_rep_access`` roadmap.
+**Catalog restriction (PR 2)**
+
+- Per-rep ``allowed_category_ids`` / ``excluded_category_ids`` on
+  ``res.partner``; ``product.template``/``product.product._search``
+  filtered to the rep's allowed categories; ``sale.order.line``
+  constraint blocking out-of-catalog products on RPC paths.
+
+**Partner draft workflow (PR 3)**
+
+- New customers created by a rep start in Draft stage and must be
+  approved by Sales Manager via ``base_tier_validation`` before
+  orders can be confirmed.
+
+**Change request (PR 4a/4b)**
+
+- ``tr.partner.change.request`` model for rep-initiated partner
+  updates, subject to tier approval. Direct writes by reps on Active
+  partners are blocked server-side; ``tr_commercial_policy`` action
+  buttons use ``sudo()`` to bypass the guard legitimately.
+
+**Sensitive field hide (PR 5/5b)**
+
+- Capital, BR-accounting, HR and union fields on ``res.partner``
+  redeclared with ``groups=!rep``. Readonly-active UX on contact
+  fields (``name``, ``phone``, ``mobile``, ``email``).
+
+**Rep notes + conference tier (PR 6a/6b)**
+
+- ``tr_rep_notes`` scratchpad on ``sale.order``; conference tier
+  (``group_sales_rep_checker``) with print-block override that allows
+  printing while only the conference tier is pending.
+
+**Companion module blocks (PR 7)**
+
+- Server-side hide of sales-analysis fields (``eng_partner_sales_info``),
+  price-history widgets (``sale_order_line_price_history``) and
+  pricelist-print action (``tr_pricelist_report``).
+
+**Chatter restriction (PR 8)**
+
+- ``message_ids``, ``message_follower_ids`` and ``website_message_ids``
+  redeclared with ``groups=!rep`` on ``sale.order``, ``res.partner``
+  and ``account.move``. Rep writes use ``mail_notrack=True`` context.
+  View-level ``oe_chatter`` div hidden as defense in depth.
+
+**Stock invisibility (PR 9)**
+
+- ``qty_available``, ``virtual_available``, ``incoming_qty``,
+  ``outgoing_qty`` redeclared with ``groups=!rep`` on
+  ``product.template`` and ``product.product``. ``display_qty_widget``
+  blocked at field-level, causing the stock forecast widget to be
+  invisible for reps.
 
 Configuration
 =============
@@ -80,19 +117,6 @@ After configuration, a rep logging in will only see:
 Write, create and unlink on sales orders and lines by rep users are
 restricted to ``state == 'draft'`` through Python overrides on the
 models. Attempting to export any model via RPC raises ``AccessError``.
-
-Known limitations (addressed in later PRs)
-==========================================
-
-- No catalog restriction yet (rep sees any product).
-- No tier validation on new customer creation yet.
-- Chatter is not restricted yet (the group can read/post messages
-  within its record scope).
-- ``tr_pricelist_report`` print button on partner is not gated by
-  group yet.
-- Master data kept pristine: existing sales orders created before
-  installation have ``sales_rep_partner_id`` NULL and are therefore
-  invisible to reps. Expected on a devel-only module install.
 
 Bug Tracker
 ===========
