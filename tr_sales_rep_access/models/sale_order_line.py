@@ -22,6 +22,30 @@ class SaleOrderLine(models.Model):
     free_qty_today = fields.Float(groups=_GROUPS_NO_REP)
     forecast_expected_date = fields.Datetime(groups=_GROUPS_NO_REP)
     scheduled_date = fields.Datetime(groups=_GROUPS_NO_REP)
+    qty_to_deliver = fields.Float(groups=_GROUPS_NO_REP)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Check before super() so the guard fires before Odoo core calls
+        # message_post on the parent order (which fails in test environments
+        # without email config and would mask our AccessError).
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            order_ids = [v["order_id"] for v in vals_list if v.get("order_id")]
+            if order_ids:
+                non_drafts = (
+                    self.env["sale.order"]
+                    .browse(order_ids)
+                    .filtered(lambda o: o.state != "draft")
+                )
+                if non_drafts:
+                    raise AccessError(
+                        _(
+                            "Sales reps can only add lines to quotations in draft. "
+                            "Order(s) %(orders)s are past draft."
+                        )
+                        % {"orders": ", ".join(non_drafts.mapped("display_name"))}
+                    )
+        return super().create(vals_list)
 
     def write(self, vals):
         self._sales_rep_check_rep_can_edit()
@@ -50,8 +74,8 @@ class SaleOrderLine(models.Model):
             )
         if offenders:
             raise ValidationError(
-                _("Product(s) %s are outside your assigned catalog.")
-                % ", ".join(offenders.product_id.mapped("display_name"))
+                _("Product(s) %(products)s are outside your assigned catalog.")
+                % {"products": ", ".join(offenders.product_id.mapped("display_name"))}
             )
 
     def _sales_rep_check_rep_can_edit(self):
@@ -70,7 +94,7 @@ class SaleOrderLine(models.Model):
             raise AccessError(
                 _(
                     "Sales reps can only modify quotation lines in draft. "
-                    "Line(s) %s belong to an order past draft."
+                    "Line(s) %(lines)s belong to an order past draft."
                 )
-                % ", ".join(non_drafts.mapped("display_name"))
+                % {"lines": ", ".join(non_drafts.mapped("display_name"))}
             )

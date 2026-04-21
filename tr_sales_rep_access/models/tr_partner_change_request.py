@@ -130,7 +130,7 @@ class TrPartnerChangeRequest(models.Model):
             if req.id:
                 req.name = "CR-%s · %s" % (req.id, partner)
             else:
-                req.name = _("New change request · %s") % partner
+                req.name = _("New change request · %(partner)s") % {"partner": partner}
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -159,9 +159,8 @@ class TrPartnerChangeRequest(models.Model):
         if touched_audit:
             raise AccessError(
                 _(
-                    "Cannot modify audit fields %(fields)s on a "
-                    "change request — they are set at create and "
-                    "pin the record to its author and scope."
+                    "Cannot modify audit fields %(fields)s on a change request"
+                    " — they are set at create and pin the record to its author and scope."
                 )
                 % {"fields": ", ".join(sorted(touched_audit))}
             )
@@ -181,10 +180,8 @@ class TrPartnerChangeRequest(models.Model):
                 if req.state != "pending":
                     raise AccessError(
                         _(
-                            "Cannot change fields %(fields)s on a "
-                            "change request that is not in the "
-                            "pending state (current state: "
-                            "%(state)s)."
+                            "Cannot change fields %(fields)s on a change request"
+                            " that is not in the pending state (current state: %(state)s)."
                         )
                         % {
                             "fields": ", ".join(sorted(touches_payload)),
@@ -208,14 +205,14 @@ class TrPartnerChangeRequest(models.Model):
                     )
         return super().write(vals)
 
-    def unlink(self):
+    def unlink(self):  # pylint: disable=no-raise-unlink
         manager = self.env.user.has_group(MANAGER_GROUP_XMLID)
         for req in self:
             if not manager:
                 raise AccessError(_("Only Sales Managers can delete change requests."))
             if req.state not in ("rejected", "cancelled"):
                 raise AccessError(
-                    _("Only rejected or cancelled change requests " "can be deleted.")
+                    _("Only rejected or cancelled change requests can be deleted.")
                 )
         return super().unlink()
 
@@ -292,11 +289,10 @@ class TrPartnerChangeRequest(models.Model):
             if duplicate:
                 raise ValidationError(
                     _(
-                        "There is already a pending change request "
-                        "for customer %s. Cancel it first if you "
-                        "want to open a new one."
+                        "There is already a pending change request for customer %(partner)s."
+                        " Cancel it first if you want to open a new one."
                     )
-                    % req.partner_id.display_name
+                    % {"partner": req.partner_id.display_name}
                 )
 
     # ------------------------------------------------------------------
@@ -313,10 +309,9 @@ class TrPartnerChangeRequest(models.Model):
             if req.state != "pending":
                 raise UserError(
                     _(
-                        "Only pending change requests can be "
-                        "cancelled (current state: %s)."
+                        "Only pending change requests can be cancelled (current state: %(state)s)."
                     )
-                    % req.state
+                    % {"state": req.state}
                 )
             req._close_pending_reviews()
             req.with_context(**{INTERNAL_CTX_KEY: True}).write({"state": "cancelled"})
@@ -328,10 +323,9 @@ class TrPartnerChangeRequest(models.Model):
             if req.state != "pending":
                 raise UserError(
                     _(
-                        "Only pending change requests can be "
-                        "rejected (current state: %s)."
+                        "Only pending change requests can be rejected (current state: %(state)s)."
                     )
-                    % req.state
+                    % {"state": req.state}
                 )
             req._raise_if_comment_required()
             # ``reject_tier`` only rejects reviews assigned to the
@@ -353,10 +347,9 @@ class TrPartnerChangeRequest(models.Model):
             if req.state != "pending":
                 raise UserError(
                     _(
-                        "Only pending change requests can be "
-                        "approved (current state: %s)."
+                        "Only pending change requests can be approved (current state: %(state)s)."
                     )
-                    % req.state
+                    % {"state": req.state}
                 )
             req._raise_if_comment_required()
             req.validate_tier()
@@ -395,7 +388,11 @@ class TrPartnerChangeRequest(models.Model):
         self.ensure_one()
         pending = self.review_ids.filtered(lambda r: r.status == "pending")
         if pending:
-            pending.sudo().write({"status": "rejected", "done_by": self.env.user.id})
+            # done_by=False is intentional: these reviews are force-closed by a
+            # state transition (cancel/reject), not by a reviewer decision.
+            # Assigning env.user.id here would make the acting user appear as
+            # the reviewer of tiers they were never assigned to.
+            pending.sudo().write({"status": "rejected", "done_by": False})
 
     def _raise_if_comment_required(self):
         self.ensure_one()
