@@ -371,10 +371,11 @@ Rep cannot read message threads, see followers, or receive tracking notification
   `models/account_move.py`: `message_ids` and `message_follower_ids` redeclared with
   `groups="!tr_sales_rep_access.group_sales_rep_external"`. The ORM filters them out of
   `fields_get`, `read` and `write` for reps.
-- **`mail_notrack=True` context**: `sale.order.create()`, `sale.order.write()` and
-  `res.partner.create()` overrides inject `mail_notrack=True` when the acting user is a
-  rep. This prevents Odoo from calling `_message_log_fields` and creating tracking
-  messages that would reference fields blocked for reps.
+- **`mail_notrack=True` context**: `sale.order.write()` and `res.partner.write()`
+  overrides inject `mail_notrack=True` when the acting user is a rep. This prevents Odoo
+  from calling `_message_log_fields` and creating tracking messages that would reference
+  fields blocked for reps. Not applied in `create()` — tracking on new records does not
+  expose pre-existing field values.
 - **View-level `oe_chatter` hide** on `sale.order` form view: the chatter `div` is set
   `invisible="1"` via `groups=!rep`. Defense in depth — the server-side field block
   already denies RPC access; this is so the UI renders cleanly.
