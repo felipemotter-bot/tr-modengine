@@ -117,47 +117,50 @@ class TestRepChatter(SalesRepAccessTestCommon):
             f"fields_get must not expose chatter fields for rep on account.move, leaked: {leaked}",
         )
 
+    def _arch_str(self, raw):
+        return raw.decode() if isinstance(raw, bytes) else raw
+
     def test_chatter_div_absent_from_sale_order_form_for_rep(self):
-        arch = (
+        raw = (
             self.env["sale.order"]
             .with_user(self.user_u1)
             .fields_view_get(view_type="form")["arch"]
         )
         self.assertNotIn(
             "oe_chatter",
-            arch,
+            self._arch_str(raw),
             "oe_chatter div must be stripped from sale.order form arch for rep",
         )
 
     def test_chatter_div_present_in_sale_order_form_for_admin(self):
-        arch = self.env["sale.order"].sudo().fields_view_get(view_type="form")["arch"]
+        raw = self.env["sale.order"].sudo().fields_view_get(view_type="form")["arch"]
         self.assertIn(
             "oe_chatter",
-            arch,
+            self._arch_str(raw),
             "oe_chatter div must remain in sale.order form arch for admin",
         )
 
     def test_chatter_div_absent_from_partner_form_for_rep(self):
-        arch = (
+        raw = (
             self.env["res.partner"]
             .with_user(self.user_u1)
             .fields_view_get(view_type="form")["arch"]
         )
         self.assertNotIn(
             "oe_chatter",
-            arch,
+            self._arch_str(raw),
             "oe_chatter div must be stripped from res.partner form arch for rep",
         )
 
     def test_chatter_div_absent_from_account_move_form_for_rep(self):
-        arch = (
+        raw = (
             self.env["account.move"]
             .with_user(self.user_u1)
             .fields_view_get(view_type="form")["arch"]
         )
         self.assertNotIn(
             "oe_chatter",
-            arch,
+            self._arch_str(raw),
             "oe_chatter div must be stripped from account.move form arch for rep",
         )
 
