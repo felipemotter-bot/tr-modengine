@@ -98,7 +98,13 @@ class OrderDiscountPopoverContent extends Component {
   }
 
   onAmountInput(ev) {
-    this.state.desiredAmount = ev.target.value;
+    let val = ev.target.value.replace(/\./g, ",");
+    const parts = val.split(",");
+    if (parts.length > 2) {
+      val = parts[0] + "," + parts.slice(1).join("");
+    }
+    ev.target.value = val;
+    this.state.desiredAmount = val;
   }
 
   formatDiscount(value) {
