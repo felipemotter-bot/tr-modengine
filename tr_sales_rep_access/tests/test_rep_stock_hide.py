@@ -19,6 +19,7 @@ _SALE_LINE_STOCK_FIELDS = (
     "free_qty_today",
     "forecast_expected_date",
     "scheduled_date",
+    "qty_to_deliver",
 )
 
 
@@ -121,6 +122,15 @@ class TestRepStockHide(SalesRepAccessTestCommon):
             msg="Rep must not be able to read virtual_available_at_date on sale.order.line",
         ):
             line.with_user(self.user_u1).read(["virtual_available_at_date"])
+
+    def test_rep_cannot_read_qty_to_deliver(self):
+        """qty_to_deliver (sale_stock) is blocked at the RPC read level."""
+        line = self.order.order_line[:1]
+        with self.assertRaises(
+            AccessError,
+            msg="Rep must not be able to read qty_to_deliver on sale.order.line",
+        ):
+            line.with_user(self.user_u1).read(["qty_to_deliver"])
 
     # Note: the qty_at_date_widget lives inside the order_line inline
     # sub-view which is processed independently; groups= on <widget>

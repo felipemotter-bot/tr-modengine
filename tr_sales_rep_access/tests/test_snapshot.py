@@ -1,6 +1,8 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from unittest.mock import patch
+
 from odoo.exceptions import UserError, ValidationError
 
 from .common import SalesRepAccessTestCommon
@@ -182,18 +184,34 @@ class TestSnapshot(SalesRepAccessTestCommon):
     def test_get_invoice_grouping_keys_is_idempotent(self):
         """Consecutive calls do not duplicate the snapshot key.
 
-        Covers the ``if ... not in res`` branch both true and false
-        by invoking the method on a subclass that pre-populates res.
+        Branch True (key absent in super result): normal call.
+        Branch False (key already present in super result): patched call
+        where the parent class returns the key pre-populated, verifying
+        our override does not append a duplicate.
         """
         order = self._make_order(self.customer_c1)
-        # Patch super() result via monkeypatching the env to include
-        # the key already.
-        original = order._get_invoice_grouping_keys
-        # First call — branch "not in" is True, appends.
-        first = original()
-        # Fake a second call where super returns the key already by
-        # calling directly with a pre-filled list simulated via a
-        # second invocation (still exercises the same code path).
-        second = original()
+
+        # Branch True — key absent: override must append it exactly once.
+        first = order._get_invoice_grouping_keys()
         self.assertEqual(first.count("sales_rep_partner_id"), 1)
+
+        # Branch False — key already present in super() result.
+        # Patch the first ancestor that defines the method so it returns
+        # a list pre-populated with the key; our override must be a no-op
+        # (no duplication).
+        SaleOrderCls = type(order)
+        parent_cls = next(
+            c
+            for c in SaleOrderCls.__mro__[1:]
+            if "_get_invoice_grouping_keys" in c.__dict__
+        )
+        # Patch the parent to always return a list that pre-contains the key.
+        # This forces the False branch of the `if key not in res` guard in
+        # our override, verifying no duplicate is appended.
+        with patch.object(
+            parent_cls,
+            "_get_invoice_grouping_keys",
+            lambda self_inner: ["sales_rep_partner_id"],
+        ):
+            second = order._get_invoice_grouping_keys()
         self.assertEqual(second.count("sales_rep_partner_id"), 1)
