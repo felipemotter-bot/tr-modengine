@@ -320,8 +320,8 @@ redeclaration needs the original field to exist at registry build time.
 
 - **`eng_partner_sales_info`**: the 21 aggregated sales stats fields on `res.partner`
   (last_order_id, order_count, total_ordered, average_ordered, etc.) are redeclared with
-  `groups="!tr_sales_rep_access.group_sales_rep_external"` in
-  `models/eng_partner_sales_info.py`. Upstream already hides the analysis tab via
+  `groups="!tr_sales_rep_access.group_sales_rep_external"` in `models/res_partner.py`.
+  Upstream already hides the analysis tab via
   `eng_partner_sales_info.group_partner_sales_analysis`, but that is view-only — the
   field-level `groups=` closes the RPC read/fields_get path. DA-6 of the plan: never
   trust view-level groups as security.
