@@ -29,22 +29,21 @@ class SaleOrderLine(models.Model):
         # Check before super() so the guard fires before Odoo core calls
         # message_post on the parent order (which fails in test environments
         # without email config and would mask our AccessError).
+        # order_id is required on sale.order.line so it is always present.
         if self.env.user.has_group(REP_GROUP_XMLID):
-            order_ids = [v["order_id"] for v in vals_list if v.get("order_id")]
-            if order_ids:
-                non_drafts = (
-                    self.env["sale.order"]
-                    .browse(order_ids)
-                    .filtered(lambda o: o.state != "draft")
-                )
-                if non_drafts:
-                    raise AccessError(
-                        _(
-                            "Sales reps can only add lines to quotations in draft. "
-                            "Order(s) %(orders)s are past draft."
-                        )
-                        % {"orders": ", ".join(non_drafts.mapped("display_name"))}
+            non_drafts = (
+                self.env["sale.order"]
+                .browse({v["order_id"] for v in vals_list})
+                .filtered(lambda o: o.state != "draft")
+            )
+            if non_drafts:
+                raise AccessError(
+                    _(
+                        "Sales reps can only add lines to quotations in draft. "
+                        "Order(s) %(orders)s are past draft."
                     )
+                    % {"orders": ", ".join(non_drafts.mapped("display_name"))}
+                )
         return super().create(vals_list)
 
     def write(self, vals):
