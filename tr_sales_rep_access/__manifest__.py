@@ -50,6 +50,9 @@
         # partner price list. View hide of the button is defense in
         # depth.
         "tr_pricelist_report",
+        # PR 9 — redeclares qty_available/virtual_available_at_date etc.
+        # with groups= to block RPC access for external reps.
+        "sale_stock",
     ],
     "data": [
         "security/security.xml",

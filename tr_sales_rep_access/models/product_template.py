@@ -1,14 +1,21 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, models
+from odoo import api, fields, models
 from odoo.osv import expression
 
 REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
+_GROUPS_NO_REP = "!tr_sales_rep_access.group_sales_rep_external"
 
 
 class ProductTemplate(models.Model):
     _inherit = "product.template"
+
+    # PR 9 — stock quantities hidden for reps (field-level RPC block).
+    qty_available = fields.Float(groups=_GROUPS_NO_REP)
+    virtual_available = fields.Float(groups=_GROUPS_NO_REP)
+    incoming_qty = fields.Float(groups=_GROUPS_NO_REP)
+    outgoing_qty = fields.Float(groups=_GROUPS_NO_REP)
 
     @api.model
     def _search(

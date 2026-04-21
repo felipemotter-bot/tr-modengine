@@ -1,14 +1,27 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import _, api, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 
 REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
+_GROUPS_NO_REP = "!tr_sales_rep_access.group_sales_rep_external"
 
 
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
+
+    # PR 9 — stock availability fields hidden for reps (field-level RPC block).
+    # These are computed by sale_stock and fed to the qty_at_date_widget.
+    # display_qty_widget controls the widget's OWL template visibility:
+    # blocking it (undefined on frontend) keeps the icon invisible even when
+    # the other qty fields are also absent.
+    display_qty_widget = fields.Boolean(groups=_GROUPS_NO_REP)
+    virtual_available_at_date = fields.Float(groups=_GROUPS_NO_REP)
+    qty_available_today = fields.Float(groups=_GROUPS_NO_REP)
+    free_qty_today = fields.Float(groups=_GROUPS_NO_REP)
+    forecast_expected_date = fields.Datetime(groups=_GROUPS_NO_REP)
+    scheduled_date = fields.Datetime(groups=_GROUPS_NO_REP)
 
     def write(self, vals):
         self._sales_rep_check_rep_can_edit()
