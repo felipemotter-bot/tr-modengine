@@ -13,6 +13,7 @@ _STOCK_QTY_FIELDS = (
     "outgoing_qty",
 )
 _SALE_LINE_STOCK_FIELDS = (
+    "display_qty_widget",
     "virtual_available_at_date",
     "qty_available_today",
     "free_qty_today",

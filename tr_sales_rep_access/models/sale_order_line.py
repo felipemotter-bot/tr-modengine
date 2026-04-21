@@ -13,6 +13,10 @@ class SaleOrderLine(models.Model):
 
     # PR 9 — stock availability fields hidden for reps (field-level RPC block).
     # These are computed by sale_stock and fed to the qty_at_date_widget.
+    # display_qty_widget controls the widget's OWL template visibility:
+    # blocking it (undefined on frontend) keeps the icon invisible even when
+    # the other qty fields are also absent.
+    display_qty_widget = fields.Boolean(groups=_GROUPS_NO_REP)
     virtual_available_at_date = fields.Float(groups=_GROUPS_NO_REP)
     qty_available_today = fields.Float(groups=_GROUPS_NO_REP)
     free_qty_today = fields.Float(groups=_GROUPS_NO_REP)
