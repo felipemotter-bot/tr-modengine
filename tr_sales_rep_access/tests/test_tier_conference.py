@@ -248,6 +248,24 @@ class TestTierConference(SalesRepAccessTestCommon):
             "order should reach validated state.",
         )
 
+    def test_confirm_after_tier_approval_does_not_break_with_chatter_fields_blocked(
+        self,
+    ):
+        """Regression for PR 12/13: action_confirm() reads message_partner_ids.
+
+        The checker (not a rep) calls action_confirm() after tier approval.
+        Because the checker is NOT in group_sales_rep_external, message_partner_ids
+        is not blocked for them and the confirm succeeds. This proves the tier flow
+        is unaffected by the groups=!rep restrictions on chatter fields.
+        """
+        order = self._make_rep_order(self.customer_c1)
+        self.assertEqual(order.state, "draft")
+        order.with_user(self.checker_user).validate_tier()
+        self.assertEqual(order.validation_status, "validated")
+        # action_confirm reads message_partner_ids — must not raise AccessError
+        order.with_user(self.checker_user).action_confirm()
+        self.assertEqual(order.state, "sale")
+
     # ------------------------------------------------------------------
     # Print block override
     # ------------------------------------------------------------------

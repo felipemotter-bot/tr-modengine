@@ -129,6 +129,7 @@ class ResPartner(models.Model):
     message_has_error = fields.Boolean(groups=_GROUPS_NO_REP)
     message_has_error_counter = fields.Integer(groups=_GROUPS_NO_REP)
     message_attachment_count = fields.Integer(groups=_GROUPS_NO_REP)
+    message_main_attachment_id = fields.Many2one(groups=_GROUPS_NO_REP)
 
     # -----------------------------------------------------------------
     # PR 7 commit 1 — ``eng_partner_sales_info`` server-side hide.

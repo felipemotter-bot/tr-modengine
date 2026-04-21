@@ -15,6 +15,7 @@ _MAIL_THREAD_AUX_FIELDS = (
     "message_has_error",
     "message_has_error_counter",
     "message_attachment_count",
+    "message_main_attachment_id",
 )
 
 # Fields from portal.mixin — only on sale.order and account.move.
@@ -50,7 +51,24 @@ class TestChatterHide(SalesRepAccessTestCommon):
                 ],
             }
         )
-        cls.invoice = cls._make_invoice(cls.customer_c1, cls.agent_a1)
+        cls.invoice = cls.env["account.move"].create(
+            {
+                "move_type": "out_invoice",
+                "partner_id": cls.customer_c1.id,
+                "invoice_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": cls.product.id,
+                            "quantity": 1.0,
+                            "price_unit": 100.0,
+                        },
+                    ),
+                ],
+            }
+        )
+        cls.invoice.sales_rep_partner_id = cls.agent_a1.id
 
     # ------------------------------------------------------------------
     # sale.order
@@ -110,6 +128,47 @@ class TestChatterHide(SalesRepAccessTestCommon):
     def test_rep_cannot_read_message_attachment_count_on_res_partner(self):
         with self.assertRaises(AccessError):
             self.customer_c1.with_user(self.user_u1).read(["message_attachment_count"])
+
+    # ------------------------------------------------------------------
+    # message_main_attachment_id (PR 13 — restored after PR 12 removed it)
+    # ------------------------------------------------------------------
+
+    def test_rep_cannot_read_message_main_attachment_id_on_sale_order(self):
+        with self.assertRaises(AccessError):
+            self.order.with_user(self.user_u1).read(["message_main_attachment_id"])
+
+    def test_rep_cannot_read_message_main_attachment_id_on_account_move(self):
+        with self.assertRaises(AccessError):
+            self.invoice.with_user(self.user_u1).read(["message_main_attachment_id"])
+
+    def test_rep_cannot_read_message_main_attachment_id_on_res_partner(self):
+        with self.assertRaises(AccessError):
+            self.customer_c1.with_user(self.user_u1).read(
+                ["message_main_attachment_id"]
+            )
+
+    def test_rep_can_post_message_with_attachment_on_sale_order(self):
+        """message_post with attachment must not raise AccessError for rep.
+
+        mail.thread calls _message_set_main_attachment_id via sudo()
+        (mail_thread.py), so the groups=!rep block on the field does not
+        prevent the write that records the main attachment.
+        """
+        attach = self.env["ir.attachment"].create(
+            {
+                "name": "test.pdf",
+                "datas": "dGVzdA==",  # base64 "test"
+                "res_model": "sale.order",
+                "res_id": self.order.id,
+            }
+        )
+        self.order.with_user(self.user_u1).message_post(
+            body="Rep note with attachment",
+            attachment_ids=[attach.id],
+            email_from="rep@example.com",
+        )
+        # The field was set (verified via sudo — rep cannot read it directly).
+        self.assertTrue(self.order.sudo().message_main_attachment_id)
 
     # ------------------------------------------------------------------
     # Regression: admin is unaffected

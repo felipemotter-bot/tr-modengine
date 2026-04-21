@@ -270,6 +270,21 @@ class TrPartnerChangeRequest(models.Model):
                         )
                     )
 
+    def _auto_init(self):
+        result = super()._auto_init()
+        # Partial unique index prevents two concurrent transactions from
+        # committing two pending requests for the same partner, closing the
+        # race condition that the Python @api.constrains cannot cover.
+        self.env.cr.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            tr_partner_change_request_unique_pending_per_partner
+            ON tr_partner_change_request (partner_id)
+            WHERE state = 'pending'
+        """
+        )
+        return result
+
     @api.constrains("state", "partner_id")
     def _check_single_pending_per_partner(self):
         for req in self:

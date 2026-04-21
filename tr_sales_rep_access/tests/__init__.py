@@ -23,3 +23,5 @@ from . import test_rep_pricelist_report_block
 from . import test_rep_group_audit
 from . import test_rep_chatter
 from . import test_rep_stock_hide
+from . import test_catalog_browse_bypass
+from . import test_chatter_hide
