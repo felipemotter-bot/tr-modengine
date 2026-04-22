@@ -59,6 +59,10 @@
         "sale_advance_payment",
         "sale_purchase",
         "l10n_br_fiscal",
+        # Top-level menus hidden from reps in views/sale_menus.xml.
+        "hr",
+        "calendar",
+        "spreadsheet_dashboard",
     ],
     "data": [
         "security/security.xml",
