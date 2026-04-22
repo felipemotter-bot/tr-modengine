@@ -27,6 +27,20 @@
         </field>
     </record>
 
+    <!-- PR 14 — hide Optional Products and Other Information tabs for reps. -->
+    <record id="view_sale_order_form_rep_tabs" model="ir.ui.view">
+        <field name="name">sale.order.form.rep.tabs</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_management.sale_order_form_quote" />
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='optional_products']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <!-- PR 8 — hide chatter for reps (defense in depth; field-level
          groups= on message_ids / message_follower_ids is the real
          server-side barrier). -->

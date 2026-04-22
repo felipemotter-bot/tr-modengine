@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <!--
-        Grant the external rep access to the Sales app menu items that are
-        gated by sales_team.group_sale_salesman in the Odoo core.
+        Grant the external rep access to the Sales app menus.
         We add the rep group without removing existing access (command 4).
-        sale_menu_root and sale_order_menu have no groups — no override needed.
+        sale_menu_root has a custom group restriction from another module, so
+        we include it here to make the app icon visible on the home screen.
+        sale_order_menu has no groups — no override needed.
     -->
+    <record id="sale.sale_menu_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_sales_rep_external'))]" />
+    </record>
+
     <record id="sale.menu_sale_quotations" model="ir.ui.menu">
         <field name="groups_id" eval="[(4, ref('group_sales_rep_external'))]" />
     </record>
