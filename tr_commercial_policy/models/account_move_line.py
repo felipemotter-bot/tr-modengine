@@ -295,6 +295,7 @@ class AccountMoveLine(models.Model):
                 continue
             line.seller_discount_max = line._get_seller_discount_absolute_max()
 
+    @api.depends("move_id")
     def _compute_seller_markup_max(self):
         markup_max = get_seller_markup_max_pct(self.env)
         for line in self:
