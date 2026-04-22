@@ -8,7 +8,11 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 
-from .policy_utils import calc_adjustment_factor, get_policy_rates
+from .policy_utils import (
+    calc_adjustment_factor,
+    get_policy_rates,
+    validate_seller_markup,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -313,6 +317,7 @@ class PartnerCommercialCondition(models.Model):
         For internal profiles, uses the 6-month average to find the band.
         ``partner`` is required when called during create (self is empty).
         """
+        validate_seller_markup(self.env, seller_discount)
         general_rule = profile.rule_ids.filtered(
             lambda rule: rule.applied_on == "general"
         )
@@ -522,6 +527,15 @@ class PartnerCommercialConditionLine(models.Model):
     )
     seller_discount = fields.Float(string="Seller Discount (%)")
     extra_discount = fields.Float(string="Extra Discount (%)")
+
+    @api.constrains("seller_discount", "extra_discount")
+    def _check_seller_discount_markup(self):
+        for line in self:
+            validate_seller_markup(self.env, line.seller_discount)
+            if (line.seller_discount or 0) < 0 and (line.extra_discount or 0) > 0:
+                raise ValidationError(
+                    _("Extra discount cannot be combined with a seller markup.")
+                )
 
     @api.onchange("applied_on")
     def _onchange_applied_on(self):

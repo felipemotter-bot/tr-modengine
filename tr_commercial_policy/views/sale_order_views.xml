@@ -173,6 +173,7 @@
                 <field name="seller_discount" optional="hide" />
                 <field name="extra_discount" optional="hide" />
                 <field name="seller_discount_max" invisible="True" />
+                <field name="seller_markup_max" invisible="True" />
                 <field name="commission_rate" optional="hide" />
             </xpath>
 
@@ -272,6 +273,7 @@
                 <label for="seller_discount" string="Seller Discount" />
                 <div name="seller_discount" class="o_row">
                     <field name="seller_discount_max" invisible="1" />
+                    <field name="seller_markup_max" invisible="1" />
                     <field
             name="seller_discount"
             class="oe_inline"
@@ -291,19 +293,22 @@
                         <field
               name="extra_discount"
               widget="extra_discount_popover"
-              attrs="{'invisible': [('parent.state', 'not in', ['draft', 'sent'])]}"
+              attrs="{'invisible': ['|', ('parent.state', 'not in', ['draft', 'sent']), ('seller_discount', '&lt;', 0)]}"
             />
                     </span>
                 </div>
 
-                <!-- Extra discount details (visible only when > 0) -->
+                <!-- Extra discount details (visible only when > 0 and no markup) -->
                 <label
           for="total_seller_extra_discount"
           string="Total Discount"
           style="white-space: nowrap;"
-          attrs="{'invisible': [('extra_discount', '=', 0)]}"
+          attrs="{'invisible': ['|', ('extra_discount', '=', 0), ('seller_discount', '&lt;', 0)]}"
         />
-                <div class="o_row" attrs="{'invisible': [('extra_discount', '=', 0)]}">
+                <div
+          class="o_row"
+          attrs="{'invisible': ['|', ('extra_discount', '=', 0), ('seller_discount', '&lt;', 0)]}"
+        >
                     <field
             name="total_seller_extra_discount"
             class="oe_inline"

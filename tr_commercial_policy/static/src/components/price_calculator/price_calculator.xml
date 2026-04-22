@@ -26,10 +26,18 @@
 
                 <t t-if="!preview.error">
                     <div class="small mb-1">
-                        <span class="text-muted">Seller discount:</span>
-                        <span class="fw-bold ms-1">
-                            <t t-esc="formatDiscount(preview.sellerDiscount)" />%
-                        </span>
+                        <t t-if="preview.sellerDiscount &lt; 0">
+                            <span class="text-success">Seller markup:</span>
+                            <span class="fw-bold ms-1 text-success">
+                                +<t t-esc="formatDiscount(-preview.sellerDiscount)" />%
+                            </span>
+                        </t>
+                        <t t-else="">
+                            <span class="text-muted">Seller discount:</span>
+                            <span class="fw-bold ms-1">
+                                <t t-esc="formatDiscount(preview.sellerDiscount)" />%
+                            </span>
+                        </t>
                     </div>
                     <div t-if="preview.extraDiscount > 0" class="small mb-1">
                         <span class="text-warning">

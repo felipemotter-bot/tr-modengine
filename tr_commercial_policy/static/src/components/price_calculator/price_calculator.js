@@ -1,12 +1,12 @@
 /** @odoo-module */
 
 import {Component, useState} from "@odoo/owl";
-import {registry} from "@web/core/registry";
-import {usePopover} from "@web/core/popover/popover_hook";
-import {standardFieldProps} from "@web/views/fields/standard_field_props";
 import {_lt} from "@web/core/l10n/translation";
 import {formatFloat} from "@web/views/fields/formatters";
 import {parseFloat as odooParseFloat} from "@web/views/fields/parsers";
+import {registry} from "@web/core/registry";
+import {standardFieldProps} from "@web/views/fields/standard_field_props";
+import {usePopover} from "@web/core/popover/popover_hook";
 
 /**
  * Pure helper: compute discount decomposition from a desired price.
@@ -14,9 +14,15 @@ import {parseFloat as odooParseFloat} from "@web/views/fields/parsers";
  * @param {Number} referencePrice - line reference price
  * @param {Number} desiredPrice - target price entered by user
  * @param {Number} sellerDiscountMax - max seller discount from profile
+ * @param {Number} sellerMarkupMax - max markup (%) from global settings
  * @returns {Object} {sellerDiscount, extraDiscount, resultingPrice, error}
  */
-function computeDiscountDecomposition(referencePrice, desiredPrice, sellerDiscountMax) {
+export function computeDiscountDecomposition(
+  referencePrice,
+  desiredPrice,
+  sellerDiscountMax,
+  sellerMarkupMax
+) {
   if (referencePrice <= 0) {
     return {sellerDiscount: 0, extraDiscount: 0, resultingPrice: 0, error: ""};
   }
@@ -28,16 +34,17 @@ function computeDiscountDecomposition(referencePrice, desiredPrice, sellerDiscou
       error: _lt("Price must be greater than zero."),
     };
   }
-  if (desiredPrice > referencePrice) {
+
+  const totalNeeded = Math.round((1 - desiredPrice / referencePrice) * 1000000) / 10000;
+
+  if (totalNeeded < -(sellerMarkupMax || 0)) {
     return {
       sellerDiscount: 0,
       extraDiscount: 0,
       resultingPrice: referencePrice,
-      error: _lt("Price must be lower than the reference price."),
+      error: _lt("Price exceeds the maximum allowed markup."),
     };
   }
-
-  const totalNeeded = Math.round((1 - desiredPrice / referencePrice) * 1000000) / 10000;
 
   if (totalNeeded > 99) {
     return {
@@ -50,7 +57,10 @@ function computeDiscountDecomposition(referencePrice, desiredPrice, sellerDiscou
 
   let sellerDiscount = 0;
   let extraDiscount = 0;
-  if (totalNeeded <= sellerDiscountMax) {
+  if (totalNeeded <= 0) {
+    // Markup: negative seller discount, no extra
+    sellerDiscount = Math.round(totalNeeded * 10000) / 10000;
+  } else if (totalNeeded <= sellerDiscountMax) {
     sellerDiscount = Math.round(totalNeeded * 10000) / 10000;
   } else {
     sellerDiscount = Math.round(sellerDiscountMax * 10000) / 10000;
@@ -85,7 +95,8 @@ class PriceCalculatorPopoverContent extends Component {
     return computeDiscountDecomposition(
       this.props.referencePrice,
       desired,
-      this.props.sellerDiscountMax
+      this.props.sellerDiscountMax,
+      this.props.sellerMarkupMax
     );
   }
 
@@ -149,6 +160,7 @@ class PriceCalculatorButton extends Component {
       {
         referencePrice: this.props.record.data.reference_price || 0,
         sellerDiscountMax: this.props.record.data.seller_discount_max || 0,
+        sellerMarkupMax: this.props.record.data.seller_markup_max || 0,
         onApply: this.onApply.bind(this),
       },
       {

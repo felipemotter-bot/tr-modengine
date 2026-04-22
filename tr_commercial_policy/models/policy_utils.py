@@ -25,6 +25,40 @@ def calc_adjustment_factor(contractual_return_pct, tax_rate, freight_rate, admin
     return (numerator / denominator - 1) * 100
 
 
+def get_seller_markup_max_pct(env):
+    """Return the global seller markup maximum as a percentage (float).
+
+    Reads ``tr_commercial_policy.seller_markup_max_pct`` from
+    ``ir.config_parameter``.  A value of 0.0 means no markup is allowed.
+    """
+    icp = env["ir.config_parameter"].sudo()
+    return float(icp.get_param("tr_commercial_policy.seller_markup_max_pct", "0.0"))
+
+
+def validate_seller_markup(env, seller_discount):
+    """Raise ValidationError when seller_discount violates the markup limit.
+
+    Negative seller_discount means markup.  The allowed floor is
+    ``-get_seller_markup_max_pct(env)``.  A zero markup_max means no
+    negative discount is accepted.
+    """
+    from odoo import _
+    from odoo.exceptions import ValidationError
+
+    markup_max = get_seller_markup_max_pct(env)
+    if (seller_discount or 0.0) < -markup_max:
+        raise ValidationError(
+            _(
+                "Seller markup (%(markup).2f%%) exceeds the maximum"
+                " allowed markup (%(max).2f%%)."
+            )
+            % {
+                "markup": -(seller_discount or 0.0),
+                "max": markup_max,
+            }
+        )
+
+
 def get_policy_rates(env):
     """Return (tax_rate, freight_rate, admin_rate) as decimals.
 

@@ -9,7 +9,9 @@ from .policy_utils import (
     calc_price_unit,
     calc_reference_price,
     get_policy_rates,
+    get_seller_markup_max_pct,
     resolve_applicable_rule,
+    validate_seller_markup,
 )
 
 
@@ -63,6 +65,12 @@ class SaleOrderLine(models.Model):
         compute="_compute_seller_discount_max",
         digits="Discount Policy",
         help="Maximum seller discount allowed by the sales profile for this product.",
+    )
+    seller_markup_max = fields.Float(
+        string="Max Seller Markup (%)",
+        compute="_compute_seller_markup_max",
+        digits="Discount Policy",
+        help="Maximum markup (negative seller discount) allowed globally.",
     )
     discount_changed = fields.Boolean(
         compute="_compute_discount_changed",
@@ -178,6 +186,11 @@ class SaleOrderLine(models.Model):
         for line in self:
             line.seller_discount_max = line._get_seller_discount_max()
 
+    def _compute_seller_markup_max(self):
+        markup_max = get_seller_markup_max_pct(self.env)
+        for line in self:
+            line.seller_markup_max = markup_max
+
     @api.depends(
         "seller_discount",
         "product_id",
@@ -225,8 +238,10 @@ class SaleOrderLine(models.Model):
         Uses ``_get_seller_discount_absolute_max`` (highest band limit)
         so that band-contextual checks are handled separately by
         ``_get_discount_validation_issues`` (tier validation).
+        Also enforces the global markup limit for negative discounts.
         """
         for line in self:
+            validate_seller_markup(self.env, line.seller_discount)
             max_disc = line._get_seller_discount_absolute_max()
             if line.seller_discount > max_disc:
                 raise ValidationError(  # noqa: UP031
@@ -245,6 +260,10 @@ class SaleOrderLine(models.Model):
     @api.constrains("extra_discount", "seller_discount")
     def _check_discount_range(self):
         for line in self:
+            if (line.seller_discount or 0) < 0 and (line.extra_discount or 0) > 0:
+                raise ValidationError(
+                    _("Extra discount cannot be combined with a seller markup.")
+                )
             if line.extra_discount < 0:
                 raise ValidationError(_("Extra discount cannot be negative."))
             if line.extra_discount > 99:
@@ -547,7 +566,7 @@ class SaleOrderLine(models.Model):
         rule = self._get_applicable_rule()
         if not rule or not rule.commission_band_ids:
             return False
-        seller_disc = seller_discount or 0.0
+        seller_disc = max(seller_discount or 0.0, 0.0)
         bands = rule.commission_band_ids.sorted("discount_up_to")
         for band in bands:
             if band.discount_up_to >= seller_disc:

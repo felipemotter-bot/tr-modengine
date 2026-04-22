@@ -34,14 +34,16 @@
         class="text-end"
         t-if="doc.discount_display == 'show_discounts'"
       >
-                <span t-field="line.reference_price" />
+                <span t-if="line.seller_discount >= 0" t-field="line.reference_price" />
+                <span t-else="" t-field="line.price_unit" />
             </td>
             <td
         name="td_seller_discount"
         class="text-end"
         t-if="doc.discount_display == 'show_discounts'"
       >
-                <span t-field="line.seller_discount" />
+                <span t-if="line.seller_discount >= 0" t-field="line.seller_discount" />
+                <span t-else="">0,00</span>
             </td>
         </xpath>
     </template>

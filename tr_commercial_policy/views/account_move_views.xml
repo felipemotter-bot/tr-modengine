@@ -320,6 +320,7 @@
                     ]}"
         >
                     <field name="seller_discount_max" invisible="1" />
+                    <field name="seller_markup_max" invisible="1" />
                     <field
             name="seller_discount"
             class="oe_inline"
@@ -339,26 +340,28 @@
                         <field
               name="extra_discount"
               widget="extra_discount_popover"
-              attrs="{'invisible': [('parent.state', '!=', 'draft')]}"
+              attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('seller_discount', '&lt;', 0)]}"
             />
                     </span>
                 </div>
 
-                <!-- Total discount (visible only when extra_discount > 0) -->
+                <!-- Total discount (visible only when extra_discount > 0 and no markup) -->
                 <label
           for="total_seller_extra_discount"
           string="Total Discount"
           style="white-space: nowrap;"
-          attrs="{'invisible': ['|',
+          attrs="{'invisible': ['|', '|',
                         ('display_type', '!=', 'product'),
-                        ('extra_discount', '=', 0)
+                        ('extra_discount', '=', 0),
+                        ('seller_discount', '&lt;', 0)
                     ]}"
         />
                 <div
           class="o_row"
-          attrs="{'invisible': ['|',
+          attrs="{'invisible': ['|', '|',
                         ('display_type', '!=', 'product'),
-                        ('extra_discount', '=', 0)
+                        ('extra_discount', '=', 0),
+                        ('seller_discount', '&lt;', 0)
                     ]}"
         >
                     <field

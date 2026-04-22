@@ -50,3 +50,13 @@ class ResConfigSettings(models.TransientModel):
             " until touched."
         ),
     )
+    tr_policy_seller_markup_max = fields.Float(
+        string="Max Seller Markup (%)",
+        config_parameter="tr_commercial_policy.seller_markup_max_pct",
+        default=0.0,
+        help=(
+            "Maximum percentage the seller can increase the price above"
+            " the reference price (negative seller discount). Zero means"
+            " no markup is allowed."
+        ),
+    )
