@@ -50,6 +50,12 @@ class SaleOrderLine(models.Model):
     # Same pattern as the other child-model fields above.
     purchase_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
 
+    # product_updatable (sale_stock) iterates move_ids in its compute —
+    # reps can't read move_ids, so the field would raise AccessError
+    # when the client reads the line. Reps only edit draft orders
+    # where product is always updatable anyway.
+    product_updatable = fields.Boolean(groups=_GROUPS_NO_REP)
+
     @api.depends("order_id.partner_id")
     def _compute_agent_ids(self):
         """Run the agent-line compute as sudo for reps.
