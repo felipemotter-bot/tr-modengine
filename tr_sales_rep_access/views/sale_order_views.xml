@@ -42,25 +42,12 @@
     </record>
 
     <!--
-        Hide the "Invoices" smart button from reps. Reps have a
-        record-scoped read on account.move but the button exposes
-        invoice UI the rep doesn't need. Field-level groups= on
-        invoice_count + invoice_ids would also kill the smart
-        button count widget but requires adding the fields to our
-        model override — not worth it for this cosmetic button hide.
+        Invoices smart button hidden for reps via _get_view() in
+        models/sale_order.py (not groups=): ``invoice_count`` lives
+        inside the button and is referenced by attrs on another
+        button, so removing it from the arch breaks validation.
     -->
-    <record id="view_sale_order_form_rep_hide_invoice_button" model="ir.ui.view">
-        <field name="name">sale.order.form.rep.hide.invoice.button</field>
-        <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_order_form" />
-        <field name="arch" type="xml">
-            <xpath expr="//button[@name='action_view_invoice']" position="attributes">
-                <attribute
-          name="groups"
-        >!tr_sales_rep_access.group_sales_rep_external</attribute>
-            </xpath>
-        </field>
-    </record>
+
 
     <!--
         Hide commission UI buttons from reps. The fields themselves

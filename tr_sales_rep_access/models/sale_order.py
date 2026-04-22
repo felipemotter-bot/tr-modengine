@@ -116,6 +116,16 @@ class SaleOrder(models.Model):
             modifiers["invisible"] = True
             node.set("modifiers", json.dumps(modifiers))
             node.set("invisible", "1")
+        # Invoices smart button — hidden for reps. Groups= on the button
+        # would remove invoice_count from the arch (the field lives
+        # inside the button) and break attrs on another button that
+        # references it. Modifiers on the button node keep the field
+        # reachable and just hide the UI.
+        for node in arch.xpath("//button[@name='action_view_invoice']"):
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["invisible"] = True
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("invisible", "1")
         # Fiscal operation / operation line / CFOP / description are
         # defined by the backoffice. Reps can see them but must not edit.
         # Inject readonly modifier directly on the arch nodes inside
