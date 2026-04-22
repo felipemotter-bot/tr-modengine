@@ -293,7 +293,7 @@ class ResPartner(models.Model):
         # Hide Language and Tags fields in the main header for reps.
         # Same rationale as sales_purchases: ``lang`` is referenced in
         # the ``child_ids`` context, so groups= would break validation.
-        for fname in ("lang", "category_id"):
+        for fname in ("lang", "category_id", "need_to_validate"):
             for node in arch.xpath(f"//field[@name='{fname}']"):
                 modifiers = json.loads(node.get("modifiers") or "{}")
                 modifiers["invisible"] = True
