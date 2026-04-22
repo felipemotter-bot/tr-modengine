@@ -274,12 +274,19 @@ class ResPartner(models.Model):
         arch, view = super()._get_view(view_id=view_id, view_type=view_type, **options)
         if view_type != "form" or not self.env.user.has_group(REP_GROUP_XMLID):
             return arch, view
-        for fname in ("agent_ids", "agent"):
-            for node in arch.xpath(f"//field[@name='{fname}']"):
-                modifiers = json.loads(node.get("modifiers") or "{}")
-                modifiers["readonly"] = True
-                node.set("modifiers", json.dumps(modifiers))
-                node.set("readonly", "1")
+        # agent_ids stays visible but readonly (rep sees their own
+        # assignment). agent flag is fully hidden — rep shouldn't even
+        # see the checkbox since they can't toggle it.
+        for node in arch.xpath("//field[@name='agent_ids']"):
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["readonly"] = True
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("readonly", "1")
+        for node in arch.xpath("//field[@name='agent']"):
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["invisible"] = True
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("invisible", "1")
         # Hide the Sales & Purchase tab entirely. Using groups= on the
         # page would remove user_id/team_id from the arch for reps and
         # break validation of unrelated views that reference those
