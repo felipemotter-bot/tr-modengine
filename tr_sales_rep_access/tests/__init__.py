@@ -25,3 +25,4 @@ from . import test_rep_chatter
 from . import test_rep_stock_hide
 from . import test_catalog_browse_bypass
 from . import test_chatter_hide
+from . import test_rep_tab_visibility
