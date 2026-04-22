@@ -267,4 +267,22 @@
             </xpath>
         </field>
     </record>
+
+    <!--
+        Fiscal tab (l10n_br_base) should only be edited by backoffice.
+        Reps fill a partner's basic data and the fiscal detail is
+        completed by an internal user afterwards.
+    -->
+    <record id="res_partner_form_hide_fiscal_rep" model="ir.ui.view">
+        <field name="name">res.partner.form.hide.fiscal.rep</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="l10n_br_base.l10n_br_base_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='fiscal']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>
