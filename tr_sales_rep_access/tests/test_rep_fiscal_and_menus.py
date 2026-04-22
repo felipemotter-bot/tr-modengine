@@ -177,7 +177,7 @@ class TestRepFiscalAndMenus(SalesRepAccessTestCommon):
                 {"name": "Fake Agent", "agent": True}
             )
 
-    def test_rep_partner_form_marks_agent_flag_readonly(self):
+    def test_rep_partner_form_marks_agent_flag_invisible(self):
         arch, _ = (
             self.env["res.partner"].with_user(self.user_u1)._get_view(view_type="form")
         )
@@ -186,6 +186,6 @@ class TestRepFiscalAndMenus(SalesRepAccessTestCommon):
         for node in nodes:
             modifiers = json.loads(node.get("modifiers") or "{}")
             self.assertTrue(
-                modifiers.get("readonly"),
-                "agent flag should be readonly in the rep's partner form",
+                modifiers.get("invisible"),
+                "agent flag should be invisible in the rep's partner form",
             )

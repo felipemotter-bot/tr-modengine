@@ -43,26 +43,25 @@
         <field name="name">res.partner.form.change.request.buttons</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="priority" eval="50" />
         <field name="arch" type="xml">
-            <xpath expr="//sheet" position="before">
-                <header>
-                    <button
-            name="%(action_tr_partner_change_request_field_update)d"
-            string="Request field update"
-            type="action"
-            groups="tr_sales_rep_access.group_sales_rep_external"
-            context="{'default_partner_id': active_id, 'default_request_type': 'field_update'}"
-            attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
-          />
-                    <button
-            name="%(action_tr_partner_change_request_new_child)d"
-            string="Request new contact"
-            type="action"
-            groups="tr_sales_rep_access.group_sales_rep_external"
-            context="{'default_partner_id': active_id, 'default_request_type': 'new_child'}"
-            attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
-          />
-                </header>
+            <xpath expr="//header" position="inside">
+                <button
+          name="%(action_tr_partner_change_request_field_update)d"
+          string="Request field update"
+          type="action"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          context="{'default_partner_id': active_id, 'default_request_type': 'field_update'}"
+          attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
+        />
+                <button
+          name="%(action_tr_partner_change_request_new_child)d"
+          string="Request new contact"
+          type="action"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          context="{'default_partner_id': active_id, 'default_request_type': 'new_child'}"
+          attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('parent_id', '!=', False)]}"
+        />
             </xpath>
         </field>
     </record>
