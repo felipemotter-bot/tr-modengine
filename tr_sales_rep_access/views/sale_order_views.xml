@@ -41,6 +41,33 @@
         </field>
     </record>
 
+    <!--
+        Hide commission UI buttons from reps. The fields themselves
+        (commission_total, commission_status, agent_ids, partner_agent_ids)
+        are blocked at model level via groups=_GROUPS_NO_REP. Only the
+        interactive buttons still need XML-level hide.
+    -->
+    <record id="view_sale_order_form_hide_commission_rep" model="ir.ui.view">
+        <field name="name">sale.order.form.hide.commission.rep</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_commission.view_order_agent_form_inherit" />
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='button_edit_agents']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//group[@name='group_recompute_commission']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <!-- PR 8 — hide chatter for reps (defense in depth; field-level
          groups= on message_ids / message_follower_ids is the real
          server-side barrier). -->
