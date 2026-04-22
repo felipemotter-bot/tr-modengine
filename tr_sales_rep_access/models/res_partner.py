@@ -263,25 +263,49 @@ class ResPartner(models.Model):
     )
 
     def _get_view(self, view_id=None, view_type="form", **options):
-        """Inject readonly on agent_ids for reps so they can see the
-        partner's assigned rep but cannot swap it (transferring the
-        customer to another rep). The record rule that surfaces other
-        reps' user partners for chat/tier purposes makes the m2m
-        dropdown list them; locking the field server-side is the
-        least invasive way to prevent assignment.
+        """Inject readonly on sensitive partner fields for reps.
+
+        - ``agent_ids``: rep sees who's assigned but can't swap it
+          (would transfer the customer to another rep).
+        - ``agent``: rep must not flag a contact as "Representante?";
+          that flag creates a commission-bearing entity and is a
+          backoffice decision.
         """
         arch, view = super()._get_view(view_id=view_id, view_type=view_type, **options)
         if view_type != "form" or not self.env.user.has_group(REP_GROUP_XMLID):
             return arch, view
-        for node in arch.xpath("//field[@name='agent_ids']"):
-            modifiers = json.loads(node.get("modifiers") or "{}")
-            modifiers["readonly"] = True
-            node.set("modifiers", json.dumps(modifiers))
-            node.set("readonly", "1")
+        for fname in ("agent_ids", "agent"):
+            for node in arch.xpath(f"//field[@name='{fname}']"):
+                modifiers = json.loads(node.get("modifiers") or "{}")
+                modifiers["readonly"] = True
+                node.set("modifiers", json.dumps(modifiers))
+                node.set("readonly", "1")
         return arch, view
+
+    def _sales_rep_check_agent_field_write(self, vals):
+        """Reject rep attempts to flag a partner as ``agent``.
+
+        The ``agent`` boolean on ``res.partner`` (from OCA commission)
+        creates a commission-bearing entity; only backoffice roles
+        should toggle it. View-level readonly is UX, this guard is the
+        real barrier against RPC writes.
+        """
+        if self.env.su or not self.env.user.has_group(REP_GROUP_XMLID):
+            return
+        if "agent" not in vals:
+            return
+        raise AccessError(
+            _(
+                "Sales representatives cannot flag a contact as "
+                "representative. Ask a sales manager to configure it."
+            )
+        )
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.su and self.env.user.has_group(REP_GROUP_XMLID):
+            for vals in vals_list:
+                self._sales_rep_check_agent_field_write(vals)
         default_ids = self._sales_rep_default_catalog_ids()
         is_rep = self.env.user.has_group(REP_GROUP_XMLID)
         draft_stage = (
@@ -360,6 +384,11 @@ class ResPartner(models.Model):
         return records
 
     def write(self, vals):
+        # Block reps from ever flagging a partner as ``agent`` — the
+        # flag creates a commission-bearing entity and is a backoffice
+        # decision, not a rep's call. Guard applies regardless of
+        # partner state so Draft partners (pre-approval) are also safe.
+        self._sales_rep_check_agent_field_write(vals)
         # PR 4b — rep cannot write directly on Active partners. The
         # canonical path is a ``tr.partner.change.request`` for
         # cadastral fields and the action buttons on

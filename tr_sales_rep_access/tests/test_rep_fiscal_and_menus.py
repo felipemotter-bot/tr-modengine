@@ -162,3 +162,30 @@ class TestRepFiscalAndMenus(SalesRepAccessTestCommon):
 
     def test_contacts_menu_visible_for_rep(self):
         self.assertTrue(self._menu_visible_to_rep("contacts.res_partner_menu_contacts"))
+
+    # ------------------------------------------------------------------
+    # agent flag: rep cannot set it via write or create
+    # ------------------------------------------------------------------
+
+    def test_rep_cannot_write_agent_flag_on_partner(self):
+        with self.assertRaises(AccessError):
+            self.customer_c1.with_user(self.user_u1).write({"agent": True})
+
+    def test_rep_cannot_create_partner_with_agent_flag(self):
+        with self.assertRaises(AccessError):
+            self.env["res.partner"].with_user(self.user_u1).create(
+                {"name": "Fake Agent", "agent": True}
+            )
+
+    def test_rep_partner_form_marks_agent_flag_readonly(self):
+        arch, _ = (
+            self.env["res.partner"].with_user(self.user_u1)._get_view(view_type="form")
+        )
+        nodes = arch.xpath("//field[@name='agent']")
+        self.assertTrue(nodes, "agent field must be in the rep's partner form arch")
+        for node in nodes:
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            self.assertTrue(
+                modifiers.get("readonly"),
+                "agent flag should be readonly in the rep's partner form",
+            )
