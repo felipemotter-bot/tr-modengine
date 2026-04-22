@@ -116,6 +116,24 @@ class SaleOrder(models.Model):
             modifiers["invisible"] = True
             node.set("modifiers", json.dumps(modifiers))
             node.set("invisible", "1")
+        # Fiscal operation / operation line / CFOP / description are
+        # defined by the backoffice. Reps can see them but must not edit.
+        # Inject readonly modifier directly on the arch nodes inside
+        # the order_line inline form.
+        readonly_line_fields = (
+            "fiscal_operation_id",
+            "fiscal_operation_line_id",
+            "cfop_id",
+            "name",
+        )
+        for fname in readonly_line_fields:
+            for node in arch.xpath(
+                f"//field[@name='order_line']//field[@name='{fname}']"
+            ):
+                modifiers = json.loads(node.get("modifiers") or "{}")
+                modifiers["readonly"] = True
+                node.set("modifiers", json.dumps(modifiers))
+                node.set("readonly", "1")
         return arch, view
 
     @api.model_create_multi
