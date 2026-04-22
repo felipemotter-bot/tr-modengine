@@ -148,11 +148,6 @@ class TestRepPartnerBlock(SalesRepAccessTestCommon):
     # Internal sudo paths (change_request approve) bypass the guard
     # ------------------------------------------------------------------
 
-    def _phone_field_id(self):
-        return self.env["ir.model.fields"].search(
-            [("model", "=", "res.partner"), ("name", "=", "phone")], limit=1
-        )
-
     def test_change_request_approve_applies_via_sudo_bypass(self):
         """End-to-end: rep → change_request → manager approve → partner updated."""
         # Mail ICPs required by notify_on_create on the tier definition.
@@ -170,16 +165,7 @@ class TestRepPartnerBlock(SalesRepAccessTestCommon):
                     "partner_id": self.customer_c1.id,
                     "request_type": "field_update",
                     "reason": "Customer moved.",
-                    "line_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "field_id": self._phone_field_id().id,
-                                "new_value_char": "+55 33 0000-0000",
-                            },
-                        )
-                    ],
+                    "new_phone": "+55 33 0000-0000",
                 }
             )
         )

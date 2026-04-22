@@ -14,12 +14,26 @@ MANAGER_GROUP_XMLID = "tr_commercial_policy.group_sales_manager"
 # group, tier validation, review cleanup and partner propagation).
 INTERNAL_CTX_KEY = "_tr_change_request_internal_transition"
 
-IMMUTABLE_FIELDS_AFTER_PENDING = frozenset(
+# Mapping: form field on the change request ↔ field on res.partner.
+# Drives the prefill onchange and the apply helper. Adding a new
+# editable field means declaring it here and on the form — nothing
+# else.
+_FIELD_UPDATE_MAP = {
+    "new_name": "name",
+    "new_phone": "phone",
+    "new_mobile": "mobile",
+    "new_email": "email",
+    "new_street": "street",
+    "new_street2": "street2",
+    "new_city": "city",
+    "new_zip": "zip",
+    "new_state_id": "state_id",
+    "new_country_id": "country_id",
+}
+
+_FIELD_UPDATE_FORM_FIELDS = frozenset(_FIELD_UPDATE_MAP)
+_NEW_CHILD_FIELDS = frozenset(
     {
-        "partner_id",
-        "request_type",
-        "reason",
-        "line_ids",
         "new_child_name",
         "new_child_email",
         "new_child_phone",
@@ -27,6 +41,12 @@ IMMUTABLE_FIELDS_AFTER_PENDING = frozenset(
         "new_child_function",
         "new_child_type",
     }
+)
+
+IMMUTABLE_FIELDS_AFTER_PENDING = (
+    frozenset({"partner_id", "request_type", "reason"})
+    | _FIELD_UPDATE_FORM_FIELDS
+    | _NEW_CHILD_FIELDS
 )
 
 # Audit fields set at create; the per-group record rule relies on
@@ -97,10 +117,21 @@ class TrPartnerChangeRequest(models.Model):
         tracking=True,
         copy=False,
     )
-    line_ids = fields.One2many(
-        "tr.partner.change.request.line",
-        "request_id",
-    )
+    # Fixed fields for ``field_update`` — no more dynamic field picker.
+    # Prefilled from partner_id via onchange so the rep can see the
+    # current value and only change what needs changing. See
+    # ``_FIELD_UPDATE_MAP`` for the form↔partner field mapping.
+    new_name = fields.Char(string="New name")
+    new_phone = fields.Char(string="New phone")
+    new_mobile = fields.Char(string="New mobile")
+    new_email = fields.Char(string="New email")
+    new_street = fields.Char(string="New street")
+    new_street2 = fields.Char(string="New street 2")
+    new_city = fields.Char(string="New city")
+    new_zip = fields.Char(string="New ZIP")
+    new_state_id = fields.Many2one("res.country.state", string="New state")
+    new_country_id = fields.Many2one("res.country", string="New country")
+
     new_child_name = fields.Char()
     new_child_email = fields.Char()
     new_child_phone = fields.Char()
@@ -132,6 +163,32 @@ class TrPartnerChangeRequest(models.Model):
             else:
                 req.name = _("New change request · %(partner)s") % {"partner": partner}
 
+    @api.onchange("partner_id")
+    def _onchange_partner_id_prefill(self):
+        """Pre-fill the ``new_*`` fields with the partner's current
+        values so the rep sees what's there and only types over what
+        needs changing. Only applies to field_update requests; for
+        new_child the form starts empty."""
+        for req in self:
+            if req.request_type != "field_update" or not req.partner_id:
+                continue
+            for form_field, model_field in _FIELD_UPDATE_MAP.items():
+                req[form_field] = req.partner_id[model_field]
+
+    @api.onchange("request_type")
+    def _onchange_request_type_reset(self):
+        """Clear the opposite payload when the request type flips so
+        the constraint doesn't fire on stale fields and the view
+        stays tidy."""
+        for req in self:
+            if req.request_type == "field_update":
+                for f in _NEW_CHILD_FIELDS:
+                    req[f] = False
+                req._onchange_partner_id_prefill()
+            elif req.request_type == "new_child":
+                for f in _FIELD_UPDATE_FORM_FIELDS:
+                    req[f] = False
+
     @api.model_create_multi
     def create(self, vals_list):
         # Forbid rep-supplied values for requested_by /
@@ -148,6 +205,20 @@ class TrPartnerChangeRequest(models.Model):
                 user = self.env["res.users"].browse(user_id)
                 if user.has_group(REP_GROUP_XMLID):
                     vals["sales_rep_partner_id"] = user.partner_id.id
+            # Prefill new_* fields from the partner for field_update
+            # requests so RPC-created records that only set the
+            # fields the caller wants to change do not end up
+            # clearing every other field on approve. The onchange
+            # covers the UI; this covers the RPC path.
+            if vals.get("request_type", "field_update") == "field_update" and vals.get(
+                "partner_id"
+            ):
+                partner = self.env["res.partner"].browse(vals["partner_id"])
+                for form_field, model_field in _FIELD_UPDATE_MAP.items():
+                    if form_field in vals:
+                        continue
+                    current = partner[model_field]
+                    vals[form_field] = current.id if hasattr(current, "id") else current
         records = super().create(vals_list)
         records.filtered(
             lambda r: r.state == "pending" and r.sales_rep_partner_id
@@ -220,35 +291,14 @@ class TrPartnerChangeRequest(models.Model):
     # Constraints
     # ------------------------------------------------------------------
 
-    @api.constrains(
-        "request_type",
-        "line_ids",
-        "new_child_name",
-        "new_child_email",
-        "new_child_phone",
-        "new_child_mobile",
-        "new_child_function",
-    )
+    @api.constrains("request_type", "new_child_name")
     def _check_payload_matches_type(self):
         for req in self:
             if req.request_type == "field_update":
-                if not req.line_ids:
-                    raise ValidationError(
-                        _(
-                            "A field update request must have at "
-                            "least one line describing the change."
-                        )
-                    )
-                if any(
-                    getattr(req, f)
-                    for f in (
-                        "new_child_name",
-                        "new_child_email",
-                        "new_child_phone",
-                        "new_child_mobile",
-                        "new_child_function",
-                    )
-                ):
+                new_child_populated = any(
+                    getattr(req, f) for f in _NEW_CHILD_FIELDS if f != "new_child_type"
+                )
+                if new_child_populated:
                     raise ValidationError(
                         _(
                             "A field update request cannot carry "
@@ -259,15 +309,7 @@ class TrPartnerChangeRequest(models.Model):
             elif req.request_type == "new_child":
                 if not req.new_child_name:
                     raise ValidationError(
-                        _("A new contact request must include " "the contact's name.")
-                    )
-                if req.line_ids:
-                    raise ValidationError(
-                        _(
-                            "A new contact request cannot carry "
-                            "field update lines; use a field_update "
-                            "request for that."
-                        )
+                        _("A new contact request must include the contact's name.")
                     )
 
     def _auto_init(self):
@@ -423,11 +465,21 @@ class TrPartnerChangeRequest(models.Model):
             )
 
     def _apply_field_update(self):
+        """Write only the fields whose ``new_*`` value differs from
+        the partner's current value. ``False`` is applied too, so the
+        rep can clear an existing value (e.g. remove an outdated
+        phone)."""
         self.ensure_one()
         vals = {}
-        for line in self.line_ids:
-            vals[line.field_id.name] = line._resolve_value()
-        self.partner_id.sudo().write(vals)
+        for form_field, model_field in _FIELD_UPDATE_MAP.items():
+            new_val = self[form_field]
+            current = self.partner_id[model_field]
+            current_cmp = current.id if hasattr(current, "id") else current
+            new_cmp = new_val.id if hasattr(new_val, "id") else new_val
+            if new_cmp != current_cmp:
+                vals[model_field] = new_cmp or False
+        if vals:
+            self.partner_id.sudo().write(vals)
 
     def _create_child(self):
         self.ensure_one()

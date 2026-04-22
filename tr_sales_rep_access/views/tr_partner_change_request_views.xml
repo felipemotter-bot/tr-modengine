@@ -73,23 +73,59 @@
               string="Fields"
               attrs="{'invisible': [('request_type', '!=', 'field_update')]}"
             >
-                            <field
-                name="line_ids"
-                attrs="{'readonly': [('state', '!=', 'pending')]}"
-              >
-                                <tree editable="bottom">
-                                    <field name="field_id" />
-                                    <field name="field_ttype" invisible="1" />
+                            <p class="text-muted">
+                                Adjust only the fields you want to change.
+                                The current value is pre-filled; leave it
+                                as is to keep it, change to update.
+                            </p>
+                            <group>
+                                <group>
                                     <field
-                    name="new_value_char"
-                    attrs="{'invisible': [('field_ttype', '!=', 'char')], 'required': [('field_ttype', '=', 'char')]}"
+                    name="new_name"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
                   />
                                     <field
-                    name="new_value_reference"
-                    attrs="{'invisible': [('field_ttype', '!=', 'many2one')], 'required': [('field_ttype', '=', 'many2one')]}"
+                    name="new_phone"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
                   />
-                                </tree>
-                            </field>
+                                    <field
+                    name="new_mobile"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_email"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                </group>
+                                <group>
+                                    <field
+                    name="new_street"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_street2"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_city"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_zip"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_state_id"
+                    options="{'no_create': True}"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                    <field
+                    name="new_country_id"
+                    options="{'no_create': True}"
+                    attrs="{'readonly': [('state', '!=', 'pending')]}"
+                  />
+                                </group>
+                            </group>
                         </page>
                         <page
               name="new_child"
