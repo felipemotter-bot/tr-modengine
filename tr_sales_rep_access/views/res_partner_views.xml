@@ -12,7 +12,10 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="commission.view_partner_form_agent" />
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='agent_information']" position="inside">
+            <xpath
+        expr="//page[@name='agent_information']//group/group[field[@name='agent_type']]"
+        position="after"
+      >
                 <group groups="tr_commercial_policy.group_sales_manager">
                     <field
             name="allowed_category_ids"
