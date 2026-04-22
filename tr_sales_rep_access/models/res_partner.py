@@ -1,6 +1,7 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import json
 import threading
 
 from odoo import _, api, fields, models
@@ -260,6 +261,24 @@ class ResPartner(models.Model):
     union_entity_code = fields.Char(
         groups="!tr_sales_rep_access.group_sales_rep_external",
     )
+
+    def _get_view(self, view_id=None, view_type="form", **options):
+        """Inject readonly on agent_ids for reps so they can see the
+        partner's assigned rep but cannot swap it (transferring the
+        customer to another rep). The record rule that surfaces other
+        reps' user partners for chat/tier purposes makes the m2m
+        dropdown list them; locking the field server-side is the
+        least invasive way to prevent assignment.
+        """
+        arch, view = super()._get_view(view_id=view_id, view_type=view_type, **options)
+        if view_type != "form" or not self.env.user.has_group(REP_GROUP_XMLID):
+            return arch, view
+        for node in arch.xpath("//field[@name='agent_ids']"):
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["readonly"] = True
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("readonly", "1")
+        return arch, view
 
     @api.model_create_multi
     def create(self, vals_list):
