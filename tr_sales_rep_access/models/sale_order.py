@@ -68,6 +68,17 @@ class SaleOrder(models.Model):
     # PR 12 extends the block to all auxiliary mail.thread fields so that
     # metadata (follower list, attachment count, needaction counters) is
     # also invisible via direct RPC read / fields_get.
+    # Stock delivery fields — hidden for reps (no ACL on stock.picking).
+    # groups= removes these from the arch for reps so the dependent computes
+    # (_compute_picking_ids, _compute_effective_date, _compute_delivery_status,
+    # _compute_json_popover) never run under a rep session.
+    picking_ids = fields.One2many(groups=_GROUPS_NO_REP)
+    delivery_count = fields.Integer(groups=_GROUPS_NO_REP)
+    effective_date = fields.Datetime(groups=_GROUPS_NO_REP)
+    delivery_status = fields.Selection(groups=_GROUPS_NO_REP)
+    json_popover = fields.Char(groups=_GROUPS_NO_REP)
+    show_json_popover = fields.Boolean(groups=_GROUPS_NO_REP)
+
     message_ids = fields.One2many(groups=_GROUPS_NO_REP)
     message_follower_ids = fields.One2many(groups=_GROUPS_NO_REP)
     message_is_follower = fields.Boolean(groups=_GROUPS_NO_REP)
