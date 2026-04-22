@@ -95,6 +95,26 @@
         </field>
     </record>
 
+    <!--
+        The inline order_line popup has a notebook with technical tabs
+        (fiscal_taxes, amounts, others, fiscal_line_extra_info,
+        accounting, commissions) that expose data the rep does not need
+        to see. Hiding the whole notebook is cleaner than per-tab
+        groups= and avoids future regressions when new tabs are added.
+    -->
+    <record id="view_sale_order_form_hide_line_notebook_rep" model="ir.ui.view">
+        <field name="name">sale.order.form.hide.line.notebook.rep</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="l10n_br_sale.l10n_br_sale_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']//notebook" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <!-- PR 8 — hide chatter for reps (defense in depth; field-level
          groups= on message_ids / message_follower_ids is the real
          server-side barrier). -->
