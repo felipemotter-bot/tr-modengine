@@ -63,6 +63,8 @@
         "hr",
         "calendar",
         "spreadsheet_dashboard",
+        # Contacts submenu groups_id override for reps.
+        "contacts",
     ],
     "data": [
         "security/security.xml",

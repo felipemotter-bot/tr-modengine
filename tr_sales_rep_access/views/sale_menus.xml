@@ -20,6 +20,18 @@
     </record>
 
     <!--
+        Grant access to the Contacts app. The ``contacts`` submenu
+        was restricted by a project-specific custom group
+        (``VISUALIZAR CONTATOS``, created at runtime without XML ID)
+        so base.group_user alone isn't enough. Adding the rep group
+        to the submenu's groups_id makes the app appear on the home
+        screen and opens the Contacts list.
+    -->
+    <record id="contacts.res_partner_menu_contacts" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_sales_rep_external'))]" />
+    </record>
+
+    <!--
         Hide top-level menus reps should not access. ir.rule is used
         instead of modifying each menu's groups_id: the ``!group``
         syntax only works on view attributes (fields/buttons), not on
