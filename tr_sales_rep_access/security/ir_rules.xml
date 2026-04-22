@@ -43,8 +43,9 @@
         <field name="perm_create" eval="True" />
         <field name="perm_unlink" eval="True" />
         <field name="domain_force">[
-            '|',
+            '|', '|',
             ('id', '=', user.partner_id.id),
+            ('id', 'in', user.env['res.users'].with_context(active_test=False).sudo().search([('partner_id', '!=', False)]).mapped('partner_id').ids),
             ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id])
         ] if user.has_group('tr_sales_rep_access.group_sales_rep_external') else [(1, '=', 1)]</field>
     </record>
