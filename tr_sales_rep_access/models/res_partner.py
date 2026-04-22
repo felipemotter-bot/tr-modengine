@@ -280,6 +280,16 @@ class ResPartner(models.Model):
                 modifiers["readonly"] = True
                 node.set("modifiers", json.dumps(modifiers))
                 node.set("readonly", "1")
+        # Hide the Sales & Purchase tab entirely. Using groups= on the
+        # page would remove user_id/team_id from the arch for reps and
+        # break validation of unrelated views that reference those
+        # fields in ``context`` attributes. Setting ``modifiers`` keeps
+        # the fields in place and just hides the tab in the UI.
+        for node in arch.xpath("//page[@name='sales_purchases']"):
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["invisible"] = True
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("invisible", "1")
         return arch, view
 
     def _sales_rep_check_agent_field_write(self, vals):

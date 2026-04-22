@@ -305,24 +305,27 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='sales_purchases']" position="attributes">
-                <attribute
-          name="groups"
-        >!tr_sales_rep_access.group_sales_rep_external</attribute>
-            </xpath>
+            <!--
+                Hide the Sales & Purchase tab for reps via _get_view()
+                in models/res_partner.py instead of groups= on the
+                page: the page holds user_id/team_id which other views
+                reference in ``context`` attributes; a groups-based
+                hide removes them from the arch for reps and breaks
+                validation of those external views.
+            -->
 
-            <xpath expr="//notebook" position="before">
-                <group
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field
+          name="company_group_id"
+          readonly="1"
+          groups="tr_sales_rep_access.group_sales_rep_external"
+          attrs="{'invisible': [('company_group_id', '=', False)]}"
+        />
+                <div
           name="rep_commercial_condition"
+          colspan="2"
           groups="tr_sales_rep_access.group_sales_rep_external"
         >
-                    <group>
-                        <field
-              name="company_group_id"
-              readonly="1"
-              attrs="{'invisible': [('company_group_id', '=', False)]}"
-            />
-                    </group>
                     <div
             class="alert alert-warning mb-2 py-1"
             role="alert"
@@ -382,7 +385,7 @@
                             Create Commercial Condition
                         </button>
                     </div>
-                </group>
+                </div>
             </xpath>
         </field>
     </record>
