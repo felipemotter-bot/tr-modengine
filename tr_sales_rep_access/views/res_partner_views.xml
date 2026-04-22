@@ -4,36 +4,30 @@
         Catalog fields are declared with field-level
         groups="tr_commercial_policy.group_sales_manager", so they
         are invisible server-side to non-managers (fields_get / read /
-        write). The view below surfaces them on a dedicated partner
-        notebook page that is itself restricted to the same group —
-        otherwise a Sales Manager without commission privileges would
-        have the permission but nowhere to edit.
+        write). They are surfaced inside the existing "Agent information"
+        tab (from the commission module) to avoid an extra tab.
     -->
     <record id="res_partner_form_sales_rep_catalog" model="ir.ui.view">
         <field name="name">res.partner.form.sales.rep.catalog</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="inherit_id" ref="commission.view_partner_form_agent" />
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page
-          name="sales_rep_catalog"
-          string="Sales Rep Catalog"
-          groups="tr_commercial_policy.group_sales_manager"
-          attrs="{'invisible': [('agent', '=', False)]}"
-        >
-                    <group>
-                        <field
-              name="allowed_category_ids"
-              widget="many2many_tags"
-              options="{'no_create': True}"
-            />
-                        <field
-              name="excluded_category_ids"
-              widget="many2many_tags"
-              options="{'no_create': True}"
-            />
-                    </group>
-                </page>
+            <xpath
+        expr="//page[@name='agent_information']//group/group[field[@name='agent_type']]"
+        position="after"
+      >
+                <group groups="tr_commercial_policy.group_sales_manager">
+                    <field
+            name="allowed_category_ids"
+            widget="many2many_tags"
+            options="{'no_create': True}"
+          />
+                    <field
+            name="excluded_category_ids"
+            widget="many2many_tags"
+            options="{'no_create': True}"
+          />
+                </group>
             </xpath>
         </field>
     </record>

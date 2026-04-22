@@ -12,3 +12,4 @@ from . import sale_order_line
 from . import account_move
 from . import tr_partner_change_request_line
 from . import tr_partner_change_request
+from . import res_users

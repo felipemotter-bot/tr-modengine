@@ -60,6 +60,7 @@
         "security/ir_rules.xml",
         "data/tier_definition.xml",
         "views/tr_partner_change_request_views.xml",
+        "views/sale_menus.xml",
         "views/sale_order_views.xml",
         "views/sale_order_line_price_history_views.xml",
         "views/tr_pricelist_report_views.xml",
