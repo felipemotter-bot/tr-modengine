@@ -53,6 +53,12 @@
         # PR 9 — redeclares qty_available/virtual_available_at_date etc.
         # with groups= to block RPC access for external reps.
         "sale_stock",
+        # Field-level hides for One2many fields declared in these
+        # modules (account_payment_ids, purchase_line_ids) and ACL
+        # references on l10n_br_fiscal lookup models.
+        "sale_advance_payment",
+        "sale_purchase",
+        "l10n_br_fiscal",
     ],
     "data": [
         "security/security.xml",
