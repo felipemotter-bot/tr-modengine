@@ -41,6 +41,15 @@ class SaleOrderLine(models.Model):
     agent_ids = fields.One2many(groups=_GROUPS_NO_REP)
     commission_status = fields.Char(groups=_GROUPS_NO_REP)
 
+    # Analytic accounting detail — reps have no ACL on account.analytic.line
+    # and the data is not relevant for order entry. Hiding the O2m removes
+    # the only path the form has to reach analytic lines.
+    analytic_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
+
+    # Incoming purchase lines — One2many to purchase.order.line (no rep ACL).
+    # Same pattern as the other child-model fields above.
+    purchase_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
+
     @api.depends("order_id.partner_id")
     def _compute_agent_ids(self):
         """Run the agent-line compute as sudo for reps.

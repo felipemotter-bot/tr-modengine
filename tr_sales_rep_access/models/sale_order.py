@@ -83,6 +83,11 @@ class SaleOrder(models.Model):
     # The computed fields read agent_ids, which would trigger AccessError.
     commission_total = fields.Float(groups=_GROUPS_NO_REP)
     partner_agent_ids = fields.Many2many(groups=_GROUPS_NO_REP)
+    # unmanaged_commission_warning (tr_commercial_policy) iterates
+    # order_line.agent_ids — its compute raises AccessError for reps
+    # because agent_ids is itself blocked for them. Cosmetic warning the
+    # rep doesn't need to see anyway.
+    unmanaged_commission_warning = fields.Char(groups=_GROUPS_NO_REP)
 
     # Advance payment link (sale_advance_payment). Reps have no ACL on
     # account.payment; the ORM filters the One2many IDs via that ACL
