@@ -41,6 +41,31 @@ class SaleOrderLine(models.Model):
     agent_ids = fields.One2many(groups=_GROUPS_NO_REP)
     commission_status = fields.Char(groups=_GROUPS_NO_REP)
 
+    # Analytic accounting detail — reps have no ACL on account.analytic.line
+    # and the data is not relevant for order entry. Hiding the O2m removes
+    # the only path the form has to reach analytic lines.
+    analytic_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
+
+    # Incoming purchase lines — One2many to purchase.order.line (no rep ACL).
+    # Same pattern as the other child-model fields above.
+    purchase_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
+
+    # product_updatable is referenced in product_id's attrs:
+    # attrs="{'readonly': [('product_updatable', '=', False)]}"
+    # Hiding it via groups= breaks the client's attrs evaluation
+    # ("Unknown field product_updatable in domain"). Instead, route its
+    # compute through sudo so it can read move_ids without AccessError.
+
+    @api.depends("move_ids")
+    def _compute_product_updatable(self):
+        """Sudo for reps: the sale_stock compute iterates move_ids,
+        which is blocked by groups= for reps. Without sudo, reading
+        product_id in the form triggers AccessError.
+        """
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            return super(SaleOrderLine, self.sudo())._compute_product_updatable()
+        return super()._compute_product_updatable()
+
     @api.depends("order_id.partner_id")
     def _compute_agent_ids(self):
         """Run the agent-line compute as sudo for reps.

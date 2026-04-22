@@ -83,6 +83,11 @@ class SaleOrder(models.Model):
     # The computed fields read agent_ids, which would trigger AccessError.
     commission_total = fields.Float(groups=_GROUPS_NO_REP)
     partner_agent_ids = fields.Many2many(groups=_GROUPS_NO_REP)
+    # unmanaged_commission_warning (tr_commercial_policy) iterates
+    # order_line.agent_ids — its compute raises AccessError for reps
+    # because agent_ids is itself blocked for them. Cosmetic warning the
+    # rep doesn't need to see anyway.
+    unmanaged_commission_warning = fields.Char(groups=_GROUPS_NO_REP)
 
     # Advance payment link (sale_advance_payment). Reps have no ACL on
     # account.payment; the ORM filters the One2many IDs via that ACL
@@ -111,6 +116,24 @@ class SaleOrder(models.Model):
             modifiers["invisible"] = True
             node.set("modifiers", json.dumps(modifiers))
             node.set("invisible", "1")
+        # Fiscal operation / operation line / CFOP / description are
+        # defined by the backoffice. Reps can see them but must not edit.
+        # Inject readonly modifier directly on the arch nodes inside
+        # the order_line inline form.
+        readonly_line_fields = (
+            "fiscal_operation_id",
+            "fiscal_operation_line_id",
+            "cfop_id",
+            "name",
+        )
+        for fname in readonly_line_fields:
+            for node in arch.xpath(
+                f"//field[@name='order_line']//field[@name='{fname}']"
+            ):
+                modifiers = json.loads(node.get("modifiers") or "{}")
+                modifiers["readonly"] = True
+                node.set("modifiers", json.dumps(modifiers))
+                node.set("readonly", "1")
         return arch, view
 
     @api.model_create_multi

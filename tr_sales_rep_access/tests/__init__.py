@@ -28,3 +28,4 @@ from . import test_chatter_hide
 from . import test_rep_tab_visibility
 from . import test_rep_commission_block
 from . import test_rep_order_flow
+from . import test_rep_fiscal_and_menus
