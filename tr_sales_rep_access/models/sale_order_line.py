@@ -24,6 +24,47 @@ class SaleOrderLine(models.Model):
     scheduled_date = fields.Datetime(groups=_GROUPS_NO_REP)
     qty_to_deliver = fields.Float(groups=_GROUPS_NO_REP)
 
+    # Additional stock-linked fields whose compute reads stock.move
+    # records. Without these, line create/read triggers AccessError on
+    # stock.move for reps (no ACL on that model).
+    move_ids = fields.One2many(groups=_GROUPS_NO_REP)
+    is_mto = fields.Boolean(groups=_GROUPS_NO_REP)
+    qty_delivered = fields.Float(groups=_GROUPS_NO_REP)
+    qty_delivered_method = fields.Selection(groups=_GROUPS_NO_REP)
+
+    # Commission fields hidden for reps at model level. agent_ids itself
+    # is blocked because the ORM read of a One2many checks the child model's
+    # ACL to filter IDs; without it the rep's client hits AccessError when
+    # reading sale.order. The compute and resolver below sudo around this
+    # block so the legitimate internal write path still runs. commission_free
+    # intentionally NOT blocked: it feeds _compute_agent_ids server-side.
+    agent_ids = fields.One2many(groups=_GROUPS_NO_REP)
+    commission_status = fields.Char(groups=_GROUPS_NO_REP)
+
+    @api.depends("order_id.partner_id")
+    def _compute_agent_ids(self):
+        """Run the agent-line compute as sudo for reps.
+
+        The rep has no ACL on ``sale.order.line.agent`` — giving direct
+        CRUD would open the model to RPC mutation and weaken the
+        post-confirm guard and band-rate enforcement. Sudo here lets
+        the legitimate system compute create/unlink child records
+        without handing the rep a usable write surface.
+        """
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            return super(SaleOrderLine, self.sudo())._compute_agent_ids()
+        return super()._compute_agent_ids()
+
+    def _resolve_agent_commissions(self):
+        """Same rationale as ``_compute_agent_ids``: the rep must not
+        write to ``sale.order.line.agent`` via RPC, but the policy
+        resolver (called from core line create/write) must run to
+        keep ``commission_id`` pointing at the band's managed record.
+        """
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            return super(SaleOrderLine, self.sudo())._resolve_agent_commissions()
+        return super()._resolve_agent_commissions()
+
     @api.model_create_multi
     def create(self, vals_list):
         # Check before super() so the guard fires before Odoo core calls

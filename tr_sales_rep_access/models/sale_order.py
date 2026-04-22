@@ -79,6 +79,16 @@ class SaleOrder(models.Model):
     json_popover = fields.Char(groups=_GROUPS_NO_REP)
     show_json_popover = fields.Boolean(groups=_GROUPS_NO_REP)
 
+    # Commission fields — hidden for reps (no ACL on sale.order.line.agent).
+    # The computed fields read agent_ids, which would trigger AccessError.
+    commission_total = fields.Float(groups=_GROUPS_NO_REP)
+    partner_agent_ids = fields.Many2many(groups=_GROUPS_NO_REP)
+
+    # Advance payment link (sale_advance_payment). Reps have no ACL on
+    # account.payment; the ORM filters the One2many IDs via that ACL
+    # and raises when the rep tries to read the parent order.
+    account_payment_ids = fields.One2many(groups=_GROUPS_NO_REP)
+
     message_ids = fields.One2many(groups=_GROUPS_NO_REP)
     message_follower_ids = fields.One2many(groups=_GROUPS_NO_REP)
     message_is_follower = fields.Boolean(groups=_GROUPS_NO_REP)
