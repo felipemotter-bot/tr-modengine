@@ -60,7 +60,8 @@
               />
                         </group>
                     </group>
-                    <group string="Reason" col="1">
+                    <separator string="Reason" />
+                    <group col="1">
                         <field
               name="reason"
               nolabel="1"
