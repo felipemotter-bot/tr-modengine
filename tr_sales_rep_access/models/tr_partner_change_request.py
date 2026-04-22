@@ -132,6 +132,93 @@ class TrPartnerChangeRequest(models.Model):
     new_state_id = fields.Many2one("res.country.state", string="New state")
     new_country_id = fields.Many2one("res.country", string="New country")
 
+    # Per-field "changed" flags used in the form attrs to hide fields
+    # that match the partner's current value after the request is
+    # saved. During editing (id is False) everything shows so the rep
+    # can type over any pre-filled value; once saved, the view
+    # collapses to only the fields the rep actually changed — makes
+    # the manager's review focus on the diff.
+    new_name_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_phone_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_mobile_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_email_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_street_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_street2_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_city_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_zip_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_state_id_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+    new_country_id_changed = fields.Boolean(
+        compute="_compute_field_update_changed", compute_sudo=True
+    )
+
+    # Flag used by the form view to distinguish a rep user (who must
+    # see ALL new_* fields so they can edit the record) from a
+    # manager/reviewer (who sees only the fields that differ). The
+    # context dependency makes the value re-evaluate per session.
+    is_sales_rep_user = fields.Boolean(compute="_compute_is_sales_rep_user")
+
+    @api.depends_context("uid")
+    def _compute_is_sales_rep_user(self):
+        is_rep = self.env.user.has_group(REP_GROUP_XMLID)
+        for req in self:
+            req.is_sales_rep_user = is_rep
+
+    @staticmethod
+    def _normalize_cmp_value(value):
+        """Normalize a field value for change comparison so records /
+        falsy / plain values compare consistently. Used by the
+        per-field ``_changed`` compute and by ``_apply_field_update``
+        to prevent drift between the two.
+        """
+        if hasattr(value, "id"):
+            return value.id or False
+        return value or False
+
+    def _is_field_update_changed(self, form_field, model_field):
+        self.ensure_one()
+        partner = self.partner_id
+        new_val = self[form_field]
+        current = partner[model_field] if partner else False
+        return self._normalize_cmp_value(new_val) != self._normalize_cmp_value(current)
+
+    @api.depends(
+        "partner_id",
+        "new_name",
+        "new_phone",
+        "new_mobile",
+        "new_email",
+        "new_street",
+        "new_street2",
+        "new_city",
+        "new_zip",
+        "new_state_id",
+        "new_country_id",
+    )
+    def _compute_field_update_changed(self):
+        for req in self:
+            for form_field, model_field in _FIELD_UPDATE_MAP.items():
+                req[f"{form_field}_changed"] = req._is_field_update_changed(
+                    form_field, model_field
+                )
+
     new_child_name = fields.Char()
     new_child_email = fields.Char()
     new_child_phone = fields.Char()
@@ -468,16 +555,15 @@ class TrPartnerChangeRequest(models.Model):
         """Write only the fields whose ``new_*`` value differs from
         the partner's current value. ``False`` is applied too, so the
         rep can clear an existing value (e.g. remove an outdated
-        phone)."""
+        phone). Comparison is delegated to ``_is_field_update_changed``
+        so the form view and the apply logic never drift apart."""
         self.ensure_one()
         vals = {}
         for form_field, model_field in _FIELD_UPDATE_MAP.items():
+            if not self._is_field_update_changed(form_field, model_field):
+                continue
             new_val = self[form_field]
-            current = self.partner_id[model_field]
-            current_cmp = current.id if hasattr(current, "id") else current
-            new_cmp = new_val.id if hasattr(new_val, "id") else new_val
-            if new_cmp != current_cmp:
-                vals[model_field] = new_cmp or False
+            vals[model_field] = self._normalize_cmp_value(new_val) or False
         if vals:
             self.partner_id.sudo().write(vals)
 
