@@ -50,11 +50,21 @@ class SaleOrderLine(models.Model):
     # Same pattern as the other child-model fields above.
     purchase_line_ids = fields.One2many(groups=_GROUPS_NO_REP)
 
-    # product_updatable (sale_stock) iterates move_ids in its compute —
-    # reps can't read move_ids, so the field would raise AccessError
-    # when the client reads the line. Reps only edit draft orders
-    # where product is always updatable anyway.
-    product_updatable = fields.Boolean(groups=_GROUPS_NO_REP)
+    # product_updatable is referenced in product_id's attrs:
+    # attrs="{'readonly': [('product_updatable', '=', False)]}"
+    # Hiding it via groups= breaks the client's attrs evaluation
+    # ("Unknown field product_updatable in domain"). Instead, route its
+    # compute through sudo so it can read move_ids without AccessError.
+
+    @api.depends("move_ids")
+    def _compute_product_updatable(self):
+        """Sudo for reps: the sale_stock compute iterates move_ids,
+        which is blocked by groups= for reps. Without sudo, reading
+        product_id in the form triggers AccessError.
+        """
+        if self.env.user.has_group(REP_GROUP_XMLID):
+            return super(SaleOrderLine, self.sudo())._compute_product_updatable()
+        return super()._compute_product_updatable()
 
     @api.depends("order_id.partner_id")
     def _compute_agent_ids(self):
