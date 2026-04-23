@@ -492,9 +492,12 @@ via `tr_commercial_policy`).
 ### Quem conferencia
 
 Usuário com o grupo **Conferente de Pedidos de Representante**
-(`tr_sales_rep_access.group_sales_rep_checker`). Ao criar o usuário, adicione também um
-grupo de acesso a `sale.order` (tipicamente `sales_team.group_sale_salesman`) — o grupo
-do conferente é **papel funcional**, não libera menu de Pedidos por si só.
+(`tr_sales_rep_access.group_sales_rep_checker`). Gerentes e Diretores de Vendas também
+podem aprovar essa conferência porque o grupo `tr_commercial_policy.group_sales_manager`
+passa a herdar o grupo do conferente (e Diretor já herda Gerente). Ao criar um usuário
+dedicado só para conferência, adicione também um grupo de acesso a `sale.order`
+(tipicamente `sales_team.group_sale_salesman`) — o grupo do conferente é **papel
+funcional**, não libera menu de Pedidos por si só.
 
 ### Como funciona
 

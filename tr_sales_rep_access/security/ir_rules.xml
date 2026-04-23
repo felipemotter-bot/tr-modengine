@@ -135,16 +135,4 @@
     >[('sales_rep_partner_id', '=', user.partner_id.id)]</field>
     </record>
 
-    <record id="rule_partner_change_request_line_rep" model="ir.rule">
-        <field name="name">tr.partner.change.request.line: sales rep scope</field>
-        <field name="model_id" ref="model_tr_partner_change_request_line" />
-        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
-        <field name="perm_read" eval="True" />
-        <field name="perm_write" eval="True" />
-        <field name="perm_create" eval="True" />
-        <field name="perm_unlink" eval="True" />
-        <field
-      name="domain_force"
-    >[('request_id.sales_rep_partner_id', '=', user.partner_id.id)]</field>
-    </record>
 </odoo>

@@ -42,6 +42,14 @@
     </record>
 
     <!--
+        Invoices smart button hidden for reps via _get_view() in
+        models/sale_order.py (not groups=): ``invoice_count`` lives
+        inside the button and is referenced by attrs on another
+        button, so removing it from the arch breaks validation.
+    -->
+
+
+    <!--
         Hide commission UI buttons from reps. The fields themselves
         (commission_total, commission_status, agent_ids, partner_agent_ids)
         are blocked at model level via groups=_GROUPS_NO_REP. Only the

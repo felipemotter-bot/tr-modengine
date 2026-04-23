@@ -39,6 +39,12 @@ class TestTierConference(SalesRepAccessTestCommon):
         cls.conference_tier = cls.env.ref(CONFERENCE_TIER_XMLID)
         cls.manager_tier = cls.env.ref("tr_commercial_policy.tier_def_discount_manager")
         cls.checker_group = cls.env.ref("tr_sales_rep_access.group_sales_rep_checker")
+        cls.sales_manager_group = cls.env.ref(
+            "tr_commercial_policy.group_sales_manager"
+        )
+        cls.sales_director_group = cls.env.ref(
+            "tr_commercial_policy.group_sales_director"
+        )
 
         # Checker user — has the rep-checker group plus a sale.order
         # access group so they can read the orders they have to
@@ -56,6 +62,40 @@ class TestTierConference(SalesRepAccessTestCommon):
                         0,
                         [
                             cls.checker_group.id,
+                            cls.env.ref("sales_team.group_sale_salesman").id,
+                        ],
+                    )
+                ],
+            }
+        )
+        cls.manager_user = cls.env["res.users"].create(
+            {
+                "name": "Conference Manager",
+                "login": "tsra_manager",
+                "email": "manager@example.com",
+                "groups_id": [
+                    (
+                        6,
+                        0,
+                        [
+                            cls.sales_manager_group.id,
+                            cls.env.ref("sales_team.group_sale_salesman").id,
+                        ],
+                    )
+                ],
+            }
+        )
+        cls.director_user = cls.env["res.users"].create(
+            {
+                "name": "Conference Director",
+                "login": "tsra_director",
+                "email": "director@example.com",
+                "groups_id": [
+                    (
+                        6,
+                        0,
+                        [
+                            cls.sales_director_group.id,
                             cls.env.ref("sales_team.group_sale_salesman").id,
                         ],
                     )
@@ -246,6 +286,26 @@ class TestTierConference(SalesRepAccessTestCommon):
             "validated",
             "After the checker approves the single pending tier, the "
             "order should reach validated state.",
+        )
+
+    def test_manager_can_approve_conference_review(self):
+        order = self._make_rep_order(self.customer_c1)
+        order.with_user(self.manager_user).validate_tier()
+        self.assertEqual(
+            order.validation_status,
+            "validated",
+            "Sales managers should inherit the checker role and be able "
+            "to approve the conference tier.",
+        )
+
+    def test_director_can_approve_conference_review(self):
+        order = self._make_rep_order(self.customer_c1)
+        order.with_user(self.director_user).validate_tier()
+        self.assertEqual(
+            order.validation_status,
+            "validated",
+            "Sales directors should inherit the manager/checker roles "
+            "and be able to approve the conference tier.",
         )
 
     def test_confirm_after_tier_approval_does_not_break_with_chatter_fields_blocked(
