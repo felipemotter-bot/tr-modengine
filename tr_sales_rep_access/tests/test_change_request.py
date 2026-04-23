@@ -241,3 +241,98 @@ class TestChangeRequest(SalesRepAccessTestCommon):
         request = self._create_field_update(self.customer_c1)
         with self.assertRaises(AccessError):
             request.with_user(self.manager_user).write({"state": "approved"})
+
+    # ------------------------------------------------------------------
+    # is_sales_rep_user flag drives the reviewer-vs-rep form rendering
+    # ------------------------------------------------------------------
+
+    def test_is_sales_rep_user_flag(self):
+        request = self._create_field_update(self.customer_c1)
+        self.assertTrue(request.with_user(self.user_u1).is_sales_rep_user)
+        self.assertFalse(request.with_user(self.manager_user).is_sales_rep_user)
+
+    # ------------------------------------------------------------------
+    # Per-field _changed flags drive which rows the reviewer sees
+    # ------------------------------------------------------------------
+
+    def test_field_update_changed_flags(self):
+        request = self._create_field_update(
+            self.customer_c1,
+            new_phone="+55 11 9999-9999",
+        )
+        self.assertTrue(request.new_phone_changed)
+        self.assertFalse(request.new_email_changed)
+        self.assertFalse(request.new_street_changed)
+
+    # ------------------------------------------------------------------
+    # Prefill onchange is a no-op outside field_update or without partner
+    # ------------------------------------------------------------------
+
+    def test_prefill_skips_new_child_request(self):
+        request = (
+            self.env["tr.partner.change.request"]
+            .with_user(self.user_u1)
+            .new(
+                {
+                    "partner_id": self.customer_c1.id,
+                    "request_type": "new_child",
+                    "reason": "t",
+                }
+            )
+        )
+        request._onchange_partner_id_prefill()
+        self.assertFalse(request.new_phone)
+        self.assertFalse(request.new_email)
+
+    def test_prefill_skips_without_partner(self):
+        request = (
+            self.env["tr.partner.change.request"]
+            .with_user(self.user_u1)
+            .new({"request_type": "field_update", "reason": "t"})
+        )
+        request._onchange_partner_id_prefill()
+        self.assertFalse(request.new_phone)
+
+    # ------------------------------------------------------------------
+    # Flipping request_type clears the opposite payload
+    # ------------------------------------------------------------------
+
+    def test_request_type_flip_field_update_to_new_child_clears_new_fields(self):
+        request = (
+            self.env["tr.partner.change.request"]
+            .with_user(self.user_u1)
+            .new(
+                {
+                    "partner_id": self.customer_c1.id,
+                    "request_type": "field_update",
+                    "reason": "t",
+                }
+            )
+        )
+        request._onchange_partner_id_prefill()
+        self.assertTrue(request.new_phone)
+        request.request_type = "new_child"
+        request._onchange_request_type_reset()
+        self.assertFalse(request.new_phone)
+        self.assertFalse(request.new_email)
+
+    def test_request_type_flip_new_child_to_field_update_clears_child_fields(self):
+        request = (
+            self.env["tr.partner.change.request"]
+            .with_user(self.user_u1)
+            .new(
+                {
+                    "partner_id": self.customer_c1.id,
+                    "request_type": "new_child",
+                    "reason": "t",
+                    "new_child_name": "Child Contact",
+                    "new_child_email": "child@example.com",
+                }
+            )
+        )
+        request.request_type = "field_update"
+        request._onchange_request_type_reset()
+        self.assertFalse(request.new_child_name)
+        self.assertFalse(request.new_child_email)
+        # field_update branch also re-prefills from the partner
+        self.assertEqual(request.new_phone, self.customer_c1.phone)
