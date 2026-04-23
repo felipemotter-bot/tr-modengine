@@ -135,4 +135,83 @@
     >[('sales_rep_partner_id', '=', user.partner_id.id)]</field>
     </record>
 
+    <!-- ============================================================ -->
+    <!-- tr.sales.profile + children — rep sees only its own profile -->
+    <!--                                                              -->
+    <!-- partner.sales_profile_id is company_dependent, so a rep may  -->
+    <!-- hold a different profile per company. The domain iterates    -->
+    <!-- over the active company_ids (allowed_company_ids) so every   -->
+    <!-- profile the rep owns across currently enabled companies is   -->
+    <!-- included. False entries are harmless: Many2one filters drop  -->
+    <!-- them.                                                        -->
+    <!-- ============================================================ -->
+
+    <record id="rule_sales_profile_rep_self_only" model="ir.rule">
+        <field name="name">tr.sales.profile: sales rep sees only own profile</field>
+        <field name="model_id" ref="tr_commercial_policy.model_tr_sales_profile" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field name="domain_force">[('id', 'in', [
+            user.partner_id.with_company(company).sales_profile_id.id
+            for company in user.env['res.company'].browse(company_ids)
+        ])]</field>
+    </record>
+
+    <record id="rule_sales_profile_rule_rep_self_only" model="ir.rule">
+        <field
+      name="name"
+    >tr.sales.profile.rule: sales rep sees only rules of own profile</field>
+        <field name="model_id" ref="tr_commercial_policy.model_tr_sales_profile_rule" />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field name="domain_force">[('profile_id', 'in', [
+            user.partner_id.with_company(company).sales_profile_id.id
+            for company in user.env['res.company'].browse(company_ids)
+        ])]</field>
+    </record>
+
+    <record id="rule_sales_profile_commission_band_rep_self_only" model="ir.rule">
+        <field
+      name="name"
+    >tr.sales.profile.commission.band: sales rep sees only commission bands of own profile</field>
+        <field
+      name="model_id"
+      ref="tr_commercial_policy.model_tr_sales_profile_commission_band"
+    />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field name="domain_force">[('rule_id.profile_id', 'in', [
+            user.partner_id.with_company(company).sales_profile_id.id
+            for company in user.env['res.company'].browse(company_ids)
+        ])]</field>
+    </record>
+
+    <record id="rule_sales_profile_order_band_rep_self_only" model="ir.rule">
+        <field
+      name="name"
+    >tr.sales.profile.order.band: sales rep sees only order bands of own profile</field>
+        <field
+      name="model_id"
+      ref="tr_commercial_policy.model_tr_sales_profile_order_band"
+    />
+        <field name="groups" eval="[(4, ref('group_sales_rep_external'))]" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="False" />
+        <field name="perm_create" eval="False" />
+        <field name="perm_unlink" eval="False" />
+        <field name="domain_force">[('rule_id.profile_id', 'in', [
+            user.partner_id.with_company(company).sales_profile_id.id
+            for company in user.env['res.company'].browse(company_ids)
+        ])]</field>
+    </record>
+
 </odoo>
