@@ -32,4 +32,11 @@
             the orders they need to validate.
         </field>
     </record>
+
+    <record id="tr_commercial_policy.group_sales_manager" model="res.groups">
+        <field
+      name="implied_ids"
+      eval="[(4, ref('tr_sales_rep_access.group_sales_rep_checker'))]"
+    />
+    </record>
 </odoo>
