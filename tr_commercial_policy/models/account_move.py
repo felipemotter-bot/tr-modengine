@@ -561,15 +561,18 @@ class AccountMove(models.Model):
     # --- View customization ---
 
     def _reorganize_invoice_line_form(self, arch):
-        """Strip the raw ``price_unit`` moved into the left anchor.
+        """Hide the raw ``price_unit`` where the rich block takes over.
 
         ``trento_invoice_usability`` moves a plain ``<field
         name="price_unit"/>`` into the ``invoice_line_left`` anchor as
         part of its generic 2-column layout. This module injects a
         richer block (``reference_price → price_unit`` + calculator)
-        into the same anchor via XML. Without this cleanup the form
-        renders both, producing the "Preço Unitário" + "Unit Price"
-        duplicate visible in the UI.
+        into the same anchor via XML, wrapped in a div that is
+        invisible for non-sales moves. On sales invoices the rich
+        block renders, so we hide the plain field to avoid a
+        duplicate "Preço Unitário" row. On vendor bills the rich
+        block stays hidden, so we leave the plain field visible —
+        otherwise the user has no way to edit the price.
         """
         result = super()._reorganize_invoice_line_form(arch)
         for left in arch.xpath(
@@ -577,7 +580,11 @@ class AccountMove(models.Model):
             "//group[@name='invoice_line_left']"
         ):
             for node in left.xpath("./field[@name='price_unit']"):
-                node.getparent().remove(node)
+                node.set(
+                    "attrs",
+                    "{'invisible': [('parent.move_type', 'in',"
+                    " ['out_invoice', 'out_refund'])]}",
+                )
         return result
 
     # --- Decision tree (principle 4) ---

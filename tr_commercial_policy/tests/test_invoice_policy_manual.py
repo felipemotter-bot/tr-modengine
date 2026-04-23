@@ -687,6 +687,30 @@ class TestInvoicePolicyManual(CommercialPolicyTestCommon):
         ):
             self.assertIn(expected, names, f"{expected} should be in the left anchor")
 
+    def test_invoice_line_form_plain_price_unit_hidden_on_sales(self):
+        """The plain ``price_unit`` moved into the left anchor stays in
+        the arch but is hidden for sales invoices so the rich block
+        (``reference_price → price_unit`` + calculator) takes over.
+        On vendor bills the rich block is hidden, so the plain field
+        must remain visible — otherwise the user has no way to edit
+        the price on a vendor bill line form.
+        """
+        from ast import literal_eval
+
+        line_form = self._get_invoice_line_form()
+        left = line_form.xpath(".//group[@name='invoice_line_left']")[0]
+        plain = left.xpath("./field[@name='price_unit']")
+        self.assertEqual(
+            len(plain),
+            1,
+            "plain price_unit must stay in invoice_line_left for vendor bills",
+        )
+        attrs = literal_eval(plain[0].get("attrs") or "{}")
+        self.assertEqual(
+            attrs,
+            {"invisible": [("parent.move_type", "in", ["out_invoice", "out_refund"])]},
+        )
+
     def test_invoice_line_form_policy_fields_in_right_anchor(self):
         """Commission rate lands inside the right anchor (invoice_line_right)."""
         line_form = self._get_invoice_line_form()
