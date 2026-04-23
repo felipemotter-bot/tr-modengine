@@ -61,13 +61,12 @@
                         </group>
                     </group>
                     <separator string="Reason" />
-                    <group col="1">
-                        <field
-              name="reason"
-              nolabel="1"
-              attrs="{'readonly': [('state', '!=', 'pending')]}"
-            />
-                    </group>
+                    <field
+            name="reason"
+            nolabel="1"
+            placeholder="Describe the change..."
+            attrs="{'readonly': [('state', '!=', 'pending')]}"
+          />
                     <notebook>
                         <page
               name="fields"
