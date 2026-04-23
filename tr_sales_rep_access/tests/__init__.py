@@ -29,3 +29,4 @@ from . import test_rep_tab_visibility
 from . import test_rep_commission_block
 from . import test_rep_order_flow
 from . import test_rep_fiscal_and_menus
+from . import test_rep_sales_profile_visibility
