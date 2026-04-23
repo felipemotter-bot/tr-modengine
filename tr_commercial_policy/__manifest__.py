@@ -18,6 +18,7 @@
         "engenere_commission",
         "engenere_commission_partner_confirmation",
         "engenere_commission_partial_payment",
+        "account_commission",
         "commission_formula",
         "account_payment_mode",
         "account_payment_sale",
