@@ -214,4 +214,25 @@
         ])]</field>
     </record>
 
+    <!-- ============================================================ -->
+    <!-- product.pricelist — rep sees only pricelists in the rep's    -->
+    <!-- ``allowed_pricelist_ids`` whitelist. Empty whitelist means no -->
+    <!-- restriction (pass-through) so the feature is opt-in per rep. -->
+    <!-- Global rule with conditional: acts only when the acting user -->
+    <!-- is a rep AND the list is non-empty, otherwise returns True   -->
+    <!-- for everyone (admins, managers, reps without a whitelist).   -->
+    <!-- ============================================================ -->
+
+    <record id="rule_product_pricelist_rep_scope" model="ir.rule">
+        <field name="name">product.pricelist: sales rep scope</field>
+        <field name="model_id" ref="product.model_product_pricelist" />
+        <field name="perm_read" eval="True" />
+        <field name="perm_write" eval="True" />
+        <field name="perm_create" eval="True" />
+        <field name="perm_unlink" eval="True" />
+        <field
+      name="domain_force"
+    >[('id', 'in', user.partner_id.sudo().allowed_pricelist_ids.ids)] if user.has_group('tr_sales_rep_access.group_sales_rep_external') and user.partner_id.sudo().allowed_pricelist_ids else [(1, '=', 1)]</field>
+    </record>
+
 </odoo>
