@@ -838,12 +838,19 @@ class TestValidatePricelist(CommercialPolicyTestCommon):
         cls._setup_commercial_policy()
 
     def test_pricelist_mismatch_raises_validation_error(self):
-        """Non-director user cannot set pricelist that differs from profile."""
+        """Manager cannot set pricelist that differs from the profile.
+
+        The manager bypasses the manager-only write guard added for
+        ``pricelist_id``; the profile-based ``_validate_pricelist`` then
+        rejects a pricelist outside the profile. A non-manager would
+        hit ``AccessError`` earlier (covered in
+        ``test_condition_pricelist_lock``).
+        """
         other_pricelist = self.env["product.pricelist"].create(
             {"name": "Other PL", "currency_id": self.env.ref("base.BRL").id}
         )
         with self.assertRaises(ValidationError):
-            self.condition.with_user(self.salesperson).write(
+            self.condition.with_user(self.manager_user).write(
                 {"pricelist_id": other_pricelist.id}
             )
 
@@ -959,6 +966,12 @@ class TestCreateUsesAgentProfileNotCompanyDefault(CommercialPolicyTestCommon):
     def test_condition_create_uses_agent_profile_for_pricelist(self):
         """Create validates pricelist against agent profile's allowed list,
         not company default's.
+
+        Uses the manager user to bypass the manager-only create guard on
+        ``pricelist_id`` and exercise the profile-based
+        ``_validate_pricelist`` path. A non-manager would hit
+        ``AccessError`` earlier (covered in
+        ``test_condition_pricelist_lock``).
         """
         other_pricelist = self.env["product.pricelist"].create(
             {"name": "Not Allowed PL", "currency_id": self.env.ref("base.BRL").id}
@@ -968,7 +981,9 @@ class TestCreateUsesAgentProfileNotCompanyDefault(CommercialPolicyTestCommon):
             (4, other_pricelist.id),
         ]
         with self.assertRaises(ValidationError):
-            self.env["partner.commercial.condition"].with_user(self.salesperson).create(
+            self.env["partner.commercial.condition"].with_user(
+                self.manager_user
+            ).create(
                 {
                     "partner_id": self.partner_with_agent.id,
                     "pricelist_id": other_pricelist.id,
