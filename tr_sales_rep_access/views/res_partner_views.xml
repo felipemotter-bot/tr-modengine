@@ -27,6 +27,11 @@
             widget="many2many_tags"
             options="{'no_create': True}"
           />
+                    <field
+            name="allowed_pricelist_ids"
+            widget="many2many_tags"
+            options="{'no_create': True}"
+          />
                 </group>
             </xpath>
         </field>

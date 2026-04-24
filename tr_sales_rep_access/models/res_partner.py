@@ -116,6 +116,21 @@ class ResPartner(models.Model):
             "while keeping its parent in allowed."
         ),
     )
+    allowed_pricelist_ids = fields.Many2many(
+        comodel_name="product.pricelist",
+        relation="tr_sales_rep_access_partner_allowed_pricelist_rel",
+        column1="partner_id",
+        column2="pricelist_id",
+        string="Allowed Pricelists",
+        groups=MANAGER_GROUP_XMLID,
+        help=(
+            "Pricelists the rep is allowed to see and use. Empty means "
+            "no restriction (all pricelists are visible). When set, the "
+            "rep can only read these pricelists; records that reference "
+            "pricelists outside this set may raise AccessError for the rep "
+            "on read, form open, name_get, onchange or write."
+        ),
+    )
 
     # PR 8 — chatter hidden for reps (same pattern as sale.order).
     # PR 8 / PR 12 — chatter hidden for reps. PR 12 extends to auxiliary
