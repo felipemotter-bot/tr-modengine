@@ -11,6 +11,7 @@ MANAGER_GROUP_XMLID = "tr_commercial_policy.group_sales_manager"
 REP_GROUP_XMLID = "tr_sales_rep_access.group_sales_rep_external"
 _GROUPS_NO_REP = "!tr_sales_rep_access.group_sales_rep_external"
 DEFAULT_CATALOG_PARAM = "tr_sales_rep_access.tr_sales_rep_default_category_ids"
+DEFAULT_PRICELIST_PARAM = "tr_sales_rep_access.tr_sales_rep_default_pricelist_ids"
 DRAFT_STAGE_XMLID = "partner_stage.partner_stage_draft"
 
 # Thread-local flag set by the module's own ``create`` override so
@@ -348,6 +349,7 @@ class ResPartner(models.Model):
             for vals in vals_list:
                 self._sales_rep_check_agent_field_write(vals)
         default_ids = self._sales_rep_default_catalog_ids()
+        default_pl_ids = self._sales_rep_default_pricelist_ids()
         is_rep = self.env.user.has_group(REP_GROUP_XMLID)
         draft_stage = (
             self.env.ref(DRAFT_STAGE_XMLID, raise_if_not_found=False)
@@ -359,6 +361,12 @@ class ResPartner(models.Model):
             # PR 2 — default catalog
             if default_ids and vals.get("agent") and "allowed_category_ids" not in vals:
                 vals["allowed_category_ids"] = [(6, 0, default_ids)]
+            if (
+                default_pl_ids
+                and vals.get("agent")
+                and "allowed_pricelist_ids" not in vals
+            ):
+                vals["allowed_pricelist_ids"] = [(6, 0, default_pl_ids)]
             if is_rep and rep_partner_id and not vals.get("parent_id"):
                 # PR 3 — rep-created commercials must end up with
                 # the acting rep as the single agent. If the caller
@@ -446,11 +454,57 @@ class ResPartner(models.Model):
                     "a change request for the Sales Manager to approve."
                 )
             )
+        # Capture partners transitioning ``agent: False → True`` before
+        # super().write commits the flag, so the defaults helper below
+        # can apply ICP whitelists to their empty fields. Same rationale
+        # as create(): if the partner was first created without the
+        # flag, neither the create-path default nor the settings change
+        # populates them retroactively.
+        flipping = (
+            self.filtered(lambda p: not p.agent) if vals.get("agent") else self.browse()
+        )
         if self.env.user.has_group(REP_GROUP_XMLID) and not self.env.su:
             # PR 8 — suppress tracking for rep writes on Draft partners
             # to avoid chatter pollution (same trade-off as sale.order).
-            return super(ResPartner, self.with_context(mail_notrack=True)).write(vals)
-        return super().write(vals)
+            result = super(ResPartner, self.with_context(mail_notrack=True)).write(vals)
+        else:
+            result = super().write(vals)
+        if flipping:
+            flipping._sales_rep_apply_defaults_on_agent_flip(vals)
+        return result
+
+    def _sales_rep_apply_defaults_on_agent_flip(self, vals):
+        """Apply ICP defaults to empty whitelists after ``agent`` flip.
+
+        Called only on the subset of records that transitioned from
+        ``agent=False`` to ``agent=True``. Vals explicitly carrying a
+        whitelist field are respected — the caller chose a value (even
+        empty) and we honour it. Uses ``sudo()`` to bypass the
+        manager-only ``groups=`` on the whitelist fields: the flip is
+        already authorized at this point (``_sales_rep_check_agent_-
+        field_write`` ran), and internal recursion is safe because the
+        inner write does not touch ``agent``.
+        """
+        cat_default = (
+            self._sales_rep_default_catalog_ids()
+            if "allowed_category_ids" not in vals
+            else []
+        )
+        pl_default = (
+            self._sales_rep_default_pricelist_ids()
+            if "allowed_pricelist_ids" not in vals
+            else []
+        )
+        if not cat_default and not pl_default:
+            return
+        for partner in self:
+            updates = {}
+            if cat_default and not partner.allowed_category_ids:
+                updates["allowed_category_ids"] = [(6, 0, cat_default)]
+            if pl_default and not partner.allowed_pricelist_ids:
+                updates["allowed_pricelist_ids"] = [(6, 0, pl_default)]
+            if updates:
+                partner.sudo().write(updates)
 
     def _sales_rep_should_block_active_write(self, vals):
         """Return True when this write must be rejected for a rep.
@@ -509,6 +563,27 @@ class ResPartner(models.Model):
             return []
         Category = self.env["product.category"].sudo()
         return Category.browse(ids).exists().ids
+
+    @api.model
+    def _sales_rep_default_pricelist_ids(self):
+        """Return the configured default pricelists as a list of IDs.
+
+        Same CSV-in-ICP storage as ``_sales_rep_default_catalog_ids``.
+        Pricelists that no longer exist are silently dropped.
+        """
+        raw = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(DEFAULT_PRICELIST_PARAM, "")
+        )
+        if not raw:
+            return []
+        try:
+            ids = [int(x) for x in raw.split(",") if x.strip()]
+        except ValueError:
+            return []
+        Pricelist = self.env["product.pricelist"].sudo()
+        return Pricelist.browse(ids).exists().ids
 
     def _get_visible_category_ids(self):
         """Return the recordset of categories visible to this agent.
