@@ -233,7 +233,11 @@ class Commission(models.Model):
         for _attempt in range(3):  # pragma: no cover — race condition retry
             try:
                 with self.env.cr.savepoint():
-                    return self.create(
+                    # Managed commissions are deterministic infra records
+                    # generated from an admin-configured template; regular
+                    # salespeople only need to read them, not to hold
+                    # create rights on the commission model.
+                    return self.sudo().create(
                         {
                             "name": name,
                             "commission_type": "formula",
