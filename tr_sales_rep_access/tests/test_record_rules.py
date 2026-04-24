@@ -99,3 +99,56 @@ class TestRecordRules(SalesRepAccessTestCommon):
             self.assertIn(line.id, visible_ids)
         for line in invoice_c2.line_ids:
             self.assertNotIn(line.id, visible_ids)
+
+    def test_partner_visible_after_agent_rotation_via_sale_snapshot(self):
+        """Rule clause for historical sale snapshots.
+
+        A1 owns an order on C1 (snapshot = A1). Customer's agent is
+        later rotated to A2. The live ``agent_ids`` clause no longer
+        matches for A1, but the historical-snapshot clause keeps the
+        partner readable so A1 can still open and print the old order.
+        """
+        self._make_order(self.customer_c1)
+        # Rotate the customer's agent to A2 (live clause now excludes A1).
+        self.customer_c1.agent_ids = [(6, 0, [self.agent_a2.id])]
+
+        Partner = self.env["res.partner"].with_user(self.user_u1)
+        self.assertIn(self.customer_c1.id, Partner.search([]).ids)
+        # Field-level read still succeeds (template path).
+        self.customer_c1.with_user(self.user_u1).read(["name", "vat"])
+
+    def test_partner_child_visible_after_agent_rotation(self):
+        """Shipping/invoice children inherit commercial_partner_id and
+        ride on the same historical clause."""
+        child = self.env["res.partner"].create(
+            {
+                "name": "C1 Shipping",
+                "parent_id": self.customer_c1.id,
+                "type": "delivery",
+            }
+        )
+        self._make_order(self.customer_c1)
+        self.customer_c1.agent_ids = [(6, 0, [self.agent_a2.id])]
+
+        Partner = self.env["res.partner"].with_user(self.user_u1)
+        self.assertIn(child.id, Partner.search([]).ids)
+
+    def test_partner_visible_after_agent_rotation_via_invoice_snapshot(self):
+        """Same clause covers account.move snapshots."""
+        self._make_invoice(self.customer_c1, self.agent_a1)
+        self.customer_c1.agent_ids = [(6, 0, [self.agent_a2.id])]
+
+        Partner = self.env["res.partner"].with_user(self.user_u1)
+        self.assertIn(self.customer_c1.id, Partner.search([]).ids)
+
+    def test_partner_not_visible_without_any_snapshot(self):
+        """No snapshot, no live agent: partner stays hidden.
+
+        Guards against the historical clause accidentally broadening
+        visibility to customers the rep never dealt with.
+        """
+        Partner = self.env["res.partner"].with_user(self.user_u1)
+        # C2 is A2's customer, U1 never owned any sale/move on it.
+        self.assertNotIn(self.customer_c2.id, Partner.search([]).ids)
+        # C3 has no agent at all.
+        self.assertNotIn(self.customer_c3.id, Partner.search([]).ids)

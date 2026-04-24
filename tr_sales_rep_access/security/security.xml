@@ -10,11 +10,14 @@
         <field name="category_id" ref="module_category_sales_rep_access" />
         <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]" />
         <field name="comment">
-            External sales representative. Sees only the partners where they
-            are a commercial agent (via commercial_partner_id.agent_ids) and
-            the sale orders / invoices where they are the rep snapshot.
-            Does NOT extend Sales/Account stock groups — ACLs are declared
-            explicitly for this group.
+            External sales representative. Sees partners where they are
+            a commercial agent (current carteira via
+            commercial_partner_id.agent_ids) plus partners of the sale
+            orders / invoices where they are the rep snapshot (historical
+            records preserved across agent rotations). Sees the sale
+            orders / invoices carrying their snapshot. Does NOT extend
+            Sales/Account stock groups — ACLs are declared explicitly
+            for this group.
         </field>
     </record>
 

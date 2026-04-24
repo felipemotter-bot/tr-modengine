@@ -246,7 +246,12 @@ Cenário: cliente C1 estava com agente A1, passa a ser do agente A2.
 
 - Pedidos criados enquanto o cliente era do A1 mantêm `sales_rep_partner_id = A1`.
   **Snapshot imutável após draft.**
-- A1 continua enxergando esses pedidos e suas faturas.
+- A1 continua enxergando esses pedidos e suas faturas. O cliente C1 **também** continua
+  visível para A1 via 4ª cláusula do rule de `res.partner` (cláusula "carteira
+  histórica"), que libera qualquer `commercial_partner_id` referenciado em `sale.order`
+  / `account.move` com snapshot do rep. Sem essa cláusula, A1 veria os pedidos na lista
+  mas não conseguiria abri-los/imprimi-los — a rule live de partner (`agent_ids`) já
+  teria apontado pra A2.
 - A2 não enxerga essa história — ele só verá pedidos criados após a troca.
 
 ### O que acontece com pedidos em rascunho
