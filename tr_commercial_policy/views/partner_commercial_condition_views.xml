@@ -23,7 +23,15 @@
                             <field name="profile_source" readonly="1" />
                         </group>
                         <group string="Pricing">
-                            <field name="pricelist_id" />
+                            <field
+                name="pricelist_id"
+                readonly="1"
+                groups="!tr_commercial_policy.group_sales_manager"
+              />
+                            <field
+                name="pricelist_id"
+                groups="tr_commercial_policy.group_sales_manager"
+              />
                             <field name="contractual_return" />
                             <field
                 name="adjustment_factor"

@@ -78,14 +78,19 @@ class PartnerCommercialCondition(models.Model):
     )
 
     @api.model
-    def _default_pricelist_id(self):
-        """Default pricelist from the applicable sales profile."""
-        profile = self._get_applicable_profile()
+    def _resolve_default_pricelist_for_partner(self, partner):
+        """Default pricelist for a given partner's applicable profile."""
+        profile = self._get_applicable_profile(partner=partner)
         if profile and profile.pricelist_ids:
             return profile.pricelist_ids[0]
         return self.env["product.pricelist"].search(
             [("company_id", "in", (self.env.company.id, False))], limit=1
         )
+
+    @api.model
+    def _default_pricelist_id(self):
+        """Default pricelist from the applicable sales profile."""
+        return self._resolve_default_pricelist_for_partner(None)
 
     contractual_return = fields.Float(
         string="Contractual Return (%)",
@@ -396,8 +401,21 @@ class PartnerCommercialCondition(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         Partner = self.env["res.partner"]
+        is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
+        is_su = self.env.su
         for vals in vals_list:
             partner = Partner.browse(vals.get("partner_id")).exists()
+            if "pricelist_id" in vals and not is_su and not is_manager:
+                expected = self._resolve_default_pricelist_for_partner(partner)
+                expected_id = expected.id if expected else False
+                if vals["pricelist_id"] != expected_id:
+                    raise AccessError(
+                        _(
+                            "Only sales managers can choose the pricelist on a "
+                            "commercial condition. The default from the sales "
+                            "profile is used automatically."
+                        )
+                    )
             self._validate_pricelist(vals, partner=partner)
             self._validate_discount_limits(vals, partner=partner)
         records = super().create(vals_list)
@@ -405,6 +423,17 @@ class PartnerCommercialCondition(models.Model):
         return records
 
     def write(self, vals):
+        if (
+            "pricelist_id" in vals
+            and not self.env.su
+            and not self.env.user.has_group("tr_commercial_policy.group_sales_manager")
+        ):
+            raise AccessError(
+                _(
+                    "Only sales managers can change the pricelist on a "
+                    "commercial condition."
+                )
+            )
         self._validate_pricelist(vals)
         self._validate_discount_limits(vals)
         result = super().write(vals)

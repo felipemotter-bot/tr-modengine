@@ -34,3 +34,4 @@ from . import test_safe_install
 from . import test_seller_markup
 from . import test_commission_post_confirm_guard
 from . import test_invoice_commission_guard
+from . import test_condition_pricelist_lock

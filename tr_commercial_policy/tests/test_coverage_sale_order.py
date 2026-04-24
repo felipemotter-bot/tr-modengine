@@ -748,7 +748,7 @@ class TestActionReloadConditions(CommercialPolicyTestCommon):
         self.agent_profile.pricelist_ids = [(4, other_pricelist.id)]
         order = self._create_order()
         self._create_order_line(order)
-        self.condition.with_user(self.salesperson).pricelist_id = other_pricelist
+        self.condition.with_user(self.manager_user).pricelist_id = other_pricelist
         action = order.action_reload_conditions()
         wizard = self.env["tr.reload.condition.wizard"].browse(action["res_id"])
         self.assertTrue(wizard.pricelist_change)
@@ -773,7 +773,7 @@ class TestActionReloadConditions(CommercialPolicyTestCommon):
         self.agent_profile.pricelist_ids = [(4, other_pricelist.id)]
         order = self._create_order()
         self._create_order_line(order)
-        self.condition.with_user(self.salesperson).pricelist_id = other_pricelist
+        self.condition.with_user(self.manager_user).pricelist_id = other_pricelist
         order._apply_reload_conditions()
         self.assertEqual(order.pricelist_id, other_pricelist)
 
