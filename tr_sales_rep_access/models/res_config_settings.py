@@ -4,6 +4,7 @@
 from odoo import api, fields, models
 
 DEFAULT_CATALOG_PARAM = "tr_sales_rep_access.tr_sales_rep_default_category_ids"
+DEFAULT_PRICELIST_PARAM = "tr_sales_rep_access.tr_sales_rep_default_pricelist_ids"
 
 
 class ResConfigSettings(models.TransientModel):
@@ -26,26 +27,58 @@ class ResConfigSettings(models.TransientModel):
             "existing agents."
         ),
     )
+    tr_sales_rep_default_pricelist_ids = fields.Many2many(
+        comodel_name="product.pricelist",
+        relation="tr_sales_rep_access_default_pricelist_rel",
+        column1="config_id",
+        column2="pricelist_id",
+        string="Default Allowed Pricelists for New Agents",
+        help=(
+            "Pricelists assigned to the Allowed Pricelists of every "
+            "new agent partner (agent=True) created without an "
+            "explicit value. Also applied when an existing partner is "
+            "flagged as agent (False → True) and has no pricelist "
+            "whitelist set yet. Does not retroactively update "
+            "previously flagged agents."
+        ),
+    )
 
     @api.model
     def get_values(self):
         res = super().get_values()
-        raw = (
-            self.env["ir.config_parameter"].sudo().get_param(DEFAULT_CATALOG_PARAM, "")
-        )
-        ids = []
-        if raw:
+        ICP = self.env["ir.config_parameter"].sudo()
+        raw_cat = ICP.get_param(DEFAULT_CATALOG_PARAM, "")
+        cat_ids = []
+        if raw_cat:
             try:
-                ids = [int(x) for x in raw.split(",") if x.strip()]
+                cat_ids = [int(x) for x in raw_cat.split(",") if x.strip()]
             except ValueError:
-                ids = []
+                cat_ids = []
             Category = self.env["product.category"].sudo()
-            ids = Category.browse(ids).exists().ids
-        res["tr_sales_rep_default_category_ids"] = [(6, 0, ids)]
+            cat_ids = Category.browse(cat_ids).exists().ids
+        res["tr_sales_rep_default_category_ids"] = [(6, 0, cat_ids)]
+
+        raw_pl = ICP.get_param(DEFAULT_PRICELIST_PARAM, "")
+        pl_ids = []
+        if raw_pl:
+            try:
+                pl_ids = [int(x) for x in raw_pl.split(",") if x.strip()]
+            except ValueError:
+                pl_ids = []
+            Pricelist = self.env["product.pricelist"].sudo()
+            pl_ids = Pricelist.browse(pl_ids).exists().ids
+        res["tr_sales_rep_default_pricelist_ids"] = [(6, 0, pl_ids)]
         return res
 
     def set_values(self):
         res = super().set_values()
-        value = ",".join(str(i) for i in self.tr_sales_rep_default_category_ids.ids)
-        self.env["ir.config_parameter"].sudo().set_param(DEFAULT_CATALOG_PARAM, value)
+        ICP = self.env["ir.config_parameter"].sudo()
+        ICP.set_param(
+            DEFAULT_CATALOG_PARAM,
+            ",".join(str(i) for i in self.tr_sales_rep_default_category_ids.ids),
+        )
+        ICP.set_param(
+            DEFAULT_PRICELIST_PARAM,
+            ",".join(str(i) for i in self.tr_sales_rep_default_pricelist_ids.ids),
+        )
         return res

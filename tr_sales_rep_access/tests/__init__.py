@@ -31,3 +31,5 @@ from . import test_rep_order_flow
 from . import test_rep_fiscal_and_menus
 from . import test_rep_sales_profile_visibility
 from . import test_rep_allowed_pricelist
+from . import test_rep_default_pricelist
+from . import test_rep_agent_flip_applies_defaults

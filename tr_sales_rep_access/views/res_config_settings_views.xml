@@ -32,6 +32,26 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane" />
+                        <div class="o_setting_right_pane">
+                            <label for="tr_sales_rep_default_pricelist_ids" />
+                            <div class="text-muted">
+                                Pricelists automatically assigned to the
+                                Allowed Pricelists of every new agent
+                                partner, and applied when an existing
+                                partner is flagged as agent without any
+                                pricelist whitelist yet.
+                            </div>
+                            <div class="content-group mt16">
+                                <field
+                  name="tr_sales_rep_default_pricelist_ids"
+                  widget="many2many_tags"
+                  options="{'no_create': True}"
+                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </xpath>
         </field>
