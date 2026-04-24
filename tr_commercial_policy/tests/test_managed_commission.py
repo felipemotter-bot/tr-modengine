@@ -74,6 +74,21 @@ class TestManagedCommission(CommercialPolicyTestCommon):
         self.assertTrue(result.tr_managed)
         self.assertAlmostEqual(result.tr_rate, 0.0, places=2)
 
+    def test_managed_commission_create_allowed_for_salesperson(self):
+        """A regular salesperson (no commission manager group) can trigger
+        the managed commission resolver without AccessError.
+
+        Reproduces the blocker hit when an internal salesperson edits a
+        sale order line for an agent profile and the resolver has to
+        create a fresh managed commission for a new (invoice_state, rate).
+        """
+        Commission = self.env["commission"].with_user(self.salesperson)
+        result = Commission._ensure_managed_commission("paid", 4.75)
+        self.assertTrue(result)
+        self.assertTrue(result.tr_managed)
+        self.assertEqual(result.invoice_state, "paid")
+        self.assertAlmostEqual(result.tr_rate, 4.75, places=2)
+
 
 @tagged("post_install", "-at_install")
 class TestCommissionConstraint(CommercialPolicyTestCommon):
