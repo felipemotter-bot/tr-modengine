@@ -40,12 +40,24 @@ PRs.
 
 - `res.partner`: two rules — a per-group open rule (`[(1,'=',1)]`) that broadens the OR
   across group rules, plus a **global rule with a conditional `user.has_group(...)`**
-  domain that narrows to
-  `['|', ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id]), ('id', '=', user.partner_id.id)]`
-  when the user is a rep and is a no-op `(1,'=',1)` otherwise. This pattern is only
-  needed here because `res_partner_rule_private_employee` from `base.group_user` is
-  permissive and combines by OR with any per-group rule; global rules combine by AND and
-  let us narrow scope without affecting non-rep users.
+  domain that narrows to an OR of four clauses when the user is a rep (and is a no-op
+  `(1,'=',1)` otherwise):
+
+  1. `('id', '=', user.partner_id.id)` — the rep's own partner.
+  2. `('id', 'in', <non-agent users' partners>)` — other internal users (for
+     assignments, followers, etc.).
+  3. `('commercial_partner_id.agent_ids', 'in', [user.partner_id.id])` — **current
+     carteira** (live).
+  4. `('commercial_partner_id', 'in', <commercial_partner_ids of sale.orders and account.moves where sales_rep_partner_id == user.partner_id>)`
+     — **historical carteira** preserved across agent rotations. Keeps partners of
+     records carrying the rep's snapshot readable even after `agent_ids` was moved to
+     another agent, matching the "A1 continua enxergando esses pedidos e suas faturas"
+     contract (see USAGE_GUIDE.md section 8).
+
+  This pattern is only needed here because `res_partner_rule_private_employee` from
+  `base.group_user` is permissive and combines by OR with any per-group rule; global
+  rules combine by AND and let us narrow scope without affecting non-rep users.
+
 - `sale.order`, `sale.order.line`, `account.move`, `account.move.line`: **single
   per-group rule** filtering by the `sales_rep_partner_id` snapshot. No open broadener
   and no global conditional are needed here because the core "personal" rules

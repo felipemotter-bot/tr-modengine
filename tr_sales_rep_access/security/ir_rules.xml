@@ -42,11 +42,30 @@
         <field name="perm_write" eval="True" />
         <field name="perm_create" eval="True" />
         <field name="perm_unlink" eval="True" />
+        <!--
+            4th OR clause: partners of historical sales/invoices where
+            the rep is the snapshot. Sale/move rules are based on an
+            immutable ``sales_rep_partner_id`` snapshot, while the live
+            ``agent_ids`` clause above follows the current carteira.
+            After an agent rotation the two diverge: the rep still owns
+            the old orders/invoices (snapshot match) but would lose
+            read access to their partners (agent_ids no longer match),
+            breaking form/list views and report printing. Granting the
+            rep access to the commercial entity of any historical record
+            they snapshot aligns with the documented behaviour in
+            USAGE_GUIDE.md section 8 ("A1 continua enxergando esses
+            pedidos e suas faturas"). The sudo().search() runs once
+            per request (ir.rule domain cache) so performance cost is
+            bounded by the rep's snapshot volume.
+        -->
         <field name="domain_force">[
-            '|', '|',
+            '|', '|', '|',
             ('id', '=', user.partner_id.id),
             ('id', 'in', user.env['res.users'].with_context(active_test=False).sudo().search([('partner_id', '!=', False), ('partner_id.agent', '=', False)]).mapped('partner_id').ids),
-            ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id])
+            ('commercial_partner_id.agent_ids', 'in', [user.partner_id.id]),
+            ('commercial_partner_id', 'in',
+                user.env['sale.order'].sudo().search([('sales_rep_partner_id', '=', user.partner_id.id)]).mapped('partner_id').mapped('commercial_partner_id').ids
+                + user.env['account.move'].sudo().search([('sales_rep_partner_id', '=', user.partner_id.id)]).mapped('partner_id').mapped('commercial_partner_id').ids)
         ] if user.has_group('tr_sales_rep_access.group_sales_rep_external') else [(1, '=', 1)]</field>
     </record>
 
