@@ -69,10 +69,11 @@
                         'readonly': [
                             '|',
                             ('state', '!=', 'draft'),
-                            ('move_type', '!=', 'out_invoice')
+                            ('move_type', 'not in', ['out_invoice', 'in_invoice'])
                         ],
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
@@ -83,10 +84,11 @@
                         'readonly': [
                             '|',
                             ('state', '!=', 'draft'),
-                            ('move_type', '!=', 'out_invoice')
+                            ('move_type', 'not in', ['out_invoice', 'in_invoice'])
                         ],
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
@@ -96,7 +98,8 @@
           readonly="1"
           attrs="{
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
