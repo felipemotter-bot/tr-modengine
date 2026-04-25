@@ -24,6 +24,16 @@ Comportamento
 - Faturas em estado ``posted`` são imutáveis (gate de proteção contra
   recompute em massa no install).
 
+Escopo intencional
+==================
+
+O módulo **não implementa ``inverse``** em ``discount`` / ``discount_value``
+e **não pretende suportar edição manual de desconto na linha como feature**.
+A regra de negócio aprovada com Felipe é: edição sempre no cabeçalho do
+pedido/fatura, nunca por linha. Se um caso futuro exigir edição por linha,
+isso é mudança de escopo (snapshot por linha + inverse), não evolução deste
+módulo.
+
 Instalação
 ==========
 

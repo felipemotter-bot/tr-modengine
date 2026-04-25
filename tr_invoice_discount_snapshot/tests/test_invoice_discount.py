@@ -61,13 +61,17 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
     # --- Recompute ao mudar header em draft ---
 
     def test_recompute_when_header_changes_in_draft(self):
-        """Mudar tr_cash_discount em fatura draft → linhas recalculam."""
+        """Mudar tr_cash_discount em fatura draft → linhas recalculam.
+
+        Usa ``invoice.write(...)`` (caminho ORM persistente), não assignment,
+        para exercitar o fluxo real de edição via UI/API.
+        """
         _order, invoice = self._make_invoice_no_fiscal(qty=10)
         line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)[0]
         # Estado inicial: 3 + 2 = 5
         self.assertAlmostEqual(line.discount, 5.0, places=2)
-        # Mudar o header
-        invoice.tr_cash_discount = 10.0
+        # Mudar o header via ORM write
+        invoice.write({"tr_cash_discount": 10.0})
         # 10 + 2 = 12
         self.assertAlmostEqual(line.discount, 12.0, places=2)
         expected_value = line.quantity * line.price_unit * 0.12
