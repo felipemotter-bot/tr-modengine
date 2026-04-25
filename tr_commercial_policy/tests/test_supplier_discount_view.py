@@ -39,16 +39,16 @@ class TestSupplierDiscountView(TransactionCase):
         self.assertIn("'in_invoice'", attrs)
         self.assertIn("'in_refund'", attrs)
 
-    def test_tr_cash_discount_editable_on_in_invoice(self):
-        """Readonly só dispara em state != draft OU move_type fora dos editáveis.
+    def test_tr_cash_discount_readonly_only_by_state(self):
+        """Readonly depende só de ``state != 'draft'``.
 
-        Em ``in_invoice`` draft, readonly deve ser False (campo editável).
+        Editável nos 4 tipos de fatura em draft (out_invoice, out_refund,
+        in_invoice, in_refund). Sem filtro adicional de move_type no readonly.
         """
         arch = self._get_invoice_form_arch()
         nodes = arch.xpath("//field[@name='tr_cash_discount']")
         attrs = nodes[0].attrib.get("attrs", "")
-        # readonly inclui 'out_invoice' E 'in_invoice' como tipos editáveis
-        self.assertIn("'out_invoice', 'in_invoice'", attrs)
+        self.assertIn("'readonly': [('state', '!=', 'draft')]", attrs)
 
     def test_supplier_invoice_accepts_discount_write(self):
         """Backend aceita write — confirma que não há constraint de tipo."""
