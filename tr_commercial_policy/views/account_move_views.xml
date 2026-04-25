@@ -66,13 +66,10 @@
           name="tr_cash_discount"
           string="Cash Discount (%)"
           attrs="{
-                        'readonly': [
-                            '|',
-                            ('state', '!=', 'draft'),
-                            ('move_type', '!=', 'out_invoice')
-                        ],
+                        'readonly': [('state', '!=', 'draft')],
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
@@ -80,13 +77,10 @@
           name="tr_fob_discount"
           string="FOB Discount (%)"
           attrs="{
-                        'readonly': [
-                            '|',
-                            ('state', '!=', 'draft'),
-                            ('move_type', '!=', 'out_invoice')
-                        ],
+                        'readonly': [('state', '!=', 'draft')],
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
@@ -96,7 +90,8 @@
           readonly="1"
           attrs="{
                         'invisible': [
-                            ('move_type', 'not in', ['out_invoice', 'out_refund'])
+                            ('move_type', 'not in',
+                             ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'])
                         ]
                     }"
         />
