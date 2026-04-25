@@ -13,7 +13,6 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         super().setUpClass()
         cls._setup_commercial_policy()
         cls.product_template_a.invoice_policy = "order"
-        # Garantir que a condition tem cash/fob distintos para os testes
         cls.condition.write(
             {
                 "cash_discount": 3.0,
@@ -36,10 +35,10 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         invoice = order._create_invoices()
         return order, invoice
 
-    # --- Bug alvo: cenário TREINAMENTO (sem fiscal) ---
+    # --- Bug alvo: cenário sem fiscal aplica header ---
 
     def test_invoice_no_fiscal_uses_header_discount(self):
-        """Linha sem fiscal aplica cash+fob do header (bug que originou o módulo)."""
+        """Linha sem fiscal aplica cash+fob do header."""
         _order, invoice = self._make_invoice_no_fiscal(qty=10)
         line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)
         self.assertTrue(line, "fatura deve ter linha de produto")
@@ -77,6 +76,21 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         expected_value = line.quantity * line.price_unit * 0.12
         self.assertAlmostEqual(line.discount_value, expected_value, places=2)
 
+    def test_qty_change_recomputes_value(self):
+        """Mudança de qty em draft recalcula discount_value (pct estável)."""
+        _order, invoice = self._make_invoice_no_fiscal(qty=4, base_price=100.0)
+        inv_line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)[0]
+        self.assertAlmostEqual(inv_line.discount, 5.0, places=2)
+        original_value = inv_line.discount_value
+        # Reduz qty
+        inv_line.quantity = 2.0
+        # Pct estável, value recalculado pra nova base
+        self.assertAlmostEqual(inv_line.discount, 5.0, places=2)
+        self.assertAlmostEqual(
+            inv_line.discount_value, 2.0 * inv_line.price_unit * 0.05, places=2
+        )
+        self.assertNotAlmostEqual(inv_line.discount_value, original_value, places=2)
+
     # --- Faturamento parcial ---
 
     def test_partial_invoicing_recalculates_value(self):
@@ -87,40 +101,26 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         line.seller_discount = 0.0
         line.discount_fixed = True
         order.action_confirm()
-        # Faturamento parcial: cria invoice e força qty=2 na linha
-        # (invoice_policy=order traz qty=4 do pedido por padrão).
         invoice = order._create_invoices()
         inv_line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)[0]
         # Forço qty=2 simulando faturamento parcial
         inv_line.quantity = 2.0
-        # Recompute deve aplicar 5% sobre 2 * price_unit
         expected_value = 2.0 * inv_line.price_unit * 0.05
         self.assertAlmostEqual(inv_line.discount_value, expected_value, places=2)
         self.assertAlmostEqual(inv_line.discount, 5.0, places=2)
 
-    # --- Header zerado: sem política ---
+    # --- Header zerado limpa o desconto ---
 
-    def test_header_zero_no_preexisting_discount_yields_zero(self):
-        """Sem política e sem discount preexistente → tudo zero."""
-        invoice = self._create_manual_invoice()
-        invoice.tr_cash_discount = 0.0
-        invoice.tr_fob_discount = 0.0
-        # Adicionar linha de produto manualmente
-        line = self.env["account.move.line"].create(
-            {
-                "move_id": invoice.id,
-                "product_id": self.product_a.id,
-                "quantity": 5.0,
-                "price_unit": 100.0,
-                "name": "Manual line",
-                "account_id": invoice.journal_id.default_account_id.id,
-            }
-        )
-        line._compute_tr_discount()
+    def test_header_zero_clears_discount(self):
+        """Header zerado em qualquer momento -> linha vai pra zero."""
+        _order, invoice = self._make_invoice_no_fiscal(qty=10)
+        line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)[0]
+        self.assertAlmostEqual(line.discount, 5.0, places=2)
+        invoice.write({"tr_cash_discount": 0.0, "tr_fob_discount": 0.0})
         self.assertAlmostEqual(line.discount, 0.0, places=2)
         self.assertAlmostEqual(line.discount_value, 0.0, places=2)
 
-    # --- Gate 1: posted é imutável ---
+    # --- Gate posted: histórico imutável ---
 
     def test_posted_state_protects_history(self):
         """Mudar header em fatura posted → linha NÃO recalcula."""
@@ -128,8 +128,6 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         line = invoice.invoice_line_ids.filtered(lambda line: line.product_id)[0]
         original_discount = line.discount
         original_value = line.discount_value
-        # Snapshot antes do post
-        # Forçar post (pode falhar por validações fiscais; usa SQL direto pra simular)
         self.env.cr.execute(
             "UPDATE account_move SET state='posted' WHERE id=%s", (invoice.id,)
         )
@@ -137,79 +135,29 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
         # Mudar header não deve afetar a linha
         invoice.tr_cash_discount = 99.0
         line.invalidate_recordset()
-        # Re-leitura: o gate posted impede o recompute
         self.assertAlmostEqual(line.discount, original_discount, places=2)
         self.assertAlmostEqual(line.discount_value, original_value, places=2)
 
-    # --- Gate 2: preserva discount preexistente quando header está zerado ---
+    # --- Caminho fiscal: account é fonte, fiscal lê via related ---
 
-    def test_no_policy_preserves_existing_discount(self):
-        """Linha draft com discount preexistente, header zero → preserva pct."""
-        invoice = self._create_manual_invoice()
-        invoice.tr_cash_discount = 0.0
-        invoice.tr_fob_discount = 0.0
-        line = self.env["account.move.line"].create(
-            {
-                "move_id": invoice.id,
-                "product_id": self.product_a.id,
-                "quantity": 1.0,
-                "price_unit": 100.0,
-                "discount": 7.0,  # discount preexistente
-                "name": "Manual line w/ discount",
-                "account_id": invoice.journal_id.default_account_id.id,
-            }
-        )
-        # Recompute manual: deve preservar o 7.0
-        line._compute_tr_discount()
-        self.assertAlmostEqual(line.discount, 7.0, places=2)
-        # E discount_value deve estar coerente
-        self.assertAlmostEqual(line.discount_value, 1.0 * 100.0 * 0.07, places=2)
-
-    def test_gate2_recalculates_value_on_qty_change(self):
-        """Gate 2 + mudança de qty: discount_value recalcula com base nova."""
-        invoice = self._create_manual_invoice()
-        invoice.tr_cash_discount = 0.0
-        invoice.tr_fob_discount = 0.0
-        line = self.env["account.move.line"].create(
-            {
-                "move_id": invoice.id,
-                "product_id": self.product_a.id,
-                "quantity": 1.0,
-                "price_unit": 100.0,
-                "discount": 5.0,
-                "name": "Manual line",
-                "account_id": invoice.journal_id.default_account_id.id,
-            }
-        )
-        # Recompute inicial estabiliza
-        line._compute_tr_discount()
-        # Mudar quantity
-        line.quantity = 2.0
-        line._compute_tr_discount()
-        self.assertAlmostEqual(line.discount, 5.0, places=2)
-        # discount_value deve ter sido recalculado para a nova base
-        self.assertAlmostEqual(line.discount_value, 2.0 * 100.0 * 0.05, places=2)
-
-    # --- Caminho fiscal: documento fiscal manda ---
-
-    def test_fiscal_document_line_overrides_header(self):
-        """fiscal_document_line_id presente → discount_value vem do fiscal,
-        ignora header da política comercial.
+    def test_account_discount_value_propagates_to_fiscal(self):
+        """fiscal_document_line.discount_value reflete account_line.discount_value
+        via related (l10n_br_fiscal_document_line override).
         """
         invoice = self._create_manual_invoice()
-        invoice.tr_cash_discount = 99.0  # header divergente do fiscal
-        invoice.tr_fob_discount = 0.0
+        invoice.tr_cash_discount = 8.0
+        invoice.tr_fob_discount = 2.0
         line = self.env["account.move.line"].create(
             {
                 "move_id": invoice.id,
                 "product_id": self.product_a.id,
-                "quantity": 1.0,
+                "quantity": 5.0,
                 "price_unit": 100.0,
                 "name": "Fiscal line",
                 "account_id": invoice.journal_id.default_account_id.id,
             }
         )
-        # Cria fiscal document line mínima e vincula
+        # Cria fiscal document line e vincula
         fiscal_doc = self.env["l10n_br_fiscal.document"].create(
             {
                 "document_type_id": self.env.ref("l10n_br_fiscal.document_55").id,
@@ -220,14 +168,52 @@ class TestInvoiceDiscountSnapshot(CommercialPolicyTestCommon):
             {
                 "document_id": fiscal_doc.id,
                 "product_id": self.product_a.id,
-                "quantity": 1.0,
+                "quantity": 5.0,
                 "price_unit": 100.0,
-                "discount_value": 10.0,  # fiscal define R$ 10 de desconto
             }
         )
         line.fiscal_document_line_id = fiscal_line
         line._compute_tr_discount()
-        # Linha deve usar fiscal (10), ignorando header (99)
-        self.assertAlmostEqual(line.discount_value, 10.0, places=2)
-        # discount = 10 * 100 / (1 * 100) = 10%
-        self.assertAlmostEqual(line.discount, 10.0, places=2)
+        # Header (10%) sobre base (5 * 100 = 500) = 50
+        expected = 50.0
+        self.assertAlmostEqual(line.discount_value, expected, places=2)
+        # Fiscal lê do account via related
+        self.assertAlmostEqual(fiscal_line.discount_value, expected, places=2)
+
+    def test_fiscal_value_changes_when_header_changes(self):
+        """Editar header em draft propaga pro fiscal via related."""
+        invoice = self._create_manual_invoice()
+        invoice.tr_cash_discount = 5.0
+        invoice.tr_fob_discount = 0.0
+        line = self.env["account.move.line"].create(
+            {
+                "move_id": invoice.id,
+                "product_id": self.product_a.id,
+                "quantity": 2.0,
+                "price_unit": 50.0,
+                "name": "Header-driven line",
+                "account_id": invoice.journal_id.default_account_id.id,
+            }
+        )
+        fiscal_doc = self.env["l10n_br_fiscal.document"].create(
+            {
+                "document_type_id": self.env.ref("l10n_br_fiscal.document_55").id,
+                "company_id": self.env.company.id,
+            }
+        )
+        fiscal_line = self.env["l10n_br_fiscal.document.line"].create(
+            {
+                "document_id": fiscal_doc.id,
+                "product_id": self.product_a.id,
+                "quantity": 2.0,
+                "price_unit": 50.0,
+            }
+        )
+        line.fiscal_document_line_id = fiscal_line
+        line._compute_tr_discount()
+        # Edita header
+        invoice.write({"tr_cash_discount": 20.0})
+        # Compute roda novamente
+        # base = 100, pct = 20 → 20
+        self.assertAlmostEqual(line.discount_value, 20.0, places=2)
+        self.assertAlmostEqual(fiscal_line.discount_value, 20.0, places=2)

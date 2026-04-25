@@ -19,39 +19,32 @@ class AccountMoveLine(models.Model):
     @api.depends(
         "quantity",
         "price_unit",
-        "fiscal_document_line_id",
-        "fiscal_document_line_id.discount_value",
         "move_id.tr_cash_discount",
         "move_id.tr_fob_discount",
         "move_id.state",
     )
     def _compute_tr_discount(self):
-        """Resolve ``discount`` e ``discount_value`` da linha da fatura.
+        """Resolve ``discount`` e ``discount_value`` a partir do cabecalho.
 
-        Bifurca por ``fiscal_document_line_id``:
-        - com fiscal: documento fiscal manda — preserva fluxo NF-e/SPED.
-        - sem fiscal: aplica ``tr_cash_discount + tr_fob_discount`` do
-          cabeçalho da fatura (política comercial).
+        Header da fatura (``tr_cash_discount + tr_fob_discount``) e a
+        fonte unica do percentual aplicado. ``discount_value`` deriva da
+        base atual da linha (``quantity * price_unit``).
 
-        ``state == 'posted'`` é gate imutável: protege histórico contra o
-        recompute em massa do ORM no install do módulo.
+        ``state == 'posted'`` e gate imutavel: protege historico contra
+        o recompute em massa do ORM no install do modulo.
 
-        Sem política no header, preserva o ``discount`` existente como
-        percentual efetivo, mas SEMPRE recalcula ``discount_value`` da
-        base atual para evitar drift entre percentual e valor monetário.
+        Em ``l10n_br_fiscal.document.line``, ``discount_value`` e
+        redefinido como ``related("account_line_ids.discount_value")``,
+        de forma que a NF-e/SPED leia o valor que a linha do account
+        guarda. Mesmo padrao que o ``engenere_account_invoice_br_discount``
+        usava em producao por anos.
         """
         for line in self:
             if line.move_id.state == "posted":
                 continue
             base = (line.quantity or 0.0) * (line.price_unit or 0.0)
-            if line.fiscal_document_line_id:
-                fiscal_dv = line.fiscal_document_line_id.discount_value or 0.0
-                line.discount_value = fiscal_dv
-                line.discount = (fiscal_dv * 100.0 / base) if base else 0.0
-                continue
             pct = (line.move_id.tr_cash_discount or 0.0) + (
                 line.move_id.tr_fob_discount or 0.0
             )
-            effective_pct = pct if pct else (line.discount or 0.0)
-            line.discount = effective_pct
-            line.discount_value = base * effective_pct / 100.0
+            line.discount = pct
+            line.discount_value = base * pct / 100.0
