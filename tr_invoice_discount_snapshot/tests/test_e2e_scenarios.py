@@ -226,11 +226,20 @@ class TestE2EScenarios(CommercialPolicyTestCommon):
     # ----------------------------------------------------------------
 
     def test_e2e_08_multiple_account_lines_per_fiscal_line(self):
-        """Documenta o comportamento real do related One2many escalar.
+        """**Trade-off conhecido — NÃO é comportamento funcional desejável.**
 
         Se duas account.move.line apontarem pra mesma fiscal_document_line,
         o ``related="account_line_ids.discount_value"`` lê o **primeiro**
-        registro. Confirma o trade-off documentado no README.
+        registro (não soma, não agrega). Em invoice grouping com múltiplas
+        account lines por fiscal line — caso raro/inexistente no fluxo
+        Trento conhecido — só a primeira linha contribuiria pro fiscal,
+        as outras seriam ignoradas.
+
+        Esse teste **documenta empiricamente** a fragilidade e serve como
+        guarda de regressão: se aparecer cenário real de grouping
+        multi-account em prod, este teste falha (assert quebra) e força
+        evolução pra agregação explícita ao invés de descobrir o problema
+        na NF-e.
         """
         invoice, (line_a, line_b) = self._create_invoice_with_lines(
             "out_invoice",
