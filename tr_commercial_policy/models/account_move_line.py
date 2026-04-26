@@ -211,8 +211,17 @@ class AccountMoveLine(models.Model):
         remaining = self.browse()
         for line in self:
             move = line.move_id
-            if line.sale_line_ids:
-                continue
+            # Sale-origin lines are no longer skipped here. ``seller_discount``
+            # and ``extra_discount`` are Classe A (own-rule) in
+            # ``OWN_RULE_KINDS`` — editable in draft and revalidated at post.
+            # If we kept the skip, the backend would restore ``price_unit``
+            # to ``super()``'s pricelist value, silently undoing the
+            # operator's edit and breaking ``_get_invoice_snapshot_issues``
+            # (which compares against ``calc_price_unit`` of the line's own
+            # reference / seller / extra). The previous skip was carried
+            # over from the snapshot-rigid origin of the module; today the
+            # taxonomy and the divergence banner explicitly support these
+            # edits.
             if move.move_type not in ("out_invoice", "out_refund"):
                 remaining |= line
                 continue
