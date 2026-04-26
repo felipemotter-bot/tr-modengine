@@ -769,17 +769,31 @@ class TestInvoicePolicyManual(CommercialPolicyTestCommon):
         line._compute_base_price()
         self.assertEqual(line.base_price, 0.0)
 
-    def test_price_unit_compute_preserves_sale_origin_snapshot(self):
-        """``_compute_price_unit`` skips lines with ``sale_line_ids``."""
-        order, invoice = self._create_confirmed_order_with_invoice(
+    def test_price_unit_compute_recomputes_after_seller_edit_in_sale_origin(self):
+        """Edição de seller_discount em linha sale-origin recompute price_unit.
+
+        Fluxo de Classe A (own-rule): seller_discount/extra_discount editados
+        na fatura draft devem recalcular price_unit via política. Sem isso,
+        a edição fica decorativa e o snapshot checker bloqueia o post por
+        divergência de price_unit (que ele detecta via calc_price_unit).
+        """
+        from ..models.policy_utils import calc_price_unit
+
+        _order, invoice = self._create_confirmed_order_with_invoice(
             seller_discount=3.0, qty=5
         )
         line = invoice.invoice_line_ids.filtered(
             lambda sol: sol.display_type == "product"
         )
-        original = line.price_unit
+        # Edita seller_discount na linha da fatura (dentro do limite do setup)
+        line.write({"seller_discount": 7.5, "extra_discount": 12.5})
+        # Compute deve aplicar calc_price_unit
+        line.invalidate_recordset(["price_unit"])
         line._compute_price_unit()
-        self.assertEqual(line.price_unit, original)
+        expected = calc_price_unit(
+            line.reference_price, line.seller_discount, line.extra_discount
+        )
+        self.assertAlmostEqual(line.price_unit, expected, delta=0.02)
 
     def test_price_unit_compute_skips_posted_invoices(self):
         """Posted moves are frozen — compute never runs on them."""

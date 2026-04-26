@@ -233,6 +233,7 @@ O `action_post` valida apenas `out_invoice`. Refunds (`out_refund`) são livres.
    e. Snapshot checks:
       - Classe B/C divergence → hard block
       - Classe A divergence or qty excess → own rules + tier
+      - commission_rate divergence → cirúrgico (ver abaixo)
    f. Parity → post free
 ```
 
@@ -241,7 +242,38 @@ O `action_post` valida apenas `out_invoice`. Refunds (`out_refund`) são livres.
 - **Classe A (own rules):** seller_discount, extra_discount, extra_discount_reason,
   cash_discount, fob_discount, payment_term
 - **Classe B/C (hard block):** base_price, reference_price, price_unit,
-  contractual_return, commission_rate, commission, agents
+  contractual_return, commission, agents
+- **commission_rate (cirúrgico):** divergência roteada para own_rule **somente** quando
+  o `commission_rate` da linha é coerente com a banda do `seller_discount` atual da
+  própria linha (ou seja, é efeito derivado natural de um seller edit que disparou
+  recálculo via onchange). Tamper desconectado do flow de seller (valor incompatível com
+  a banda atual) continua sendo hard_block. Como `commission_rate` é readonly na UI,
+  esse hard_block só é exercitado por edição via backend/admin.
+
+### Edição de Classe A em sale-origin (`_compute_price_unit`)
+
+Editar `seller_discount` ou `extra_discount` na linha de uma fatura draft sale-origin
+recompute `price_unit` automaticamente via `calc_price_unit(reference, seller, extra)` —
+o compute é coerente com a Classe A (campos editáveis em draft). O recompute roda tanto
+em `out_invoice` quanto em `out_refund` draft: editar desconto e o valor não mudar é
+incoerente com o desenho da política.
+
+Os efeitos no post divergem por tipo de move:
+
+- **`out_invoice`**: a divergência resultante (Classe A) é classificada em own_rule no
+  post; o banner `invoice_divergence_warning` lista os campos em desacordo com o pedido
+  enquanto a fatura ainda está editável.
+- **`out_refund`**: refund é "free" no post (`_check_invoice_policy` não é chamado), o
+  banner não é renderizado e não há revalidação. O recompute em draft existe só pra
+  manter coerência da edição com o `price_unit` mostrado na linha.
+
+### Resync (`action_resync_from_sale_order`)
+
+Botão "Restaurar do Pedido" em fatura sale-origin draft. Restaura todos os campos
+snapshot da linha **incluindo** `price_unit` (recomputado de `calc_price_unit` da sale
+line) — sem isso, um seller edit anterior deixaria `price_unit` stale após o resync. Faz
+também sync de agents (commission_id + add/remove) e dos campos de header
+(cash/fob/contractual_return, payment_term, condition, profile).
 
 ### Validade Temporal
 
@@ -267,6 +299,11 @@ Override de `import_fiscal_document` adiciona `tr_skip_price_protection` no cont
 Campos da política presentes para rastreabilidade, mas sem proteção de edição e sem
 validação no `action_post`. Reversal copia todos os campos de política (header +
 linhas + agents). Commission amounts são negativos na reversal.
+
+`_compute_price_unit` aplica `calc_price_unit` em refund draft também — editar
+seller/extra na linha recompute `price_unit` igual em out_invoice. O comportamento de
+"free" do refund se refere ao post (que não chama `_check_invoice_policy`), não ao
+recompute em draft.
 
 ### Tier Validation na Fatura
 

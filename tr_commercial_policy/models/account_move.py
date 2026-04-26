@@ -1041,6 +1041,7 @@ class AccountMove(models.Model):
                 issues.append(
                     {
                         "kind": "commission_rate",
+                        "line_id": inv_line.id,
                         "message": _(
                             "Line '%s': commission rate diverges from the sale order."
                         )
@@ -1116,7 +1117,7 @@ class AccountMove(models.Model):
 
     # --- Taxonomia / divergence classification ---
 
-    # Classe A: inputs comerciais editáveis → own rules
+    # Classe A: inputs comerciais editáveis → own rules.
     OWN_RULE_KINDS = {
         "seller_discount",
         "extra_discount",
@@ -1131,6 +1132,15 @@ class AccountMove(models.Model):
 
         Returns (hard_block, own_rule) — two lists of issue dicts.
         Classe A → own_rule, Classe B + C → hard_block.
+
+        ``commission_rate`` é tratado fora de ``OWN_RULE_KINDS`` porque
+        a flexibilização é cirúrgica: a divergência só vira own_rule
+        quando ``commission_rate`` da linha bate com a banda do
+        ``seller_discount`` atual da própria linha (ou seja, é efeito
+        derivado coerente de um seller edit). Tamper direto em
+        commission_rate desconectado do seller continua sendo hard
+        block — ``commission_rate`` é readonly na UI, então um valor
+        incoerente só aparece via backend/admin.
         """
         self.ensure_one()
         hard_block = []
@@ -1138,9 +1148,33 @@ class AccountMove(models.Model):
         for issue in self._get_invoice_snapshot_issues():
             if issue["kind"] in self.OWN_RULE_KINDS:
                 own_rule.append(issue)
+            elif (
+                issue["kind"] == "commission_rate"
+                and self._is_commission_rate_coherent_with_line_seller(issue)
+            ):
+                own_rule.append(issue)
             else:
                 hard_block.append(issue)
         return hard_block, own_rule
+
+    def _is_commission_rate_coherent_with_line_seller(self, issue):
+        """Return True when the line's ``commission_rate`` matches the
+        band that ``_get_commission_rate_for_discount`` would compute
+        for the current ``seller_discount`` of that same line.
+
+        Used to distinguish "derived effect of seller edit" (route to
+        own_rule) from "tamper desconectado do flow" (keep hard block).
+        """
+        self.ensure_one()
+        line = self.env["account.move.line"].browse(issue["line_id"])
+        expected = line._get_commission_rate_for_discount(line.seller_discount)
+        if expected is False:
+            return False
+        precision = self.env["decimal.precision"].precision_get("Discount Policy")
+        return (
+            float_compare(line.commission_rate, expected, precision_digits=precision)
+            == 0
+        )
 
     # --- Profile resolution ---
 
@@ -1616,7 +1650,18 @@ class AccountMove(models.Model):
             if not sale_line:  # pragma: no cover — _get_sale_origin_lines pre-filters
                 continue  # pragma: no cover
 
-            # Resync snapshot fields from sale line
+            # Resync snapshot fields from sale line. ``price_unit`` is
+            # also restored — recomputed from the sale line's reference
+            # and discounts so the line value matches what
+            # ``_get_invoice_snapshot_issues`` expects after resync.
+            # Otherwise an edited seller/extra would leave price_unit
+            # stale, exactly the divergence the resync button is meant
+            # to clear.
+            resynced_price_unit = calc_price_unit(
+                sale_line.reference_price,
+                sale_line.seller_discount,
+                sale_line.extra_discount,
+            )
             inv_line.with_context(**ctx).write(
                 {
                     "seller_discount": sale_line.seller_discount,
@@ -1625,6 +1670,7 @@ class AccountMove(models.Model):
                     "base_price": sale_line.base_price,
                     "reference_price": sale_line.reference_price,
                     "commission_rate": sale_line.commission_rate,
+                    "price_unit": resynced_price_unit,
                 }
             )
 
