@@ -36,3 +36,4 @@ from . import test_commission_post_confirm_guard
 from . import test_invoice_commission_guard
 from . import test_condition_pricelist_lock
 from . import test_supplier_discount_view
+from . import test_sale_origin_revalidation

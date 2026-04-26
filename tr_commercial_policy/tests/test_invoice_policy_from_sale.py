@@ -591,8 +591,15 @@ class TestInvoicePolicyFromSale(CommercialPolicyTestCommon):
         invoice.action_post()
         self.assertEqual(invoice.state, "posted")
 
-    def test_commission_rate_divergence_blocks(self):
-        """Divergence in commission_rate → blocks post."""
+    def test_commission_rate_tamper_disconnected_from_seller_hard_blocks(self):
+        """Tamper direto em commission_rate (desconectado do seller) → hard_block.
+
+        A reclassificação de commission_rate como own_rule é cirúrgica:
+        só vale quando a divergência é coerente com o seller_discount
+        atual da linha (efeito derivado de um seller edit). Tamper
+        direto via backend/SQL com valor incoerente continua sendo
+        hard_block — commission_rate é readonly na UI.
+        """
         _order, invoice = self._create_confirmed_order_with_invoice()
         inv_line = invoice.invoice_line_ids.filtered(
             lambda line: line.display_type == "product"
@@ -600,8 +607,11 @@ class TestInvoicePolicyFromSale(CommercialPolicyTestCommon):
         inv_line.with_context(
             skip_invoice_sync=True, check_move_validity=False
         ).commission_rate = 99.0
-        with self.assertRaises(UserError):
-            invoice.action_post()
+        hard_block, own_rule = invoice._split_invoice_divergence_issues()
+        kinds_hard = {issue["kind"] for issue in hard_block}
+        kinds_own = {issue["kind"] for issue in own_rule}
+        self.assertIn("commission_rate", kinds_hard)
+        self.assertNotIn("commission_rate", kinds_own)
 
     # --- Phase 1: Warning compute ---
 
