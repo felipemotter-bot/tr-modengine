@@ -1,6 +1,9 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from odoo.exceptions import UserError
+from odoo.tools import float_compare
+
 
 def calc_adjustment_factor(contractual_return_pct, tax_rate, freight_rate, admin_rate):
     """Calculate adjustment factor from contractual return and rates.
@@ -170,39 +173,103 @@ def calc_line_pricing(
     }
 
 
-def resolve_applicable_rule(product, rules, empty_rule):
-    """Resolve the most specific profile rule for a product.
+def _rule_passes_qty_min(rule, line_qty, line_uom):
+    """Return True when ``rule.qty_min`` is met by the line.
+
+    - ``qty_min == 0`` ⇒ rule always passes (no qty filter).
+    - ``qty_min > 0`` ⇒ converts ``line_qty`` from ``line_uom`` to
+      ``rule.qty_uom_id`` and compares with ``float_compare`` using the
+      rule UoM rounding.
+    - Same UoM ⇒ no conversion needed.
+    - Different UoM categories ⇒ rule ignored (returns False).
+    - ``UserError`` from ``_compute_quantity`` (e.g. inactive UoM) ⇒
+      defensive fallback, rule ignored.
+    """
+    if rule.qty_min <= 0:
+        return True
+    rule_uom = rule.qty_uom_id
+    if not rule_uom or not line_uom:
+        return False
+    if line_uom == rule_uom:
+        converted = line_qty
+    else:
+        if line_uom.category_id != rule_uom.category_id:
+            return False
+        try:
+            converted = line_uom._compute_quantity(line_qty, rule_uom, round=False)
+        except UserError:
+            return False
+    return (
+        float_compare(converted, rule.qty_min, precision_rounding=rule_uom.rounding)
+        >= 0
+    )
+
+
+def _pick_best(rules):
+    """Pick the rule that wins among elegible rules in the same level.
+
+    Tiebreaker order: largest ``qty_min`` first, then smallest
+    ``sequence``, then smallest ``id``. Largest ``qty_min`` wins so that
+    cadastrating multiple rules in the same scope with increasing
+    thresholds produces volume bands automatically.
+    """
+    return rules.sorted(key=lambda r: (-r.qty_min, r.sequence, r.id))[0]
+
+
+def resolve_applicable_rule(product, rules, empty_rule, line_qty, line_uom):
+    """Resolve the most specific profile rule for a product and line qty.
 
     Resolution order: product variant > product template > category > general.
+    Within each level, only rules whose ``qty_min`` is met by ``line_qty``
+    (in ``line_uom``) are eligible; the rule with the largest matching
+    ``qty_min`` wins (``sequence`` as tiebreaker). When no rule at a level
+    is eligible, resolution falls back to the next level.
+
     Returns the matching rule record or ``empty_rule`` (empty recordset).
 
     Pure ORM function — shared between sale.order.line and account.move.line.
+
+    ``line_qty`` and ``line_uom`` are required (no defaults). This is
+    intentional: any caller that forgets to pass them would silently bypass
+    every volume rule, which is a much worse failure mode than a TypeError.
     """
     # 1. Product variant
-    variant_rule = rules.filtered(
+    variant_rules = rules.filtered(
         lambda rule: rule.applied_on == "product" and rule.product_id == product
     )
-    if variant_rule:
-        return variant_rule[0]
+    eligible = variant_rules.filtered(
+        lambda r: _rule_passes_qty_min(r, line_qty, line_uom)
+    )
+    if eligible:
+        return _pick_best(eligible)
     # 2. Product template
-    tmpl_rule = rules.filtered(
+    tmpl_rules = rules.filtered(
         lambda rule: rule.applied_on == "product_template"
         and rule.product_tmpl_id == product.product_tmpl_id
     )
-    if tmpl_rule:
-        return tmpl_rule[0]
+    eligible = tmpl_rules.filtered(
+        lambda r: _rule_passes_qty_min(r, line_qty, line_uom)
+    )
+    if eligible:
+        return _pick_best(eligible)
     # 3. Category (walk up the category tree)
     categ = product.categ_id
     while categ:
-        categ_rule = rules.filtered(
+        categ_rules = rules.filtered(
             lambda rule, cat=categ: rule.applied_on == "category"
             and rule.categ_id == cat
         )
-        if categ_rule:
-            return categ_rule[0]
+        eligible = categ_rules.filtered(
+            lambda r: _rule_passes_qty_min(r, line_qty, line_uom)
+        )
+        if eligible:
+            return _pick_best(eligible)
         categ = categ.parent_id
     # 4. General
-    general_rule = rules.filtered(lambda rule: rule.applied_on == "general")
-    if general_rule:
-        return general_rule[0]
+    general_rules = rules.filtered(lambda rule: rule.applied_on == "general")
+    eligible = general_rules.filtered(
+        lambda r: _rule_passes_qty_min(r, line_qty, line_uom)
+    )
+    if eligible:
+        return _pick_best(eligible)
     return empty_rule

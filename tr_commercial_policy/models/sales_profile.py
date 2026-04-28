@@ -105,6 +105,31 @@ class SalesProfileRule(models.Model):
         comodel_name="product.category",
         string="Product Category",
     )
+    qty_min = fields.Float(
+        string="Min Qty",
+        default=0.0,
+        help=(
+            "Minimum quantity on the order/invoice line for this rule to be "
+            "applicable. When 0, the rule applies regardless of quantity. "
+            "Multiple rules in the same scope (e.g. same product variant) with "
+            "increasing qty_min values define volume bands — the highest band "
+            "whose threshold is met wins.\n\n"
+            "Fallback: when the most specific rule does not meet qty_min, "
+            "resolution moves to the next level (variant → template → "
+            "category → general). This is by design, not a bug."
+        ),
+    )
+    qty_uom_id = fields.Many2one(
+        comodel_name="uom.uom",
+        string="Qty UoM",
+        help=(
+            "Unit of measure used to compare the line quantity with qty_min. "
+            "Required when qty_min > 0. The line quantity is converted to "
+            "this UoM before comparison. If conversion is not possible "
+            "(different UoM categories), the rule is ignored and resolution "
+            "falls back to the next level."
+        ),
+    )
     seller_discount_max = fields.Float(
         string="Max Seller Discount (%)",
         compute="_compute_seller_discount_max",
@@ -210,6 +235,42 @@ class SalesProfileRule(models.Model):
                         " 'Product Category'."
                     )
                 )
+
+    @api.constrains("qty_min", "qty_uom_id")
+    def _check_qty_min(self):
+        for rule in self:
+            if rule.qty_min < 0:
+                raise ValidationError(
+                    _("Min Qty cannot be negative (got %.4f).") % rule.qty_min
+                )
+            if rule.qty_min > 0 and not rule.qty_uom_id:
+                raise ValidationError(
+                    _(
+                        "Min Qty is set (%.4f) but Qty UoM is missing. "
+                        "Define a unit of measure so the line quantity can "
+                        "be compared."
+                    )
+                    % rule.qty_min
+                )
+
+    @api.onchange("qty_min", "applied_on", "product_id", "product_tmpl_id")
+    def _onchange_qty_min(self):
+        if self.qty_min and not self.qty_uom_id:
+            if self.applied_on == "product" and self.product_id:
+                self.qty_uom_id = self.product_id.uom_id
+            elif self.applied_on == "product_template" and self.product_tmpl_id:
+                self.qty_uom_id = self.product_tmpl_id.uom_id
+            else:
+                return {
+                    "warning": {
+                        "title": _("Qty UoM Required"),
+                        "message": _(
+                            "Define the UoM for Min Qty. The unit could "
+                            "not be inferred automatically for this rule "
+                            "scope."
+                        ),
+                    }
+                }
 
     @api.constrains("profile_id", "commission_band_ids", "order_value_band_ids")
     def _check_bands_required(self):

@@ -641,8 +641,16 @@ class PartnerCommercialConditionLine(models.Model):
                 )
 
     def _resolve_rule_for_product(self, profile, product_id, product_tmpl_id):
-        """Find the best matching profile rule for a product."""
-        rules = profile.rule_ids
+        """Find the best matching profile rule for a product.
+
+        Used to validate ``seller_discount`` on commercial condition lines —
+        a static configuration context with no line quantity available.
+        Volume rules (``qty_min > 0``) are intentionally filtered out: they
+        only apply at order/invoice time, when the line quantity is known.
+        The cadastrador of a condition line should respect the base limit
+        (rule with ``qty_min == 0``); volume bands extend that limit later.
+        """
+        rules = profile.rule_ids.filtered(lambda r: r.qty_min == 0)
         if product_id:
             product = self.env["product.product"].browse(product_id)
             variant_rule = rules.filtered(

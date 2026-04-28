@@ -3,7 +3,7 @@
 
 {
     "name": "Commercial Policy",
-    "version": "16.0.2.2.0",
+    "version": "16.0.2.3.0",
     "maintainers": ["felipemotter"],
     "author": "Engenere",
     "license": "AGPL-3",
