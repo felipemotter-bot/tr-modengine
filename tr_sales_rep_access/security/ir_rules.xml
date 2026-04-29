@@ -161,8 +161,14 @@
     <!-- hold a different profile per company. The domain iterates    -->
     <!-- over the active company_ids (allowed_company_ids) so every   -->
     <!-- profile the rep owns across currently enabled companies is   -->
-    <!-- included. False entries are harmless: Many2one filters drop  -->
-    <!-- them.                                                        -->
+    <!-- included.                                                    -->
+    <!--                                                              -->
+    <!-- ``if pid`` filters out companies where the rep has no        -->
+    <!-- profile registered. Without it the comprehension produces    -->
+    <!-- ``False`` entries (e.g. company without ir.property), which  -->
+    <!-- become ``IN (NULL)`` in SQL and silently mask the valid      -->
+    <!-- entries — locking the rep out of every profile in companies  -->
+    <!-- where they DO have one. Filtering Falsy keeps only real ids. -->
     <!-- ============================================================ -->
 
     <record id="rule_sales_profile_rep_self_only" model="ir.rule">
@@ -174,8 +180,10 @@
         <field name="perm_create" eval="False" />
         <field name="perm_unlink" eval="False" />
         <field name="domain_force">[('id', 'in', [
-            user.partner_id.with_company(company).sales_profile_id.id
-            for company in user.env['res.company'].browse(company_ids)
+            pid for pid in [
+                user.partner_id.with_company(company).sales_profile_id.id
+                for company in user.env['res.company'].browse(company_ids)
+            ] if pid
         ])]</field>
     </record>
 
@@ -190,8 +198,10 @@
         <field name="perm_create" eval="False" />
         <field name="perm_unlink" eval="False" />
         <field name="domain_force">[('profile_id', 'in', [
-            user.partner_id.with_company(company).sales_profile_id.id
-            for company in user.env['res.company'].browse(company_ids)
+            pid for pid in [
+                user.partner_id.with_company(company).sales_profile_id.id
+                for company in user.env['res.company'].browse(company_ids)
+            ] if pid
         ])]</field>
     </record>
 
@@ -209,8 +219,10 @@
         <field name="perm_create" eval="False" />
         <field name="perm_unlink" eval="False" />
         <field name="domain_force">[('rule_id.profile_id', 'in', [
-            user.partner_id.with_company(company).sales_profile_id.id
-            for company in user.env['res.company'].browse(company_ids)
+            pid for pid in [
+                user.partner_id.with_company(company).sales_profile_id.id
+                for company in user.env['res.company'].browse(company_ids)
+            ] if pid
         ])]</field>
     </record>
 
@@ -228,8 +240,10 @@
         <field name="perm_create" eval="False" />
         <field name="perm_unlink" eval="False" />
         <field name="domain_force">[('rule_id.profile_id', 'in', [
-            user.partner_id.with_company(company).sales_profile_id.id
-            for company in user.env['res.company'].browse(company_ids)
+            pid for pid in [
+                user.partner_id.with_company(company).sales_profile_id.id
+                for company in user.env['res.company'].browse(company_ids)
+            ] if pid
         ])]</field>
     </record>
 

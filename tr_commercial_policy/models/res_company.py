@@ -10,6 +10,7 @@ class ResCompany(models.Model):
 
     default_sales_profile_id = fields.Many2one(
         comodel_name="tr.sales.profile",
+        domain="[('company_id', '=', id)]",
     )
     invoice_validity_days = fields.Integer(
         string="Invoice Validity (days)",

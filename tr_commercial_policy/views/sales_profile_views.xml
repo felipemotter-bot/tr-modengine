@@ -128,6 +128,11 @@
             <tree>
                 <field name="name" />
                 <field name="profile_type" />
+                <field
+          name="company_id"
+          groups="base.group_multi_company"
+          optional="show"
+        />
                 <field name="pricelist_ids" widget="many2many_tags" optional="show" />
                 <field name="cash_discount_max" />
                 <field name="fob_discount_max" />
