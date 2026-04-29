@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="report_sales_profile_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <h2>Commercial Profile</h2>
+                <h3 t-field="doc.name" />
+                <div>
+                    <strong>Company:</strong>
+                    <span t-field="doc.company_id.name" />
+                </div>
+
+                <h4 class="mt-4">Cash Discount</h4>
+                <div>
+                    <strong>Maximum:</strong>
+                    <span t-esc="'%.2f' % doc.cash_discount_max" />%
+                </div>
+                <div t-if="doc.cash_term_avg_days_max or doc.payment_mode_ids">
+                    <strong>Conditions to grant:</strong>
+                    <ul>
+                        <li t-if="doc.cash_term_avg_days_max">
+                            Maximum average payment term:
+                            <span t-esc="doc.cash_term_avg_days_max" />
+                            days
+                        </li>
+                        <li t-if="doc.payment_mode_ids">
+                            Allowed payment modes:
+                            <span
+                t-esc="', '.join(doc.payment_mode_ids.mapped('name'))"
+              />
+                        </li>
+                    </ul>
+                </div>
+
+                <h4 class="mt-4">FOB Discount</h4>
+                <div>
+                    <strong>Maximum:</strong>
+                    <span t-esc="'%.2f' % doc.fob_discount_max" />%
+                </div>
+
+                <h4 class="mt-4">Discount Bands by Scope</h4>
+                <t t-foreach="doc.rule_ids" t-as="rule">
+                    <div class="mt-2">
+                        <strong>
+                            <span t-field="rule.applied_on" />
+                            <t t-if="rule.applied_on == 'product'">:
+                                <span t-field="rule.product_id" />
+                            </t>
+                            <t t-if="rule.applied_on == 'product_template'">:
+                                <span t-field="rule.product_tmpl_id" />
+                            </t>
+                            <t t-if="rule.applied_on == 'category'">:
+                                <span t-field="rule.categ_id" />
+                            </t>
+                        </strong>
+                    </div>
+                    <t t-if="doc.profile_type == 'agent'">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-end">Discount up to (%)</th>
+                                    <th class="text-end">Commission (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                  t-foreach="rule.commission_band_ids.sorted('discount_up_to')"
+                  t-as="band"
+                >
+                                    <td class="text-end">
+                                        <span t-esc="'%.2f' % band.discount_up_to" />
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-esc="'%.2f' % band.commission_rate" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-if="doc.profile_type == 'internal'">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-end">Minimum order amount</th>
+                                    <th class="text-end">Maximum discount (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                  t-foreach="rule.order_value_band_ids.sorted('order_min_amount')"
+                  t-as="band"
+                >
+                                    <td class="text-end">
+                                        <span
+                      t-field="band.order_min_amount"
+                      t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'
+                    />
+                                    </td>
+                                    <td class="text-end">
+                                        <span
+                      t-esc="'%.2f' % band.seller_discount_max"
+                    />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_sales_profile">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="tr_commercial_policy.report_sales_profile_document" />
+            </t>
+        </t>
+    </template>
+</odoo>

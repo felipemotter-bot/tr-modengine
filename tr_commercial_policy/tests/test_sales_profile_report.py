@@ -1,0 +1,138 @@
+# Copyright 2026 Engenere - Felipe Motter Pereira
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+
+from odoo.tests import tagged
+
+from .common import CommercialPolicyTestCommon
+
+
+@tagged("post_install", "-at_install")
+class TestSalesProfileReport(CommercialPolicyTestCommon):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.report = cls.env.ref("tr_commercial_policy.action_report_sales_profile")
+        # Realistic bands so the rendered tables actually have rows.
+        cls.agent_general_rule = cls.agent_profile.rule_ids.filtered(
+            lambda r: r.applied_on == "general"
+        )[:1]
+        cls.agent_general_rule.commission_band_ids.unlink()
+        cls.agent_general_rule.write(
+            {
+                "commission_band_ids": [
+                    (0, 0, {"discount_up_to": 5.0, "commission_rate": 10.0}),
+                    (0, 0, {"discount_up_to": 10.0, "commission_rate": 7.0}),
+                ],
+            }
+        )
+        # Pin a payment mode on the agent profile so the "Conditions to grant"
+        # block exercises both the prazo and the modes branches. Build it
+        # explicitly for cls.company / inbound to avoid coupling to whatever
+        # payment.mode happens to exist in the test DB.
+        journal = cls.env["account.journal"].search(
+            [("company_id", "=", cls.company.id), ("type", "in", ("bank", "cash"))],
+            limit=1,
+        )
+        payment_method = cls.env["account.payment.method"].search(
+            [("payment_type", "=", "inbound")], limit=1
+        )
+        if journal and payment_method:
+            cls.payment_mode = cls.env["account.payment.mode"].create(
+                {
+                    "name": "Test Profile Report Mode",
+                    "company_id": cls.company.id,
+                    "payment_method_id": payment_method.id,
+                    "bank_account_link": "variable",
+                    "payment_type": "inbound",
+                    "fixed_journal_id": journal.id,
+                }
+            )
+            cls.agent_profile.payment_mode_ids = [(4, cls.payment_mode.id)]
+
+        cls.internal_general_rule = cls.internal_profile.rule_ids.filtered(
+            lambda r: r.applied_on == "general"
+        )[:1]
+        cls.internal_general_rule.order_value_band_ids.unlink()
+        cls.internal_general_rule.write(
+            {
+                "order_value_band_ids": [
+                    (0, 0, {"order_min_amount": 1000.0, "seller_discount_max": 5.0}),
+                    (0, 0, {"order_min_amount": 5000.0, "seller_discount_max": 10.0}),
+                ],
+            }
+        )
+
+    def _render(self, profile):
+        html, _ = self.report._render_qweb_html(self.report.report_name, profile.ids)
+        return html.decode() if isinstance(html, bytes) else html
+
+    def test_render_agent_profile(self):
+        html = self._render(self.agent_profile)
+        self.assertIn("Commercial Profile", html)
+        self.assertIn(self.agent_profile.name, html)
+        self.assertIn("Cash Discount", html)
+        self.assertIn("FOB Discount", html)
+        # Agent → commission columns
+        self.assertIn("Discount up to", html)
+        self.assertIn("Commission", html)
+        # Bands rendered (locale-tolerant: en_US vs pt_BR)
+        self.assertTrue("5.00" in html or "5,00" in html)
+        self.assertTrue("10.00" in html or "10,00" in html)
+
+    def test_render_internal_profile(self):
+        html = self._render(self.internal_profile)
+        self.assertIn(self.internal_profile.name, html)
+        # Internal → order-value columns, not commission
+        self.assertIn("Minimum order amount", html)
+        self.assertIn("Maximum discount", html)
+        self.assertNotIn("Commission (%)", html)
+
+    def test_my_profiles_returns_user_profile(self):
+        self.salesperson.partner_id.with_company(
+            self.company
+        ).sales_profile_id = self.agent_profile
+        ids = (
+            self.env["tr.sales.profile"]
+            .with_user(self.salesperson)
+            ._get_my_profile_ids()
+        )
+        self.assertEqual(ids, [self.agent_profile.id])
+
+    def test_my_profiles_no_fallback_to_company_default(self):
+        # User has NO profile of their own; company has default set.
+        self.salesperson.partner_id.with_company(self.company).sales_profile_id = False
+        self.company.default_sales_profile_id = self.internal_profile
+        ids = (
+            self.env["tr.sales.profile"]
+            .with_user(self.salesperson)
+            ._get_my_profile_ids()
+        )
+        self.assertEqual(ids, [])
+
+    def test_my_profiles_multi_company(self):
+        company_b = self.env["res.company"].create({"name": "Profile Report Company B"})
+        # Allow the salesperson on both companies.
+        self.salesperson.write({"company_ids": [(4, company_b.id)]})
+        # Profile on company A only; B left empty.
+        self.salesperson.partner_id.with_company(
+            self.company
+        ).sales_profile_id = self.agent_profile
+        self.salesperson.partner_id.with_company(company_b).sales_profile_id = False
+        ids = (
+            self.env["tr.sales.profile"]
+            .with_user(self.salesperson)
+            ._get_my_profile_ids()
+        )
+        self.assertEqual(ids, [self.agent_profile.id])
+
+    def test_action_my_profiles_returns_act_window(self):
+        self.salesperson.partner_id.with_company(
+            self.company
+        ).sales_profile_id = self.agent_profile
+        action = (
+            self.env["tr.sales.profile"]
+            .with_user(self.salesperson)
+            .action_my_profiles()
+        )
+        self.assertEqual(action["res_model"], "tr.sales.profile")
+        self.assertIn(("id", "in", [self.agent_profile.id]), action["domain"])

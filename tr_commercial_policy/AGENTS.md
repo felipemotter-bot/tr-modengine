@@ -199,6 +199,25 @@ teto efetivo aparece em campo separado da linha, contextualizado).
 2. Usuário vendedor → perfil do usuário
 3. Equipe de vendas → perfil da equipe
 
+### Relatório "Commercial Profile" + Menu "My Commercial Profiles"
+
+PDF (`tr_commercial_policy.report_sales_profile`) imprime os parâmetros de um
+`tr.sales.profile`: limite de desconto à vista (com prazo médio máximo e modos de
+pagamento permitidos), limite FOB e tabelas de bandas por escopo (comissão para `agent`,
+valor mínimo para `internal`). Disparado pelo botão **Print** padrão do form.
+
+O menu **Sales → Reporting → My Commercial Profiles** abre uma lista filtrada via
+`tr.sales.profile._get_my_profile_ids()`, que itera `env.user.allowed_company_ids` e lê
+`env.user.partner_id.with_company(c).sales_profile_id` (`company_dependent`). **Sem
+fallback** de team/company default — só os perfis atribuídos diretamente ao próprio
+usuário.
+
+⚠️ **O filtro do menu é conveniência de navegação, não isolamento de segurança.** A ACL
+atual é leitura para `base.group_user` e não há record rule restringindo quais perfis o
+usuário enxerga. Qualquer usuário logado ainda pode abrir um perfil arbitrário via
+URL/RPC. O isolamento real (record rule restrita a `group_sales_rep_external`) entra com
+`tr_sales_rep_access`.
+
 ## Fluxo de Aprovação (Desconto Extra)
 
 1. Vendedor seta `extra_discount` + `extra_discount_reason` na linha

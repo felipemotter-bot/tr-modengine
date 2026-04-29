@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from . import test_sales_profile
+from . import test_sales_profile_report
 from . import test_commercial_condition
 from . import test_discount_engine
 from . import test_discount_validation
