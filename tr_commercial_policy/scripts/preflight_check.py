@@ -124,8 +124,8 @@ if ok:
     print("OK - no structural issues found. Safe to install.")
 else:
     print(
-        "WARNING - orphan records found. The pre_init_hook will clean "
-        "them automatically, but review the counts above."
+        "WARNING - orphan records found. Review the counts above and "
+        "clean them manually before installing/updating."
     )
 
 cr.rollback()

@@ -30,7 +30,7 @@ from . import test_invoice_policy_refund
 from . import test_pragma_coverage
 from . import test_multi_company_guard
 from . import test_readonly_agents
-from . import test_safe_install
+from . import test_confirmed_order_freeze
 from . import test_seller_markup
 from . import test_commission_post_confirm_guard
 from . import test_invoice_commission_guard
