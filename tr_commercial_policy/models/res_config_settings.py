@@ -10,6 +10,16 @@ class ResConfigSettings(models.TransientModel):
     company_default_sales_profile_id = fields.Many2one(
         related="company_id.default_sales_profile_id",
         readonly=False,
+        # Override the domain inherited from
+        # ``res.company.default_sales_profile_id`` (which uses ``id`` to
+        # self-reference the company). In ``res.config.settings``
+        # (TransientModel), ``id`` evaluates to the transient record's
+        # id, not the company's, so the inherited domain filters out
+        # every profile and the dropdown comes up empty. Reference the
+        # ``company_id`` Many2one of the settings record instead — at
+        # runtime this resolves to the id of the company being
+        # configured.
+        domain="[('company_id', '=', company_id)]",
     )
     company_invoice_validity_days = fields.Integer(
         related="company_id.invoice_validity_days",
