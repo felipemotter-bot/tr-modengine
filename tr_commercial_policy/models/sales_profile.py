@@ -59,7 +59,7 @@ class SalesProfile(models.Model):
     def _get_my_profile_ids(self):
         partner = self.env.user.partner_id
         ids = []
-        for company in self.env.user.company_ids:
+        for company in self.env.companies:
             profile = partner.with_company(company).sales_profile_id
             if profile:
                 ids.append(profile.id)

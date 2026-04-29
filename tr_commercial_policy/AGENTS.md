@@ -207,10 +207,11 @@ pagamento permitidos), limite FOB e tabelas de bandas por escopo (comissão para
 valor mínimo para `internal`). Disparado pelo botão **Print** padrão do form.
 
 O menu **Sales → Reporting → My Commercial Profiles** abre uma lista filtrada via
-`tr.sales.profile._get_my_profile_ids()`, que itera `env.user.allowed_company_ids` e lê
+`tr.sales.profile._get_my_profile_ids()`, que itera `env.companies` (companies ativas no
+seletor multi-company da sessão) e lê
 `env.user.partner_id.with_company(c).sales_profile_id` (`company_dependent`). **Sem
 fallback** de team/company default — só os perfis atribuídos diretamente ao próprio
-usuário.
+usuário, restritos ao contexto ativo.
 
 ⚠️ **O filtro do menu é conveniência de navegação, não isolamento de segurança.** A ACL
 atual é leitura para `base.group_user` e não há record rule restringindo quais perfis o

@@ -121,6 +121,26 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
         ids = (
             self.env["tr.sales.profile"]
             .with_user(self.salesperson)
+            .with_context(allowed_company_ids=[self.company.id, company_b.id])
+            ._get_my_profile_ids()
+        )
+        self.assertEqual(ids, [self.agent_profile.id])
+
+    def test_my_profiles_respects_active_companies_only(self):
+        """User with profile in A and B but only A active in the session
+        switcher must see only A's profile, not B's."""
+        company_b = self.env["res.company"].create({"name": "Profile Report Company B"})
+        self.salesperson.write({"company_ids": [(4, company_b.id)]})
+        self.salesperson.partner_id.with_company(
+            self.company
+        ).sales_profile_id = self.agent_profile
+        self.salesperson.partner_id.with_company(
+            company_b
+        ).sales_profile_id = self.internal_profile
+        ids = (
+            self.env["tr.sales.profile"]
+            .with_user(self.salesperson)
+            .with_context(allowed_company_ids=[self.company.id])
             ._get_my_profile_ids()
         )
         self.assertEqual(ids, [self.agent_profile.id])
