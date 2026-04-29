@@ -145,6 +145,13 @@ class SalesRepAccessTestCommon(TransactionCase):
         cls.profile_a1 = cls._make_sales_profile("A1 Profile")
         cls.profile_a2 = cls._make_sales_profile("A2 Profile")
 
+        # Set the company-default profile so commercial conditions
+        # created by these tests have a fallback when the partner has
+        # no agent. After the multi-company resolution fix in
+        # ``tr_commercial_policy``, conditions without a resolvable
+        # profile are blocked by ``_check_applicable_profile_resolved``.
+        cls.company.default_sales_profile_id = cls.profile_a1
+
         # Agents A1 and A2 are res.partner records with agent=True,
         # sales_profile_id and commission_id.
         cls.agent_a1 = cls.env["res.partner"].create(
