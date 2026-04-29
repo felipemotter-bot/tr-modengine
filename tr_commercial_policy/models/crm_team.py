@@ -10,6 +10,7 @@ class CrmTeam(models.Model):
     sales_profile_id = fields.Many2one(
         comodel_name="tr.sales.profile",
         string="Sales Profile",
+        check_company=True,
         help="Default sales profile for members of this team. "
         "Individual profile on the salesperson takes precedence.",
     )

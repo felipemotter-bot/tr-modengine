@@ -62,6 +62,7 @@ class AccountMove(models.Model):
     sales_profile_id = fields.Many2one(
         comodel_name="tr.sales.profile",
         string="Sales Profile",
+        check_company=True,
     )
     payment_term_avg_days = fields.Float(
         compute="_compute_payment_term_avg_days",

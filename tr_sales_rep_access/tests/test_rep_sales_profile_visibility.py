@@ -281,3 +281,61 @@ class TestRepSalesProfileVisibility(SalesRepAccessTestCommon):
             .search([])
         )
         self.assertIn(self.profile_a1, profiles)
+
+    def test_rep_can_read_profile_when_active_company_lacks_one(self):
+        """Regression: rep with profile in company A but switched to
+        company B (allowed_company_ids = [B] only) tries to read a
+        sale.order whose ``applicable_profile_id`` resolves to the
+        profile in company A. The record rule must not produce a
+        ``[False]`` list in SQL (which becomes ``IN (NULL)`` and
+        silently denies access). Once filtered for falsy values, the
+        list is empty and the rule fails closed — no AccessError leaks
+        from a stray NULL.
+
+        Captures the bug observed in devel: rep PM with allowed
+        companies [TRENTO, TREINAMENTO] but only profile in TRENTO,
+        editing a sale.order in TREINAMENTO whose condition pointed at
+        the TRENTO profile, silently failed read with confusing message.
+        """
+        company_b = self.env["res.company"].create({"name": "Company B (no profile)"})
+        self.user_u1.write({"company_ids": [(4, company_b.id)]})
+        # Switch to company B only — profile_a1 is in company A.
+        profiles = (
+            self.env["tr.sales.profile"]
+            .with_user(self.user_u1)
+            .with_company(company_b)
+            .with_context(allowed_company_ids=[company_b.id])
+            .search([])
+        )
+        # Rep has no profile in company B → fail-closed: empty result
+        # set, NOT an AccessError. The previous ``[False]`` ⇒ ``IN (NULL)``
+        # behavior would have silently let SQL match nothing while
+        # making downstream reads on profile records raise.
+        self.assertFalse(profiles)
+        # And direct read of a profile from another company still raises
+        # AccessError (intended), not the silent NULL trap.
+        with self.assertRaises(AccessError):
+            self.profile_a1.with_user(self.user_u1).with_company(company_b).read(
+                ["name"]
+            )
+
+    def test_rep_can_read_profile_with_mixed_companies_one_empty(self):
+        """Regression: lista da record rule pode misturar profile.id
+        válido com False (company sem profile) — resultado deve casar
+        o id válido sem ser confundido por entradas falsy.
+        """
+        company_b = self.env["res.company"].create({"name": "Company B (no profile)"})
+        self.user_u1.write({"company_ids": [(4, company_b.id)]})
+        # Both companies allowed; profile only in A.
+        profile_records = (
+            self.env["tr.sales.profile"]
+            .with_user(self.user_u1)
+            .with_company(self.company)
+            .with_context(allowed_company_ids=[self.company.id, company_b.id])
+            .search([])
+        )
+        self.assertIn(self.profile_a1, profile_records)
+        # Read attribute too — the underlying rule check runs again here.
+        self.profile_a1.with_user(self.user_u1).with_context(
+            allowed_company_ids=[self.company.id, company_b.id]
+        ).read(["name"])

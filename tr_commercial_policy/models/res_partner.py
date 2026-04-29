@@ -24,6 +24,7 @@ class ResPartner(models.Model):
         comodel_name="tr.sales.profile",
         string="Sales Profile",
         company_dependent=True,
+        domain="[('company_id', '=', current_company_id)]",
         help="Sales profile for this agent/salesperson. "
         "Overrides team and global default profiles.",
     )

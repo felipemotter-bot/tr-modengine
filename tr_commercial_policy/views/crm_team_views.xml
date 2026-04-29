@@ -6,6 +6,11 @@
         <field name="inherit_id" ref="sales_team.crm_team_view_form" />
         <field name="arch" type="xml">
             <xpath expr="//group[@name='left']" position="inside">
+                <!-- company_id is required for the check_company domain
+                     of sales_profile_id; the field is restricted to the
+                     multi_company group, so we expose it invisibly so
+                     view validation passes regardless of the group. -->
+                <field name="company_id" invisible="1" />
                 <field name="sales_profile_id" />
             </xpath>
         </field>
