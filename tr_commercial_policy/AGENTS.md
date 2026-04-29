@@ -92,12 +92,63 @@ módulo não as lê mais. Se sobrar valor nelas no banco, é órfão inofensivo.
 
 ### Resolução de Desconto por Produto
 
-Hierarquia (do mais específico ao geral):
+Hierarquia **absoluta** (do mais específico ao geral):
 
 1. Variante do produto (`product_id`)
 2. Template do produto (`product_tmpl_id`)
-3. Categoria (sobe na árvore de categorias)
+3. Categoria (sobe na árvore via `parent_id`)
 4. Geral (`applied_on='general'`)
+
+#### Função pura compartilhada
+
+`policy_utils.resolve_applicable_rule(product, rules, empty_rule, line_qty, line_uom)` é
+o **ponto único** de resolução. É chamada por `sale.order.line._get_applicable_rule()` e
+`account.move.line._get_applicable_rule()`. Mudança na função propaga nos dois mundos —
+não dá pra alterar só um lado.
+
+A assinatura **exige `line_qty` e `line_uom`** (sem defaults). Esquecer de passar é
+`TypeError` na hora — defesa proposital contra regressão silenciosa que ignora rules de
+volume.
+
+#### Filtro por quantidade (`qty_min` / `qty_uom_id`)
+
+Cada rule pode declarar uma **quantidade mínima** na linha do pedido/fatura para ser
+elegível:
+
+- `qty_min == 0` (default) ⇒ rule sempre elegível, comportamento sem filtro.
+- `qty_min > 0` ⇒ rule só vale quando `line_qty` (convertida pra `qty_uom_id`) cumpre o
+  threshold. Comparação usa `float_compare` com `precision_rounding` da UoM da rule. UoM
+  de categoria diferente ⇒ rule ignorada (sem `_compute_quantity`).
+
+Resolução por nível:
+
+- Em cada nível, filtra rules que casam pelo `applied_on` e que passam no filtro de
+  `qty_min`.
+- Se há mais de uma elegível: vence a de **maior `qty_min`** cumprido; `sequence` é
+  tiebreaker. Cadastrar várias rules na mesma variante com `qty_min` crescentes produz
+  **faixas de volume** automaticamente.
+- Se nenhuma rule do nível passa: cai pro próximo nível (fallback). Isso é por design —
+  **não é "promoção"** da rule menos específica; é o nível mais específico declarando
+  "não tenho rule aplicável aqui".
+
+Constraint: `qty_min > 0 ⇒ qty_uom_id obrigatório`. Onchange sugere a UoM do produto
+quando aplicado_on é `product`/`product_template`.
+
+#### Segunda implementação (validação de condition lines)
+
+Existe uma **segunda implementação** de resolução de rule em
+`partner_commercial_condition._resolve_rule_for_product`, usada **só** para validar
+`seller_discount` no cadastro de **condition lines** — contexto estático, sem qty da
+linha disponível. Para evitar inconsistência, esse método **filtra `qty_min == 0`**
+antes da hierarquia: rules de volume só se aplicam em pedido/fatura, quando a qty é
+conhecida.
+
+Implicações práticas:
+
+- Mexer só na função pura `resolve_applicable_rule` **não** afeta a validação no
+  cadastro de condition lines.
+- Se mudar a hierarquia (ex: introduzir um novo nível), tem que refletir nos dois
+  lugares.
 
 ## Perfis de Vendas
 
@@ -114,6 +165,33 @@ Hierarquia (do mais específico ao geral):
 - Exemplo: pedido R$1000+ → max 5%, R$5000+ → max 10%
 - Constraint: descontos devem ser estritamente crescentes
 - Usa média de 6 meses do parceiro para determinar banda aplicável
+
+### Bandas vivem em modelos próprios
+
+`tr.sales.profile.commission.band` (com `_order = "discount_up_to"`) e
+`tr.sales.profile.order.band` (com `_order = "order_min_amount"`) são modelos separados,
+ligados à rule por `rule_id`. Constraints de monotonicidade
+(`_check_strictly_decreasing` / `_check_strictly_increasing`) são exercitadas **varrendo
+as bandas irmãs** dentro da rule — adicionar campo numa banda exige reler essas
+constraints para garantir que a ordenação ainda faz sentido.
+
+### `seller_discount_max`: agregado vs contextual
+
+Há **três** noções de "teto de desconto do vendedor" que **não são intercambiáveis**:
+
+- `tr.sales.profile.rule.seller_discount_max` — campo computed na rule, **agregado**:
+  topo das bandas (maior `discount_up_to` em agent, maior `seller_discount_max` em
+  internal). Não conhece contexto de pedido.
+- `sale.order.line._get_seller_discount_max()` — **contextual**: em perfil internal,
+  retorna o `seller_discount_max` da banda que casa com `order_id.amount_untaxed`. Em
+  agent, retorna o agregado da rule. É o teto efetivo da linha.
+- `_get_seller_discount_absolute_max()` (sale e move) — **agregado por linha**: maior
+  teto possível pra rule resolvida (independente de contexto). Usado em
+  `_validate_seller_discount_limit` e na invoice's `_compute_seller_discount_max`.
+
+Misturar agregado vs contextual em label/UI gera mensagens incoerentes em pedidos com
+perfil internal — por isso `applied_rule_label` evita mostrar `(max X%)` na string (o
+teto efetivo aparece em campo separado da linha, contextualizado).
 
 ### Resolução do Perfil no Pedido
 
@@ -310,6 +388,53 @@ recompute em draft.
 Usa `account_move_tier_validation` (OCA). Tier definitions para
 `discount_approval_level` manager/director. `_get_under_validation_exceptions` permite
 editar campos de desconto enquanto validação está pendente.
+
+## Reatividade e `@api.depends`
+
+Computes que invocam `_get_applicable_rule()` precisam declarar **todos** os campos que
+afetam a rule resolvida. A lista mínima atual:
+
+- `applied_on`, `product_id`, `product_tmpl_id`, `categ_id` (escopo da rule)
+- `qty_min`, `qty_uom_id`, `sequence` (filtro qty + tiebreaker)
+- `seller_discount_max`, `commission_band_ids`, `order_value_band_ids` (saída usada no
+  compute)
+- Do lado da linha: `product_id`, `product_uom`, `product_uom_qty` (sale) /
+  `product_uom_id`, `quantity` (move)
+
+Histórico: `account.move.line._compute_seller_discount_max` já teve depends
+**incompleto** (só `product_id`, `move_id.sales_profile_id`, `move_id.move_type`),
+deixando o teto da fatura stale ao mexer em rule. Foi corrigido na PR de `qty_min`. Ao
+adicionar novos campos na rule, conferir os 5 computes que dependem dela:
+`_compute_seller_discount_max` (sale e move), `_compute_commission_rate` (sale),
+`_compute_applied_rule` (sale e move).
+
+`applied_rule_id` / `applied_rule_label` são `store=False` — recompute on-demand é
+suficiente para o uso atual (form da linha, invisível na tree). Se for promovido para
+tree/relatórios, considerar `store=True`.
+
+## Testes
+
+`tests/common.py` (`CommercialPolicyTestCommon`) provê `agent_profile`,
+`internal_profile`, `customer`, `salesperson`, etc., já configurados para a maioria dos
+cenários. Pontos não-óbvios:
+
+- `_PLACEHOLDER_SEQUENCE = 999`: a rule "geral" do placeholder usa sequence 999, então
+  rules criadas em testes com sequence default 10 vencem no tiebreaker.
+- `_setup_commercial_policy()` substitui o placeholder do agent por bandas reais
+  (decrescente). `_setup_internal_policy()` faz análogo para o internal.
+- **Salesperson não tem ACL** para criar `account.move`. Testes de invoice usam
+  `self.env["account.move"].create(...)` direto (admin), sem `with_user(salesperson)`.
+- Use `RuleModel.new({...})` quando quiser exercitar onchange (`_onchange_qty_min` e
+  similares) sem disparar constraints — `new()` cria record virtual sem flush.
+- Para cobrir branches `try/except` de `_compute_quantity` (UoM com erro), use
+  `unittest.mock.patch.object(type(uom_record), "_compute_quantity", _raise)`.
+- `pylint_odoo` exige `_()` em strings de `UserError`/`ValidationError` **mesmo em
+  testes**. `pre-commit` reformata automaticamente via `ruff-format` na primeira
+  execução — re-rodar até passar limpo.
+
+Coverage local: `python3 scripts/patch-coverage.py tr_commercial_policy --base 16.0`.
+Roda testes em DB isolado (`devel_test`) e mede patch coverage só nas linhas alteradas —
+meta é 100% antes de abrir PR.
 
 ## Notas Técnicas
 

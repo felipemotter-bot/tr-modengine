@@ -52,6 +52,12 @@
                     name="categ_id"
                     attrs="{'invisible': [('applied_on', '!=', 'category')]}"
                   />
+                                    <field name="qty_min" optional="show" />
+                                    <field
+                    name="qty_uom_id"
+                    optional="show"
+                    attrs="{'required': [('qty_min', '&gt;', 0)]}"
+                  />
                                     <field name="seller_discount_max" />
                                     <field name="bands_summary" />
                                 </tree>
@@ -72,6 +78,11 @@
                         attrs="{'invisible': [('applied_on', '!=', 'category')], 'required': [('applied_on', '=', 'category')]}"
                       />
                                             <field name="seller_discount_max" />
+                                            <field name="qty_min" />
+                                            <field
+                        name="qty_uom_id"
+                        attrs="{'required': [('qty_min', '&gt;', 0)]}"
+                      />
                                         </group>
                                     </group>
                                     <notebook>

@@ -76,6 +76,18 @@ class SaleOrderLine(models.Model):
         compute="_compute_discount_changed",
         help="True when seller/extra discount differs from the commercial condition.",
     )
+    applied_rule_id = fields.Many2one(
+        comodel_name="tr.sales.profile.rule",
+        string="Applied Rule",
+        compute="_compute_applied_rule",
+        help="Profile rule resolved for this line (variant/template/category/general).",
+    )
+    applied_rule_label = fields.Char(
+        string="Applied Rule (label)",
+        compute="_compute_applied_rule",
+        help="Human-readable description of the applied rule, including volume "
+        "threshold when relevant.",
+    )
 
     @api.depends(
         "product_id",
@@ -178,8 +190,17 @@ class SaleOrderLine(models.Model):
 
     @api.depends(
         "product_id",
+        "product_uom",
+        "product_uom_qty",
         "order_id.sales_profile_id",
         "order_id.sales_profile_id.rule_ids",
+        "order_id.sales_profile_id.rule_ids.applied_on",
+        "order_id.sales_profile_id.rule_ids.product_id",
+        "order_id.sales_profile_id.rule_ids.product_tmpl_id",
+        "order_id.sales_profile_id.rule_ids.categ_id",
+        "order_id.sales_profile_id.rule_ids.qty_min",
+        "order_id.sales_profile_id.rule_ids.qty_uom_id",
+        "order_id.sales_profile_id.rule_ids.sequence",
         "order_id.amount_untaxed",
     )
     def _compute_seller_discount_max(self):
@@ -221,13 +242,71 @@ class SaleOrderLine(models.Model):
     @api.depends(
         "seller_discount",
         "product_id",
+        "product_uom",
+        "product_uom_qty",
         "order_id.sales_profile_id",
         "order_id.sales_profile_id.rule_ids",
+        "order_id.sales_profile_id.rule_ids.applied_on",
+        "order_id.sales_profile_id.rule_ids.product_id",
+        "order_id.sales_profile_id.rule_ids.product_tmpl_id",
+        "order_id.sales_profile_id.rule_ids.categ_id",
         "order_id.sales_profile_id.rule_ids.commission_band_ids",
+        "order_id.sales_profile_id.rule_ids.qty_min",
+        "order_id.sales_profile_id.rule_ids.qty_uom_id",
+        "order_id.sales_profile_id.rule_ids.sequence",
     )
     def _compute_commission_rate(self):
         for line in self:
             line.commission_rate = line._get_commission_rate_from_bands()
+
+    @api.depends(
+        "product_id",
+        "product_uom",
+        "product_uom_qty",
+        "order_id.sales_profile_id",
+        "order_id.sales_profile_id.rule_ids",
+        "order_id.sales_profile_id.rule_ids.applied_on",
+        "order_id.sales_profile_id.rule_ids.product_id",
+        "order_id.sales_profile_id.rule_ids.product_tmpl_id",
+        "order_id.sales_profile_id.rule_ids.categ_id",
+        "order_id.sales_profile_id.rule_ids.qty_min",
+        "order_id.sales_profile_id.rule_ids.qty_uom_id",
+        "order_id.sales_profile_id.rule_ids.sequence",
+    )
+    def _compute_applied_rule(self):
+        for line in self:
+            rule = line._get_applicable_rule()
+            line.applied_rule_id = rule
+            line.applied_rule_label = line._format_applied_rule_label(rule)
+
+    def _format_applied_rule_label(self, rule):
+        """Build a human-readable label for the applied rule.
+
+        The effective seller discount max is shown in a separate field on
+        the line form, contextualized to the order amount when relevant
+        (internal profiles with order value bands). Including a "(max X%)"
+        here would risk showing a stale or aggregate cap, so we keep the
+        label focused on scope and volume threshold only.
+        """
+        self.ensure_one()
+        if not rule:
+            return False
+        if rule.applied_on == "product":
+            scope = _("Variant: %s") % rule.product_id.display_name
+        elif rule.applied_on == "product_template":
+            scope = _("Template: %s") % rule.product_tmpl_id.display_name
+        elif rule.applied_on == "category":
+            scope = _("Category: %s") % rule.categ_id.display_name
+        else:
+            scope = _("General")
+        if rule.qty_min and rule.qty_uom_id:
+            volume = _(" — Volume ≥ %(qty)s %(uom)s") % {
+                "qty": ("%g" % rule.qty_min),
+                "uom": rule.qty_uom_id.name,
+            }
+        else:
+            volume = ""
+        return scope + volume
 
     @api.constrains("seller_discount")
     def _check_seller_discount_limit(self):
@@ -500,14 +579,20 @@ class SaleOrderLine(models.Model):
         """Resolve the most specific profile rule for this line's product.
 
         Resolution order: product variant > product template > category > general.
-        Returns the matching ``tr.sales.profile.rule`` record or empty recordset.
+        Within each level, the rule with the highest ``qty_min`` met by the
+        line quantity wins. Returns the matching ``tr.sales.profile.rule``
+        record or empty recordset.
         """
         self.ensure_one()
         profile = self.order_id.sales_profile_id
         if not profile or not self.product_id:
             return self.env["tr.sales.profile.rule"]
         return resolve_applicable_rule(
-            self.product_id, profile.rule_ids, self.env["tr.sales.profile.rule"]
+            self.product_id,
+            profile.rule_ids,
+            self.env["tr.sales.profile.rule"],
+            self.product_uom_qty or 0.0,
+            self.product_uom,
         )
 
     def _get_seller_discount_max(self):
