@@ -61,24 +61,6 @@ class TestSalespersonConditionAccess(CommercialPolicyTestCommon):
         with self.assertRaises(AccessError):
             self.condition.with_user(self.salesperson).unlink()
 
-    def test_salesperson_without_profile_blocked(self):
-        """Salesperson without sales profile gets AccessError on discount write."""
-        # Clear company default so no profile can be resolved
-        self.env.company.default_sales_profile_id = False
-        # Also remove agent from customer so profile can't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        user_no_profile = self.env["res.users"].create(
-            {
-                "name": "No Profile SP",
-                "login": "no_profile_sp_access_test",
-                "groups_id": [
-                    (4, self.env.ref("sales_team.group_sale_salesman").id),
-                ],
-            }
-        )
-        with self.assertRaises(AccessError):
-            self.condition.with_user(user_no_profile).write({"cash_discount": 1.0})
-
 
 @tagged("post_install", "-at_install")
 class TestSalespersonConditionLineAccess(CommercialPolicyTestCommon):

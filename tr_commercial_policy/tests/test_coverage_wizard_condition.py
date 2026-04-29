@@ -1,7 +1,7 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo.exceptions import AccessError, ValidationError
+from odoo.exceptions import ValidationError
 from odoo.tests import tagged
 
 from .common import CommercialPolicyTestCommon
@@ -620,41 +620,6 @@ class TestSaveConditionWizardCheckUserProfileDirector(CommercialPolicyTestCommon
 
 
 @tagged("post_install", "-at_install")
-class TestSaveConditionWizardCheckUserProfileNoProfile(CommercialPolicyTestCommon):
-    """save_condition_wizard._check_user_profile: no-profile user raises AccessError."""
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._setup_commercial_policy()
-
-    def test_no_profile_no_director_raises_access_error(self):
-        """User without sales profile and without director group raises AccessError."""
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        # Also remove agent from customer so profile can't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        user_no_profile = self.env["res.users"].create(
-            {
-                "name": "No Profile No Director",
-                "login": "no_profile_no_director_tcp",
-                "groups_id": [
-                    (4, self.env.ref("sales_team.group_sale_salesman").id),
-                ],
-            }
-        )
-        self.assertFalse(user_no_profile.partner_id.sales_profile_id)
-
-        order = self._create_order()
-        order.cash_discount = 3.0
-        result = order.action_open_save_condition_wizard()
-        wizard = self.env["tr.save.condition.wizard"].browse(result["res_id"])
-        wizard.update_cash_discount = True
-        with self.assertRaises(AccessError):
-            wizard.with_user(user_no_profile).action_save()
-
-
-@tagged("post_install", "-at_install")
 class TestSaveConditionWizardComputeAllSameDiscountNoLines(CommercialPolicyTestCommon):
     """_compute_all_same_discount: all lines ignored → all_same_discount is True."""
 
@@ -774,43 +739,6 @@ class TestSaveConditionLineWizardCheckUserProfileDirector(CommercialPolicyTestCo
             and cline.applied_on == "product_template"
         )
         self.assertTrue(cond_line)
-
-
-@tagged("post_install", "-at_install")
-class TestSaveConditionLineWizardCheckUserProfileNoProfile(CommercialPolicyTestCommon):
-    """save_condition_line_wizard._check_user_profile: no-profile raises AccessError."""
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._setup_commercial_policy()
-
-    def test_no_profile_user_raises_access_error(self):
-        """User without profile and without director group raises AccessError."""
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        # Also remove agent from customer so profile can't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        user_no_profile = self.env["res.users"].create(
-            {
-                "name": "No Profile Line Wizard",
-                "login": "no_profile_line_wizard_tcp",
-                "groups_id": [
-                    (4, self.env.ref("sales_team.group_sale_salesman").id),
-                ],
-            }
-        )
-        self.assertFalse(user_no_profile.partner_id.sales_profile_id)
-
-        order = self._create_order()
-        line = self._create_order_line(
-            order, product=self.product_b, seller_discount=0.0
-        )
-        result = line.action_open_save_condition_line_wizard()
-        wizard = self.env["tr.save.condition.line.wizard"].browse(result["res_id"])
-        wizard.save_as = "template"
-        with self.assertRaises(AccessError):
-            wizard.with_user(user_no_profile).action_save()
 
 
 @tagged("post_install", "-at_install")

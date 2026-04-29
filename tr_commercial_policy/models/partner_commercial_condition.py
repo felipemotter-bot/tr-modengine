@@ -78,13 +78,19 @@ class PartnerCommercialCondition(models.Model):
     )
 
     @api.model
-    def _resolve_default_pricelist_for_partner(self, partner):
-        """Default pricelist for a given partner's applicable profile."""
-        profile = self._get_applicable_profile(partner=partner)
+    def _resolve_default_pricelist_for_partner(self, partner, company=None):
+        """Default pricelist for a given partner's applicable profile.
+
+        ``company`` is forwarded to the profile resolver so cross-company
+        creates pick the pricelist of the target company, not of
+        ``env.company``.
+        """
+        company = company or self.env.company
+        profile = self._get_applicable_profile(partner=partner, company=company)
         if profile and profile.pricelist_ids:
             return profile.pricelist_ids[0]
         return self.env["product.pricelist"].search(
-            [("company_id", "in", (self.env.company.id, False))], limit=1
+            [("company_id", "in", (company.id, False))], limit=1
         )
 
     @api.model
@@ -155,16 +161,22 @@ class PartnerCommercialCondition(models.Model):
     )
 
     @api.depends(
+        "company_id",
+        "company_id.default_sales_profile_id",
+        "company_id.default_sales_profile_id.company_id",
         "partner_id",
         "partner_id.agent_ids",
         "partner_id.agent_ids.sales_profile_id",
+        "partner_id.agent_ids.sales_profile_id.company_id",
         "partner_id.user_id",
         "partner_id.user_id.partner_id.sales_profile_id",
+        "partner_id.user_id.partner_id.sales_profile_id.company_id",
         "partner_id.user_id.sale_team_id",
         "partner_id.user_id.sale_team_id.sales_profile_id",
+        "partner_id.user_id.sale_team_id.sales_profile_id.company_id",
         "partner_id.team_id",
         "partner_id.team_id.sales_profile_id",
-        "company_id.default_sales_profile_id",
+        "partner_id.team_id.sales_profile_id.company_id",
     )
     def _compute_applicable_profile(self):
         for condition in self:
@@ -190,51 +202,73 @@ class PartnerCommercialCondition(models.Model):
 
     # ---- Profile-based validation (Gap 2 / Gap 3) ----
 
-    def _resolve_applicable_profile_and_source(self, partner=None):
+    def _resolve_applicable_profile_and_source(self, partner=None, company=None):
         """Resolve sales profile and its source for the condition's partner.
 
-        Resolution chain (first match wins):
-        1. Partner's agent → agent's profile
-        2. Partner's salesperson → salesperson's profile
-        3. Salesperson's team → team's profile
-        4. Partner's team → team's profile
-        5. Company default
+        Resolution chain (first match wins, profile must belong to ``company``):
+        1. Partner's agent → agent's profile in ``company``
+        2. Partner's salesperson → salesperson's profile in ``company``
+        3. Salesperson's team → team's profile (if it belongs to ``company``)
+        4. Partner's team → team's profile (if it belongs to ``company``)
+        5. Company default (if it belongs to ``company``)
 
-        Returns (profile_recordset, source_string).
-        ``partner`` overrides self.partner_id (needed during create).
+        Returns ``(profile_recordset, source_string_or_False)``.
+        ``profile_source`` is ``False`` when no valid (same-company) profile
+        is resolved — keeps diagnostics honest instead of claiming a
+        ``"company"`` source when the default is invalid.
+
+        ``partner`` overrides ``self.partner_id`` (needed during ``create``
+        when ``self`` is empty). ``company`` overrides ``self.company_id``
+        (needed during ``create`` for the same reason — ``self.env.company``
+        would resolve against the wrong company in cross-company creates).
+
+        Each branch reads ``sales_profile_id`` (``company_dependent`` on
+        ``res.partner``) via ``with_company(company)`` so the value comes
+        from the right company's ``ir.property``. A defensive
+        ``profile.company_id == company`` check guards against any path
+        that could leak a profile from another company (e.g. teams whose
+        ``sales_profile_id`` is a plain Many2one without
+        ``company_dependent``).
         """
         partner = partner or (self.partner_id if self else False)
+        company = company or (self.company_id if self else False) or self.env.company
         empty = self.env["tr.sales.profile"]
         # 1. Agent
         if partner and partner.agent_ids:
-            profile = partner.agent_ids[0].sales_profile_id
-            if profile:
+            profile = partner.agent_ids[0].with_company(company).sales_profile_id
+            if profile and profile.company_id == company:
                 return profile, "agent"
         # 2. Partner's salesperson
         if partner and partner.user_id:
-            profile = partner.user_id.partner_id.sales_profile_id
-            if profile:
+            profile = partner.user_id.partner_id.with_company(company).sales_profile_id
+            if profile and profile.company_id == company:
                 return profile, "salesperson"
             # 3. Salesperson's team
             if partner.user_id.sale_team_id:
                 profile = partner.user_id.sale_team_id.sales_profile_id
-                if profile:
+                if profile and profile.company_id == company:
                     return profile, "salesperson_team"
         # 4. Partner's team
         if partner and partner.team_id:
             profile = partner.team_id.sales_profile_id
-            if profile:
+            if profile and profile.company_id == company:
                 return profile, "partner_team"
         # 5. Company default
-        company = self.company_id if self else self.env.company
-        return company.default_sales_profile_id or empty, "company"
+        default = company.default_sales_profile_id
+        if default and default.company_id == company:
+            return default, "company"
+        # Nothing resolved cleanly — return empty + False source to signal
+        # "no valid profile" rather than pretending the company default won.
+        return empty, False
 
-    def _get_applicable_profile(self, partner=None):
+    def _get_applicable_profile(self, partner=None, company=None):
         """Resolve sales profile for the condition's partner.
 
-        Convenience wrapper around _resolve_applicable_profile_and_source.
+        Convenience wrapper around ``_resolve_applicable_profile_and_source``.
+        ``company`` is propagated for cross-company creates where ``self``
+        is empty.
         """
-        profile, _source = self._resolve_applicable_profile_and_source(partner)
+        profile, _source = self._resolve_applicable_profile_and_source(partner, company)
         return profile
 
     def _get_partner_avg_order_amount(self, partner, months=6):
@@ -252,13 +286,16 @@ class PartnerCommercialCondition(models.Model):
             return 0.0
         return sum(orders.mapped("amount_untaxed")) / len(orders)
 
-    def _validate_discount_limits(self, vals, partner=None):
+    def _validate_discount_limits(self, vals, partner=None, company=None):
         """Validate discount values against the partner's profile.
 
         Raises AccessError if no profile can be resolved.
         Raises ValidationError if discounts exceed profile limits.
         Directors bypass all validations.
         ``partner`` is needed during create when self is empty.
+        ``company`` is needed during create for the same reason — without
+        it the resolver would fall back to ``env.company`` and validate
+        against the wrong company's profile.
         """
         if self.env.user.has_group("tr_commercial_policy.group_sales_director"):
             return
@@ -272,7 +309,7 @@ class PartnerCommercialCondition(models.Model):
         if not discount_fields.intersection(vals):
             return
 
-        profile = self._get_applicable_profile(partner=partner)
+        profile = self._get_applicable_profile(partner=partner, company=company)
         if not profile:
             raise AccessError(
                 _("You need a sales profile to edit commercial conditions.")
@@ -367,17 +404,19 @@ class PartnerCommercialCondition(models.Model):
                     }
                 )
 
-    def _validate_pricelist(self, vals, partner=None):
+    def _validate_pricelist(self, vals, partner=None, company=None):
         """Validate pricelist against the partner's profile.
 
         Directors bypass all validations.
-        ``partner`` overrides self.partner_id (needed during create).
+        ``partner`` overrides ``self.partner_id`` (needed during create).
+        ``company`` overrides ``self.company_id`` (needed during create
+        to resolve the profile in the right company).
         """
         if self.env.user.has_group("tr_commercial_policy.group_sales_director"):
             return
         if "pricelist_id" not in vals:
             return
-        profile = self._get_applicable_profile(partner=partner)
+        profile = self._get_applicable_profile(partner=partner, company=company)
         if not profile or not profile.pricelist_ids:
             return
         if vals["pricelist_id"] not in profile.pricelist_ids.ids:
@@ -401,12 +440,24 @@ class PartnerCommercialCondition(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         Partner = self.env["res.partner"]
+        Company = self.env["res.company"]
         is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
         is_su = self.env.su
         for vals in vals_list:
             partner = Partner.browse(vals.get("partner_id")).exists()
+            # Resolve the target company explicitly so cross-company
+            # creates (env.company is A, vals["company_id"] is B) validate
+            # discounts/pricelist against the profile of company B, not
+            # the silent fallback of env.company.
+            company = (
+                Company.browse(vals["company_id"])
+                if vals.get("company_id")
+                else self.env.company
+            )
             if "pricelist_id" in vals and not is_su and not is_manager:
-                expected = self._resolve_default_pricelist_for_partner(partner)
+                expected = self._resolve_default_pricelist_for_partner(
+                    partner, company=company
+                )
                 expected_id = expected.id if expected else False
                 if vals["pricelist_id"] != expected_id:
                     raise AccessError(
@@ -416,8 +467,8 @@ class PartnerCommercialCondition(models.Model):
                             "profile is used automatically."
                         )
                     )
-            self._validate_pricelist(vals, partner=partner)
-            self._validate_discount_limits(vals, partner=partner)
+            self._validate_pricelist(vals, partner=partner, company=company)
+            self._validate_discount_limits(vals, partner=partner, company=company)
         records = super().create(vals_list)
         records._sync_to_partners()
         return records
@@ -493,6 +544,66 @@ class PartnerCommercialCondition(models.Model):
             if condition.contractual_return < 0 or condition.contractual_return > 100:
                 raise ValidationError(
                     _("Contractual return must be between 0%% and 100%%.")
+                )
+
+    @api.constrains("applicable_profile_id", "company_id")
+    def _check_applicable_profile_resolved(self):
+        """Ensure every condition has a same-company sales profile.
+
+        Two states are blocked:
+
+        - ``applicable_profile_id`` is empty (the resolution chain
+          could not find an agent/team/default profile in the
+          condition's company) — this surfaces the setup gap to the
+          user immediately, instead of letting the order workflow
+          break later with a confusing message.
+        - ``applicable_profile_id`` belongs to a different company than
+          ``company_id``. Defense in depth: the resolver already filters
+          by company, but a SQL backdoor or a context-bypassed write
+          could still leak a cross-company profile, and the migration
+          aggregates these for diagnostics rather than per-record
+          aborts.
+
+        Migration runs may set
+        ``skip_profile_resolution_check=True`` on the context to
+        defer validation to a single aggregated pass after the bulk
+        recompute — without this guard the constraint would fire
+        per-record during ``flush_recordset`` and only the first error
+        would reach the user.
+        """
+        if self.env.context.get("skip_profile_resolution_check"):
+            return
+        for condition in self:
+            profile = condition.applicable_profile_id
+            if not profile:
+                raise ValidationError(
+                    _(
+                        "Could not resolve a sales profile for customer "
+                        "'%(partner)s' in company '%(company)s'. This change "
+                        "would leave the customer's commercial condition "
+                        "without a valid sales profile. Configure another "
+                        "agent / team / default profile for this company "
+                        "before continuing."
+                    )
+                    % {
+                        "partner": condition.partner_id.display_name or "",
+                        "company": condition.company_id.name or "",
+                    }
+                )
+            if profile.company_id != condition.company_id:
+                raise ValidationError(
+                    _(
+                        "Sales profile '%(profile)s' belongs to company "
+                        "'%(profile_company)s' but the commercial condition is "
+                        "for company '%(condition_company)s'. This is an "
+                        "inconsistency — please review the agent/team/default "
+                        "profile configuration for this customer and company."
+                    )
+                    % {
+                        "profile": profile.name,
+                        "profile_company": profile.company_id.name,
+                        "condition_company": condition.company_id.name,
+                    }
                 )
 
     @api.model

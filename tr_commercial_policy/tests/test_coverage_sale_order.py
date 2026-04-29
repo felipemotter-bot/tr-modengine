@@ -58,24 +58,31 @@ class TestComputeSalesProfileId(CommercialPolicyTestCommon):
             "Individual salesperson profile should take precedence over team profile.",
         )
 
-    def test_no_profile_when_neither_salesperson_nor_team_has_one(self):
-        """Profile is False when neither salesperson nor team has one."""
-        self.salesperson.partner_id.sales_profile_id = False
-        self.team.sales_profile_id = False
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
+    def test_no_profile_when_partner_has_no_condition(self):
+        """Profile is False when the partner has no commercial condition.
 
+        Uses a partner without commercial condition so the order
+        naturally lacks ``commercial_condition_id`` and therefore
+        ``sales_profile_id``. Post-``_check_applicable_profile_resolved``,
+        this is the only valid path to reach a profile-less order —
+        clearing salesperson/team/default while a condition exists is
+        blocked by the constraint.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition SaleOrder"}
+        )
         order = self.env["sale.order"].create(
             {
-                "partner_id": self.customer.id,
+                "partner_id": partner_no_cond.id,
                 "user_id": self.salesperson.id,
                 "team_id": self.team.id,
+                "pricelist_id": self.pricelist.id,
             }
         )
-
+        self.assertFalse(order.commercial_condition_id)
         self.assertFalse(
             order.sales_profile_id,
-            "Profile should be False when neither salesperson nor team has one.",
+            "Profile should be False when the partner has no condition.",
         )
 
 
@@ -265,13 +272,24 @@ class TestOnchangeProductWarningNoProfile(CommercialPolicyTestCommon):
         cls._setup_commercial_policy()
 
     def test_onchange_returns_warning_when_no_profile(self):
-        """Onchange returns warning dict when order has no sales profile."""
-        self.salesperson.partner_id.sales_profile_id = False
-        self.env.company.default_sales_profile_id = False
-        self.customer.agent_ids = [(5,)]
-        order = self._create_order()
-        # Force recompute after clearing all profile sources
-        order._compute_sales_profile_id()
+        """Onchange returns warning dict when order has no sales profile.
+
+        Uses a partner without commercial condition so the order
+        naturally lacks a profile. The legacy approach of clearing
+        ``salesperson.sales_profile_id`` + company default + agent
+        on an existing customer would now hit
+        ``_check_applicable_profile_resolved`` on the cascading
+        recompute of the existing condition.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition Onchange"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         self.assertFalse(order.sales_profile_id)
         line = self._create_order_line(order, seller_discount=0.0)
         result = line._onchange_product_id_apply_condition()

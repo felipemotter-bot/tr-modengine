@@ -277,12 +277,21 @@ class TestProfileConsistency(CommercialPolicyTestCommon):
         cls._setup_agent()
 
     def test_no_profile_skips_check(self):
-        """Consistency check is skipped when order has no profile."""
-        self.customer.agent_ids = [(5,)]
-        self.salesperson.partner_id.sales_profile_id = False
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
-        order._compute_sales_profile_id()
+        """Consistency check is skipped when order has no profile.
+
+        Uses a partner without a commercial condition so the order
+        naturally lacks a profile (post-constraint, condition existing
+        without profile is impossible).
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition Consistency"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         self.assertFalse(order.sales_profile_id)
         # Should not raise (no profile → nothing to check)
         order._check_profile_consistency()
@@ -450,21 +459,6 @@ class TestProfileConsistency(CommercialPolicyTestCommon):
         )
         with self.assertRaises(UserError):
             order._check_profile_consistency()
-
-    def test_internal_context_no_context_passes(self):
-        """Internal profile: OK when no salesperson/team/company profile."""
-        self._setup_internal_policy()
-        self.customer.agent_ids = [(5,)]
-        self.env.company.default_sales_profile_id = self.internal_profile
-        self.salesperson.partner_id.sales_profile_id = False
-        self.team.sales_profile_id = False
-        # Temporarily clear company default for the context check only
-        # (condition already resolved the profile before we clear)
-        order = self._create_order()
-        self.assertEqual(order.sales_profile_id, self.internal_profile)
-        self.env.company.default_sales_profile_id = False
-        # No context to compare → should pass
-        order._check_profile_consistency()
 
     def test_internal_profile_matches_company_default(self):
         """Internal profile: OK when company default matches."""

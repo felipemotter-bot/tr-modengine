@@ -78,28 +78,6 @@ class TestGap2ConditionValidation(CommercialPolicyTestCommon):
             ),
         ]
 
-    def test_no_profile_blocks_condition_write(self):
-        """User without profile cannot edit condition discounts."""
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        # Also remove agent from customer so profile can't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        user_no_profile = self.env["res.users"].create(
-            {
-                "name": "No Profile User",
-                "login": "no_profile_user_tcp",
-                "groups_id": [
-                    (4, self.env.ref("sales_team.group_sale_salesman").id),
-                    (
-                        4,
-                        self.env.ref("tr_commercial_policy.group_sales_manager").id,
-                    ),
-                ],
-            }
-        )
-        with self.assertRaises(AccessError):
-            self.condition.with_user(user_no_profile).write({"cash_discount": 1.0})
-
     def test_cash_discount_within_limit_ok(self):
         """Cash discount within profile limit is accepted."""
         # internal_profile.cash_discount_max = 8.0
@@ -370,11 +348,20 @@ class TestGap5BlockDirectPriceEdit(CommercialPolicyTestCommon):
         self.assertAlmostEqual(line.price_unit, 50.0, places=2)
 
     def test_no_profile_blocks_direct_edit(self):
-        """Direct editing is blocked even when no profile is active (policy 4.1)."""
-        self.salesperson.partner_id.sales_profile_id = False
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
+        """Direct editing is blocked even when no profile is active (policy 4.1).
+
+        Uses a partner without commercial condition so the order
+        naturally has no profile.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition GapDirect"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         self.assertFalse(order.sales_profile_id)
         line = self._create_order_line(order)
         with self.assertRaises(ValidationError):

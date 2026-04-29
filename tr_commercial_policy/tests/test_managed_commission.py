@@ -299,11 +299,20 @@ class TestManagedCommissionInSaleOrder(CommercialPolicyTestCommon):
         )
 
     def test_no_profile_no_managed_commission(self):
-        """Without agent profile, managed commission is not used."""
-        self.customer.agent_ids = [(5,)]
-        self.salesperson.partner_id.sales_profile_id = False
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
+        """Without agent profile, managed commission is not used.
+
+        Uses a partner without commercial condition so the order
+        naturally has no profile.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition ManagedComm"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         line = self._create_order_line(order, seller_discount=0.0)
         # No agent → no agent lines
         self.assertFalse(line.agent_ids)
