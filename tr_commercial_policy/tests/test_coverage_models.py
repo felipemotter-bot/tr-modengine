@@ -84,6 +84,23 @@ class TestResConfigSettingsCoverage(CommercialPolicyTestCommon):
             self.env.company.default_sales_profile_id,
         )
 
+    def test_settings_field_domain_references_company_id_not_id(self):
+        """Settings ``company_default_sales_profile_id`` overrides the
+        inherited domain to reference ``company_id`` instead of ``id``.
+
+        Regression: the default for ``res.company.default_sales_profile_id``
+        is ``[('company_id', '=', id)]``. In ``res.config.settings``
+        (TransientModel), ``id`` evaluates to the transient record's id,
+        which is never a company id, leaving the dropdown empty. The
+        override must reference the ``company_id`` Many2one of the
+        settings record so the domain resolves to the company being
+        configured.
+        """
+        field = self.env["res.config.settings"]._fields[
+            "company_default_sales_profile_id"
+        ]
+        self.assertEqual(field.domain, "[('company_id', '=', company_id)]")
+
 
 @tagged("post_install", "-at_install")
 class TestSalesProfileBandsSummary(CommercialPolicyTestCommon):
