@@ -296,23 +296,6 @@
 
                 <!-- Seller discount + extra discount popover button -->
                 <field name="extra_discount_reason" invisible="1" />
-                <field name="applied_rule_id" invisible="1" />
-                <label
-          for="applied_rule_label"
-          string="Applied Rule"
-          attrs="{'invisible': ['|',
-                        ('applied_rule_label', '=', False),
-                        ('parent.move_type', 'not in', ['out_invoice', 'out_refund'])
-                    ]}"
-        />
-                <field
-          name="applied_rule_label"
-          readonly="1"
-          attrs="{'invisible': ['|',
-                        ('applied_rule_label', '=', False),
-                        ('parent.move_type', 'not in', ['out_invoice', 'out_refund'])
-                    ]}"
-        />
                 <label
           for="seller_discount"
           string="Seller Discount"

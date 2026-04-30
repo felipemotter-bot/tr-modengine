@@ -189,9 +189,9 @@ Há **três** noções de "teto de desconto do vendedor" que **não são interca
   teto possível pra rule resolvida (independente de contexto). Usado em
   `_validate_seller_discount_limit` e na invoice's `_compute_seller_discount_max`.
 
-Misturar agregado vs contextual em label/UI gera mensagens incoerentes em pedidos com
-perfil internal — por isso `applied_rule_label` evita mostrar `(max X%)` na string (o
-teto efetivo aparece em campo separado da linha, contextualizado).
+Em pedidos com perfil internal, o teto efetivo aparece em campo separado da linha,
+contextualizado por banda — não em label agregada que misturaria contexto com agregado e
+geraria mensagens incoerentes.
 
 ### Resolução do Perfil no Pedido
 
@@ -404,13 +404,8 @@ afetam a rule resolvida. A lista mínima atual:
 Histórico: `account.move.line._compute_seller_discount_max` já teve depends
 **incompleto** (só `product_id`, `move_id.sales_profile_id`, `move_id.move_type`),
 deixando o teto da fatura stale ao mexer em rule. Foi corrigido na PR de `qty_min`. Ao
-adicionar novos campos na rule, conferir os 5 computes que dependem dela:
-`_compute_seller_discount_max` (sale e move), `_compute_commission_rate` (sale),
-`_compute_applied_rule` (sale e move).
-
-`applied_rule_id` / `applied_rule_label` são `store=False` — recompute on-demand é
-suficiente para o uso atual (form da linha, invisível na tree). Se for promovido para
-tree/relatórios, considerar `store=True`.
+adicionar novos campos na rule, conferir os computes que dependem dela:
+`_compute_seller_discount_max` (sale e move), `_compute_commission_rate` (sale).
 
 ## Testes
 

@@ -75,18 +75,6 @@ class AccountMoveLine(models.Model):
     adjustment_factor_display = fields.Char(
         related="move_id.adjustment_factor_display",
     )
-    applied_rule_id = fields.Many2one(
-        comodel_name="tr.sales.profile.rule",
-        string="Applied Rule",
-        compute="_compute_applied_rule",
-        help="Profile rule resolved for this line (variant/template/category/general).",
-    )
-    applied_rule_label = fields.Char(
-        string="Applied Rule (label)",
-        compute="_compute_applied_rule",
-        help="Human-readable description of the applied rule, including volume "
-        "threshold when relevant.",
-    )
 
     @api.depends("move_id.partner_id")
     def _compute_agent_ids(self):
@@ -329,59 +317,6 @@ class AccountMoveLine(models.Model):
                 line.seller_discount_max = 0.0
                 continue
             line.seller_discount_max = line._get_seller_discount_absolute_max()
-
-    @api.depends(
-        "product_id",
-        "product_uom_id",
-        "quantity",
-        "move_id.sales_profile_id",
-        "move_id.sales_profile_id.rule_ids",
-        "move_id.sales_profile_id.rule_ids.applied_on",
-        "move_id.sales_profile_id.rule_ids.product_id",
-        "move_id.sales_profile_id.rule_ids.product_tmpl_id",
-        "move_id.sales_profile_id.rule_ids.categ_id",
-        "move_id.sales_profile_id.rule_ids.qty_min",
-        "move_id.sales_profile_id.rule_ids.qty_uom_id",
-        "move_id.sales_profile_id.rule_ids.sequence",
-        "move_id.move_type",
-    )
-    def _compute_applied_rule(self):
-        for line in self:
-            if line.move_id.move_type not in ("out_invoice", "out_refund"):
-                line.applied_rule_id = False
-                line.applied_rule_label = False
-                continue
-            rule = line._get_applicable_rule()
-            line.applied_rule_id = rule
-            line.applied_rule_label = line._format_applied_rule_label(rule)
-
-    def _format_applied_rule_label(self, rule):
-        """Build a human-readable label for the applied rule.
-
-        The effective seller discount max is shown in a separate field on
-        the line form, contextualized to the move when relevant. Including
-        a "(max X%)" here would risk showing a stale or aggregate cap, so
-        we keep the label focused on scope and volume threshold only.
-        """
-        self.ensure_one()
-        if not rule:
-            return False
-        if rule.applied_on == "product":
-            scope = _("Variant: %s") % rule.product_id.display_name
-        elif rule.applied_on == "product_template":
-            scope = _("Template: %s") % rule.product_tmpl_id.display_name
-        elif rule.applied_on == "category":
-            scope = _("Category: %s") % rule.categ_id.display_name
-        else:
-            scope = _("General")
-        if rule.qty_min and rule.qty_uom_id:
-            volume = _(" — Volume ≥ %(qty)s %(uom)s") % {
-                "qty": ("%g" % rule.qty_min),
-                "uom": rule.qty_uom_id.name,
-            }
-        else:
-            volume = ""
-        return scope + volume
 
     @api.depends("move_id")
     def _compute_seller_markup_max(self):
