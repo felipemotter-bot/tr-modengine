@@ -138,14 +138,22 @@ class SaleOrder(models.Model):
                 order.commercial_condition_id.applicable_profile_id or False
             )
 
-    @api.depends("partner_id", "partner_id.effective_condition_id")
+    @api.depends("partner_id", "partner_id.effective_condition_id", "company_id")
     def _compute_commercial_condition_id(self):
         for order in self:
             if order.state not in ("draft", "sent"):
                 order.commercial_condition_id = order.commercial_condition_id
                 continue
             if order.partner_id:
-                order.commercial_condition_id = order.partner_id.effective_condition_id
+                # ``effective_condition_id`` reads ``commercial_condition_id``
+                # which is ``company_dependent=True``; without ``with_company``
+                # the compute resolves against ``env.company`` and may pick
+                # the wrong company's condition (regression observed: order
+                # in TREINAMENTO picking up TRENTO's condition because the
+                # compute fired with ``env.company`` = TRENTO).
+                order.commercial_condition_id = order.partner_id.with_company(
+                    order.company_id
+                ).effective_condition_id
             else:
                 order.commercial_condition_id = False
 

@@ -149,6 +149,7 @@ class ResPartner(models.Model):
         "company_group_id",
         "company_group_id.commercial_condition_id",
     )
+    @api.depends_context("company")
     def _compute_effective_condition_id(self):
         for partner in self:
             # Use _origin for company_dependent fields in onchange context

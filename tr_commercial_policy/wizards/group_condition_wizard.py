@@ -32,6 +32,17 @@ class GroupConditionWizard(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
         if self.action == "inherit":
-            self.partner_id.commercial_condition_id = False
+            # ``commercial_condition_id`` is ``company_dependent`` — clear
+            # in the company that owns the override condition (or, if
+            # absent, the group's), not ``env.company``. Without this the
+            # wizard could clear company A's link while the override
+            # actually lived in company B, leaving the override silently
+            # in place.
+            company = (
+                self.own_condition_id.company_id
+                or self.group_condition_id.company_id
+                or self.env.company
+            )
+            self.partner_id.with_company(company).commercial_condition_id = False
         # If "keep", the partner already has its own condition — nothing to do.
         return {"type": "ir.actions.act_window_close"}
