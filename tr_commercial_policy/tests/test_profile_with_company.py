@@ -318,7 +318,11 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
             )
         )
         self.assertEqual(condition.applicable_profile_id, internal_b)
-        cust.commercial_condition_id = condition
+        # ``commercial_condition_id`` is company_dependent — write in the
+        # condition's company so the order's compute (which reads via
+        # ``with_company(order.company_id)`` after the multi-company fix)
+        # finds the link.
+        cust.with_company(self.company_b).commercial_condition_id = condition
         # Order without salesperson/team in company_b, and no company
         # default in B → ``_resolve_compatibility_profile`` returns
         # (empty, "") → ``_check_internal_context_compatibility`` is a
@@ -441,6 +445,116 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
             )
 
     # ------------------------------------------------------------------
+    # Order's ``commercial_condition_id`` follows the order's company
+    # ------------------------------------------------------------------
+
+    def test_order_picks_partner_condition_in_order_company(self):
+        """Regression: ``sale.order._compute_commercial_condition_id`` used
+        to read ``partner.effective_condition_id`` without ``with_company``,
+        so an order in company B picked up the condition stored for
+        ``env.company`` instead of the order's company. The fix calls
+        ``with_company(order.company_id)`` before reading the partner's
+        condition.
+        """
+        # Agent has profile in both companies so the per-company
+        # constraint on each condition passes.
+        self.agent.with_company(self.company_b).sales_profile_id = self.profile_b
+        cond_a = self.env["partner.commercial.condition"].create(
+            {
+                "partner_id": self.customer_xco.id,
+                "company_id": self.company_a.id,
+                "pricelist_id": self.pricelist_a.id,
+            }
+        )
+        cond_b = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": self.customer_xco.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        self.customer_xco.with_company(self.company_a).commercial_condition_id = cond_a
+        self.customer_xco.with_company(self.company_b).commercial_condition_id = cond_b
+        # Order in company B with ``env.company`` = A. Without the fix
+        # in ``_compute_commercial_condition_id``, this would read the
+        # partner's condition through ``env.company`` (= A) and pick
+        # ``cond_a``. The fix forces ``with_company(order.company_id)``
+        # so the order picks ``cond_b``.
+        order = (
+            self.env["sale.order"]
+            .with_company(self.company_a)
+            .create(
+                {
+                    "partner_id": self.customer_xco.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        self.assertEqual(order.commercial_condition_id, cond_b)
+
+    def _setup_partner_with_dual_company_conditions(self):
+        """Helper: customer with one condition per company, profiles set."""
+        self.agent.with_company(self.company_b).sales_profile_id = self.profile_b
+        cond_a = self.env["partner.commercial.condition"].create(
+            {
+                "partner_id": self.customer_xco.id,
+                "company_id": self.company_a.id,
+                "pricelist_id": self.pricelist_a.id,
+            }
+        )
+        cond_b = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": self.customer_xco.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        self.customer_xco.with_company(self.company_a).commercial_condition_id = cond_a
+        self.customer_xco.with_company(self.company_b).commercial_condition_id = cond_b
+        return cond_a, cond_b
+
+    def test_group_condition_wizard_clears_in_override_company(self):
+        """``tr.group.condition.wizard`` with ``action='inherit'`` must
+        clear the partner's ``commercial_condition_id`` in the company
+        that owns the override condition, even when ``env.company`` is
+        a different company. Without the fix, the wizard cleared
+        ``env.company``'s link and left the actual override silently in
+        place.
+        """
+        cond_a, cond_b = self._setup_partner_with_dual_company_conditions()
+        # Run the wizard with env.company = A but pointing at the
+        # override condition in company B.
+        wizard = (
+            self.env["tr.group.condition.wizard"]
+            .with_company(self.company_a)
+            .create(
+                {
+                    "partner_id": self.customer_xco.id,
+                    "own_condition_id": cond_b.id,
+                    "action": "inherit",
+                }
+            )
+        )
+        wizard.action_confirm()
+        # Company B's link must be cleared. Company A's must stay.
+        self.assertFalse(
+            self.customer_xco.with_company(self.company_b).commercial_condition_id
+        )
+        self.assertEqual(
+            self.customer_xco.with_company(self.company_a).commercial_condition_id,
+            cond_a,
+        )
+
+    # ------------------------------------------------------------------
     # Branch coverage: short-circuit paths in resolution chain
     # ------------------------------------------------------------------
 
@@ -541,7 +655,7 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
                 "agent_ids": [(4, self.agent.id)],
             }
         )
-        cust.commercial_condition_id = (
+        cust.with_company(self.company_b).commercial_condition_id = (
             self.env["partner.commercial.condition"]
             .with_company(self.company_b)
             .create(
@@ -589,7 +703,7 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
                 "agent_ids": [(4, self.agent.id)],
             }
         )
-        cust.commercial_condition_id = (
+        cust.with_company(self.company_b).commercial_condition_id = (
             self.env["partner.commercial.condition"]
             .with_company(self.company_b)
             .create(

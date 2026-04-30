@@ -69,10 +69,26 @@ class SaveConditionWizard(models.TransientModel):
 
         condition = self.order_id.commercial_condition_id
         if not condition:
-            condition = self.env["partner.commercial.condition"].create(
-                {"partner_id": self.partner_id.id}
+            # Wizard is launched from a sale.order — create the condition
+            # in the order's company so the partner's company-dependent
+            # ``commercial_condition_id`` and the new condition's
+            # ``company_id`` line up. Without ``with_company`` here, the
+            # condition is created against ``env.company`` (which may be
+            # different from the order's company in multi-company setups)
+            # and the partner write below would store the link under the
+            # wrong company.
+            company = self.order_id.company_id or self.env.company
+            condition = (
+                self.env["partner.commercial.condition"]
+                .with_company(company)
+                .create(
+                    {
+                        "partner_id": self.partner_id.id,
+                        "company_id": company.id,
+                    }
+                )
             )
-            self.partner_id.commercial_condition_id = condition
+            self.partner_id.with_company(company).commercial_condition_id = condition
 
         # Update general discounts (validation delegated to condition.write)
         vals = {}

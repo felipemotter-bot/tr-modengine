@@ -48,10 +48,23 @@ class SaveConditionLineWizard(models.TransientModel):
         order = self.sale_line_id.order_id
         condition = order.commercial_condition_id
         if not condition:
-            condition = self.env["partner.commercial.condition"].create(
-                {"partner_id": order.partner_id.id}
+            # Wizard is launched from a sale.order line — create the
+            # condition in the order's company and pin the partner's
+            # company-dependent link in that same scope (multi-company
+            # safety; otherwise env.company would drive both, leading
+            # to cross-company inconsistencies).
+            company = order.company_id or self.env.company
+            condition = (
+                self.env["partner.commercial.condition"]
+                .with_company(company)
+                .create(
+                    {
+                        "partner_id": order.partner_id.id,
+                        "company_id": company.id,
+                    }
+                )
             )
-            order.partner_id.commercial_condition_id = condition
+            order.partner_id.with_company(company).commercial_condition_id = condition
 
         ConditionLine = self.env["partner.commercial.condition.line"]
         if self.save_as == "variant":

@@ -298,12 +298,21 @@ class AccountMove(models.Model):
 
     @api.onchange("partner_id")
     def _onchange_partner_commercial_condition(self):
-        """Prefill commercial condition from partner (manual invoice)."""
+        """Prefill commercial condition from partner (manual invoice).
+
+        ``effective_condition_id`` reads ``commercial_condition_id``
+        which is ``company_dependent=True``; ``with_company(self.company_id)``
+        ensures the snapshot picks the condition stored for this move's
+        company, not for ``env.company``.
+        """
         if self.has_sale_origin:
             return
         if self.partner_id:
             self.commercial_condition_id = (
-                self.partner_id.effective_condition_id or False
+                self.partner_id.with_company(
+                    self.company_id or self.env.company
+                ).effective_condition_id
+                or False
             )
         else:
             self.commercial_condition_id = False
@@ -1501,8 +1510,13 @@ class AccountMove(models.Model):
         )
         if manual_moves:
             for move in manual_moves:
+                # company-aware read so multi-company creates pick the
+                # condition stored for the move's company, not env.company.
                 move.commercial_condition_id = (
-                    move.partner_id.effective_condition_id or False
+                    move.partner_id.with_company(
+                        move.company_id or self.env.company
+                    ).effective_condition_id
+                    or False
                 )
             manual_moves.with_context(
                 tr_skip_manual_snapshot=True
@@ -1548,7 +1562,10 @@ class AccountMove(models.Model):
             )
             for move in manual_moves:
                 move.commercial_condition_id = (
-                    move.partner_id.effective_condition_id or False
+                    move.partner_id.with_company(
+                        move.company_id or self.env.company
+                    ).effective_condition_id
+                    or False
                 )
             if manual_moves:
                 manual_moves.with_context(
