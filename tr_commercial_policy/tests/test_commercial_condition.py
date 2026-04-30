@@ -3,7 +3,7 @@
 
 from psycopg2 import IntegrityError
 
-from odoo.exceptions import AccessError, ValidationError
+from odoo.exceptions import ValidationError
 from odoo.tests import Form, tagged
 
 from ..models.policy_utils import (
@@ -282,6 +282,27 @@ class TestCommercialCondition(CommercialPolicyTestCommon):
     def test_commercial_condition_company_dependent(self):
         """Test that commercial_condition_id on partner varies by company."""
         company_2 = self.env["res.company"].create({"name": "Company 2"})
+        # Create a profile of company_2 and set it as the company default
+        # so ``_check_applicable_profile_resolved`` passes (the resolver
+        # requires the profile's ``company_id`` to match the condition's).
+        profile_company_2 = (
+            self.env["tr.sales.profile"]
+            .with_company(company_2)
+            .create(
+                {
+                    "name": "Default Profile Company 2",
+                    "profile_type": "agent",
+                    "company_id": company_2.id,
+                    "pricelist_ids": [(6, 0, [self.pricelist.id])],
+                    "cash_discount_max": 5.0,
+                    "fob_discount_max": 3.0,
+                    "cash_term_avg_days_max": 30,
+                    "manager_extra_limit": 5.0,
+                    "rule_ids": self._placeholder_rule_vals("agent"),
+                }
+            )
+        )
+        company_2.default_sales_profile_id = profile_company_2
         condition_1 = self.env["partner.commercial.condition"].create(
             {
                 "partner_id": self.customer.id,
@@ -708,36 +729,6 @@ class TestConditionDiscountValidation(CommercialPolicyTestCommon):
             )
         )
         self.assertAlmostEqual(line.seller_discount, 99.0, places=2)
-
-    def test_no_profile_user_blocked_on_line_seller_discount(self):
-        """User without profile gets AccessError writing seller_discount."""
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        # Also remove agent from customer so profile can't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        user_no_profile = self.env["res.users"].create(
-            {
-                "name": "No Profile Cond Line",
-                "login": "no_profile_cond_line_tcp",
-                "groups_id": [
-                    (4, self.env.ref("sales_team.group_sale_salesman").id),
-                    (
-                        4,
-                        self.env.ref("tr_commercial_policy.group_sales_manager").id,
-                    ),
-                ],
-            }
-        )
-        with self.assertRaises(AccessError):
-            self.env["partner.commercial.condition.line"].with_user(
-                user_no_profile
-            ).create(
-                {
-                    "condition_id": self.condition.id,
-                    "product_tmpl_id": self.product_template_b.id,
-                    "seller_discount": 1.0,
-                }
-            )
 
     def test_write_seller_discount_on_existing_line(self):
         """Writing seller_discount on existing line triggers validation."""

@@ -1068,34 +1068,58 @@ class SaleOrder(models.Model):
                 }
             )
 
+    def _resolve_compatibility_profile(self):
+        """Resolve the expected profile for compatibility check.
+
+        Mirrors ``partner_commercial_condition._resolve_applicable_profile_and_source``
+        but in the order's perspective: salesperson → salesperson's team
+        → order's team → company default. Each branch only "wins" if the
+        candidate profile belongs to the order's company. Cross-company
+        candidates are skipped, the chain continues — this matches the
+        same semantics applied to condition resolution and prevents the
+        check from falsely failing in multi-company setups.
+
+        Returns ``(expected_profile, source_label)`` or ``(empty, "")``
+        when no valid profile is resolvable.
+        """
+        self.ensure_one()
+        company = self.company_id or self.env.company
+        empty = self.env["tr.sales.profile"]
+        # 1. Salesperson
+        if self.user_id:
+            profile = self.user_id.partner_id.with_company(company).sales_profile_id
+            if profile and profile.company_id == company:
+                return profile, _("salesperson '%s'") % self.user_id.name
+            # 2. Salesperson's team
+            if self.user_id.sale_team_id:
+                profile = self.user_id.sale_team_id.sales_profile_id
+                if profile and profile.company_id == company:
+                    return profile, _("sales team '%s' (salesperson's team)") % (
+                        self.user_id.sale_team_id.name
+                    )
+        # 3. Order's team
+        if self.team_id:
+            profile = self.team_id.sales_profile_id
+            if profile and profile.company_id == company:
+                return profile, _("sales team '%s'") % self.team_id.name
+        # 4. Company default
+        default = company.default_sales_profile_id
+        if default and default.company_id == company:
+            return default, _("company default")
+        return empty, ""
+
     def _check_internal_context_compatibility(self, profile):
         """Verify internal profile matches the salesperson/team context.
 
         The order's profile comes from the condition, but the salesperson
-        handling the order should be aligned.  The compatibility chain
-        mirrors the condition's resolution:
-        salesperson → salesperson's team → order's team → company default.
+        handling the order should be aligned. Uses ``_resolve_compatibility_profile``
+        which traverses the chain skipping cross-company candidates.
+        When no valid expected profile is found in the order's company
+        (e.g. salesperson has profile only in another company and there
+        is no team/default for this one), the check is a no-op — without
+        an expected reference, comparison would be meaningless.
         """
-        expected = False
-        source = ""
-        if self.user_id and self.user_id.partner_id.sales_profile_id:
-            expected = self.user_id.partner_id.sales_profile_id
-            source = _("salesperson '%s'") % self.user_id.name
-        elif (
-            self.user_id
-            and self.user_id.sale_team_id
-            and self.user_id.sale_team_id.sales_profile_id
-        ):
-            expected = self.user_id.sale_team_id.sales_profile_id
-            source = _("sales team '%s' (salesperson's team)") % (
-                self.user_id.sale_team_id.name
-            )
-        elif self.team_id and self.team_id.sales_profile_id:
-            expected = self.team_id.sales_profile_id
-            source = _("sales team '%s'") % self.team_id.name
-        else:
-            expected = self.company_id.default_sales_profile_id
-            source = _("company default")
+        expected, source = self._resolve_compatibility_profile()
         if expected and expected != profile:
             raise UserError(  # noqa: UP031
                 _(

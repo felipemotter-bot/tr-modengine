@@ -117,13 +117,21 @@ class TestDiscountEngine(CommercialPolicyTestCommon):
         # No specific line for product_b, should use condition.seller_discount (5%)
         self.assertAlmostEqual(line.seller_discount, 5.0, places=2)
 
-    def test_no_policy_keeps_standard_behavior(self):
-        """Test that lines without sales_profile use standard Odoo behavior."""
-        # Create order without profile
-        self.salesperson.partner_id.sales_profile_id = False
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
+    def test_no_profile_keeps_standard_behavior(self):
+        """Lines without sales_profile use standard Odoo behavior.
+
+        Uses a partner without commercial condition so the order
+        naturally has no profile.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition DiscEngine"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         self.assertFalse(order.sales_profile_id)
         line = self._create_order_line(order)
         # price_unit should come from standard Odoo compute

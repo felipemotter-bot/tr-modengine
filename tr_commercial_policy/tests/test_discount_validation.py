@@ -99,11 +99,20 @@ class TestDiscountValidation(CommercialPolicyTestCommon):
         self.assertAlmostEqual(order.payment_term_avg_days, 45.0, places=1)
 
     def test_no_profile_skips_validation(self):
-        """Test that orders without profile skip discount validation."""
-        self.salesperson.partner_id.sales_profile_id = False
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
+        """Orders without profile skip discount validation.
+
+        Uses a partner without commercial condition so the order
+        naturally has no profile.
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition DiscValidation"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
         self.assertFalse(order.sales_profile_id)
         # Should not raise even with high values
         order.cash_discount = 99.0

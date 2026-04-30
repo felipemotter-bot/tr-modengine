@@ -48,14 +48,25 @@ class TestDynamicCommission(CommercialPolicyTestCommon):
         self.assertEqual(line.commission_rate, 0.0)
 
     def test_commission_rate_no_profile(self):
-        """Commission rate is 0 when order has no sales profile."""
-        # Remove agent from customer so profile doesn't resolve from agent
-        self.customer.agent_ids = [(5,)]
-        self.salesperson.partner_id.sales_profile_id = False
-        # Clear company default so profile can't resolve via fallback
-        self.env.company.default_sales_profile_id = False
-        order = self._create_order()
-        # Without profile, seller_discount_max=0, so can only create with 0
+        """Commission rate is 0 when order has no sales profile.
+
+        Uses a partner without a commercial condition so the order
+        naturally lacks a profile, instead of corrupting the existing
+        fixture's condition (the new
+        ``_check_applicable_profile_resolved`` constraint would block
+        the cleanup).
+        """
+        partner_no_cond = self.env["res.partner"].create(
+            {"name": "Customer Without Condition Commission"}
+        )
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": partner_no_cond.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
+        self.assertFalse(order.commercial_condition_id)
+        self.assertFalse(order.sales_profile_id)
         line = self._create_order_line(order, seller_discount=0.0)
         self.assertEqual(line.commission_rate, 0.0)
 

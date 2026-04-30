@@ -145,6 +145,13 @@ class SalesRepAccessTestCommon(TransactionCase):
         cls.profile_a1 = cls._make_sales_profile("A1 Profile")
         cls.profile_a2 = cls._make_sales_profile("A2 Profile")
 
+        # Set the company-default profile so commercial conditions
+        # created by these tests have a fallback when the partner has
+        # no agent. After the multi-company resolution fix in
+        # ``tr_commercial_policy``, conditions without a resolvable
+        # profile are blocked by ``_check_applicable_profile_resolved``.
+        cls.company.default_sales_profile_id = cls.profile_a1
+
         # Agents A1 and A2 are res.partner records with agent=True,
         # sales_profile_id and commission_id.
         cls.agent_a1 = cls.env["res.partner"].create(
@@ -208,6 +215,21 @@ class SalesRepAccessTestCommon(TransactionCase):
             }
         )
         cls.customer_c3 = cls.env["res.partner"].create({"name": "Customer C3"})
+
+        # Commercial conditions for the customers, so sale.order tests
+        # that call ``action_confirm`` get a resolved profile via the
+        # condition's chain (agent → company default). Without these,
+        # ``_check_sales_profile_required`` fails because the orders
+        # have no ``commercial_condition_id`` and therefore no profile.
+        Condition = cls.env["partner.commercial.condition"]
+        for customer in (cls.customer_c1, cls.customer_c2, cls.customer_c3):
+            cond = Condition.create(
+                {
+                    "partner_id": customer.id,
+                    "pricelist_id": cls.pricelist.id,
+                }
+            )
+            customer.commercial_condition_id = cond
 
     def _make_invoice(self, customer, rep_agent=None):
         """Create a minimal ``account.move`` for visibility-rule tests.

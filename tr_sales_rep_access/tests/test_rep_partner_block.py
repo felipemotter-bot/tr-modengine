@@ -271,13 +271,13 @@ class TestRepPartnerBlock(SalesRepAccessTestCommon):
     def test_rep_can_trigger_action_create_commercial_condition_on_active_partner(
         self,
     ):
-        self.customer_c1.sudo().write({"commercial_condition_id": False})
+        self.customer_c1.commercial_condition_id.sudo().unlink()
         self.customer_c1.with_user(self.user_u1).action_create_commercial_condition()
         self.assertTrue(self.customer_c1.commercial_condition_id)
 
     def test_rep_can_trigger_action_create_override_condition_on_active_partner(self):
         self._ensure_company_group()
-        self.customer_c1.sudo().write({"commercial_condition_id": False})
+        self.customer_c1.commercial_condition_id.sudo().unlink()
         self.customer_c1.with_user(self.user_u1).action_create_override_condition()
         self.assertTrue(self.customer_c1.commercial_condition_id)
         self.assertEqual(
@@ -286,6 +286,7 @@ class TestRepPartnerBlock(SalesRepAccessTestCommon):
 
     def test_rep_can_trigger_action_remove_override_condition_on_active_partner(self):
         self._ensure_company_group()
+        self.customer_c1.commercial_condition_id.sudo().unlink()
         self.customer_c1.with_user(self.user_u1).action_create_override_condition()
         self.assertTrue(self.customer_c1.commercial_condition_id)
         self.customer_c1.with_user(self.user_u1).action_remove_override_condition()

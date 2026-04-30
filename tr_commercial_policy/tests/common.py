@@ -164,6 +164,14 @@ class CommercialPolicyTestCommon(TransactionCase):
             }
         )
 
+        # Set the company-default profile so creating a commercial
+        # condition without a configured agent/salesperson/team still
+        # resolves through the fallback branch and passes the
+        # ``_check_applicable_profile_resolved`` constraint introduced
+        # in 16.0.2.4.0. Tests that need to exercise the "no profile
+        # resolvable" path can clear this default explicitly.
+        cls.company.default_sales_profile_id = cls.agent_profile
+
         # Payment terms
         cls.payment_term_short = cls.env["account.payment.term"].create(
             {
