@@ -1035,12 +1035,22 @@ class SaleOrder(models.Model):
             self._check_internal_context_compatibility(profile)
 
     def _check_agent_line_profiles(self, profile):
-        """Validate that all line agents have the same profile as the order."""
+        """Validate that all line agents have the same profile as the order.
+
+        ``sales_profile_id`` is ``company_dependent`` on the agent
+        partner — must read it ``with_company(self.company_id)`` so the
+        comparison is against the profile pinned to the order's
+        company. Without it, the check could fail (or pass) based on
+        ``env.company`` rather than the order's company.
+        """
+        company = self.company_id or self.env.company
         for line in self.order_line.filtered(
             lambda sol: sol.product_id and sol.agent_ids
         ):
             for agent_line in line.agent_ids:
-                agent_profile = agent_line.agent_id.sales_profile_id
+                agent_profile = agent_line.agent_id.with_company(
+                    company
+                ).sales_profile_id
                 if agent_profile and agent_profile != profile:
                     raise UserError(  # noqa: UP031
                         _(

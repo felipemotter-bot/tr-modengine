@@ -271,15 +271,26 @@ class PartnerCommercialCondition(models.Model):
         profile, _source = self._resolve_applicable_profile_and_source(partner, company)
         return profile
 
-    def _get_partner_avg_order_amount(self, partner, months=6):
-        """Average amount_untaxed of confirmed orders in last N months."""
+    def _get_partner_avg_order_amount(self, partner, months=6, company=None):
+        """Average amount_untaxed of confirmed orders in last N months.
+
+        ``company`` defaults to ``self.company_id`` when called on a
+        condition recordset (the most common path — discount validation
+        from condition write/create), falling back to ``env.company``.
+        Without an explicit company, the average leaks orders from
+        ``env.company`` even when the calling condition belongs to a
+        different company, producing the wrong band match in internal-
+        profile discount limits.
+        """
+        if company is None:
+            company = (self.company_id if self else False) or self.env.company
         date_from = fields.Date.today() - relativedelta(months=months)
         orders = self.env["sale.order"].search(
             [
                 ("partner_id", "=", partner.id),
                 ("state", "in", ("sale", "done")),
                 ("date_order", ">=", date_from),
-                ("company_id", "=", self.env.company.id),
+                ("company_id", "=", company.id),
             ]
         )
         if not orders:
@@ -350,14 +361,19 @@ class PartnerCommercialCondition(models.Model):
         # Seller discount (general)
         if "seller_discount" in vals:
             self._validate_seller_discount(
-                vals["seller_discount"], profile, partner=partner
+                vals["seller_discount"], profile, partner=partner, company=company
             )
 
-    def _validate_seller_discount(self, seller_discount, profile, partner=None):
+    def _validate_seller_discount(
+        self, seller_discount, profile, partner=None, company=None
+    ):
         """Validate general seller_discount against profile rules.
 
         For internal profiles, uses the 6-month average to find the band.
         ``partner`` is required when called during create (self is empty).
+        ``company`` propagates to ``_get_partner_avg_order_amount`` so
+        the average is computed against the right company's orders
+        (defaults to the condition's company / env.company).
         """
         validate_seller_markup(self.env, seller_discount)
         general_rule = profile.rule_ids.filtered(
@@ -370,7 +386,7 @@ class PartnerCommercialCondition(models.Model):
         if profile.profile_type == "internal" and general_rule.order_value_band_ids:
             partners = self.mapped("partner_id") if self else partner
             for part in partners:
-                avg_amount = self._get_partner_avg_order_amount(part)
+                avg_amount = self._get_partner_avg_order_amount(part, company=company)
                 bands = general_rule.order_value_band_ids.filtered(
                     lambda band, avg=avg_amount: band.order_min_amount <= avg
                 ).sorted("order_min_amount")
@@ -522,21 +538,34 @@ class PartnerCommercialCondition(models.Model):
         return (self.seller_discount or 0.0, 0.0, "general")
 
     def _sync_to_partners(self):
-        """Sync condition fields to all partners using this condition."""
+        """Sync condition fields to all partners using this condition.
+
+        ``commercial_condition_id`` is ``company_dependent`` — both the
+        ``search()`` for direct users and the ``filtered()`` over group
+        members must run with ``with_company(condition.company_id)`` so
+        the property values are read in the condition's scope. Without
+        it, a sync triggered with ``env.company`` mismatched against
+        the condition would either miss partners linked in the
+        condition's company or pick up partners linked in a different
+        company.
+        """
         for condition in self:
+            company = condition.company_id or self.env.company
+            PartnerCo = self.env["res.partner"].with_company(company)
             # Direct users
-            direct = self.env["res.partner"].search(
-                [("commercial_condition_id", "=", condition.id)]
-            )
+            direct = PartnerCo.search([("commercial_condition_id", "=", condition.id)])
             # Group members inheriting: condition belongs to a group head,
             # find members of that group without their own condition
             inherited = self.env["res.partner"]
             group_head = condition.partner_id
             if group_head and group_head.company_group_member_ids:
-                inherited = group_head.company_group_member_ids.filtered(
+                members_co = group_head.company_group_member_ids.with_company(company)
+                inherited = members_co.filtered(
                     lambda member: not member.commercial_condition_id
                 )
-            (direct | inherited)._sync_partner_fields_from_condition()
+            (direct | inherited).with_company(
+                company
+            )._sync_partner_fields_from_condition()
 
     @api.constrains("contractual_return")
     def _check_contractual_return(self):

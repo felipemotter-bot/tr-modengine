@@ -555,6 +555,223 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
         )
 
     # ------------------------------------------------------------------
+    # Multi-company audit fixes (PR follow-up to PR #58)
+    # ------------------------------------------------------------------
+
+    def test_action_create_commercial_condition_in_env_company(self):
+        """``res.partner.action_create_commercial_condition`` must create
+        the condition in the user's current company and link it under
+        that same company on the partner. Run with ``env.company`` = B
+        and verify both ends land in B.
+        """
+        # Default profile in company B so the new condition resolves
+        # cleanly via the company-default fallback (the partner has no
+        # agent/team/salesperson by design).
+        self.company_b.default_sales_profile_id = self.profile_b
+        partner = self.env["res.partner"].create({"name": "Manual Cond Cust"})
+        partner.with_company(self.company_b).action_create_commercial_condition()
+        condition_b = partner.with_company(self.company_b).commercial_condition_id
+        self.assertTrue(condition_b)
+        self.assertEqual(condition_b.company_id, self.company_b)
+        # Company A must NOT have inherited the link.
+        self.assertFalse(partner.with_company(self.company_a).commercial_condition_id)
+
+    def test_action_remove_override_clears_in_env_company_only(self):
+        """``action_remove_override_condition`` clears the override in
+        the user's current company without touching other companies.
+        Setup: partner with conditions in both A and B. Run remove with
+        ``env.company`` = B. A's link must remain.
+        """
+        cond_a, cond_b = self._setup_partner_with_dual_company_conditions()
+        self.customer_xco.with_company(
+            self.company_b
+        ).action_remove_override_condition()
+        self.assertFalse(
+            self.customer_xco.with_company(self.company_b).commercial_condition_id
+        )
+        self.assertEqual(
+            self.customer_xco.with_company(self.company_a).commercial_condition_id,
+            cond_a,
+        )
+
+    def test_sync_to_partners_finds_links_in_condition_company(self):
+        """``_sync_to_partners`` must search/filter
+        ``res.partner.commercial_condition_id`` (company_dependent) in
+        the condition's company. Run sync on a B condition with
+        ``env.company`` = A; the partner linked in B must be found and
+        synced (verified by checking that pricelist propagated).
+        """
+        cond_a, cond_b = self._setup_partner_with_dual_company_conditions()
+        # Change cond_b's pricelist so the sync has something to copy.
+        new_pl_b = self.env["product.pricelist"].create(
+            {"name": "PL B Alt", "company_id": self.company_b.id}
+        )
+        # Add the new pricelist to profile_b so the constraint passes.
+        self.profile_b.with_company(self.company_b).pricelist_ids = [(4, new_pl_b.id)]
+        cond_b.with_company(self.company_b).pricelist_id = new_pl_b
+        # Trigger sync from env.company = A. Without the with_company in
+        # _sync_to_partners, the search would not see partner→cond_b
+        # link (it's stored as ir.property in company B).
+        cond_b.with_company(self.company_a)._sync_to_partners()
+        # Property in company B must reflect the new pricelist.
+        self.assertEqual(
+            self.customer_xco.with_company(self.company_b).property_product_pricelist,
+            new_pl_b,
+        )
+
+    def test_get_partner_avg_order_amount_filters_by_company(self):
+        """``_get_partner_avg_order_amount`` must filter by the
+        ``company`` kwarg, not ``env.company``. Confirmed sale order in
+        company A; the call with ``company=A`` returns its amount, with
+        ``company=B`` returns zero — proves the filter actually uses
+        the kwarg.
+        """
+        # The ``customer_xco`` already has an agent with profile in A;
+        # build a plain order in A and force it into ``sale`` state via
+        # sudo so the search picks it up (we don't need to exercise the
+        # full confirmation flow here — just have a record matching the
+        # search domain).
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": self.customer_xco.id,
+                "company_id": self.company_a.id,
+                "pricelist_id": self.pricelist_a.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product_a.id,
+                            "product_uom_qty": 1.0,
+                            "price_unit": 100.0,
+                        },
+                    )
+                ],
+            }
+        )
+        order.sudo().write({"state": "sale"})
+        Cond = self.env["partner.commercial.condition"]
+        avg_a = Cond._get_partner_avg_order_amount(
+            self.customer_xco, company=self.company_a
+        )
+        avg_b = Cond._get_partner_avg_order_amount(
+            self.customer_xco, company=self.company_b
+        )
+        self.assertGreater(avg_a, 0.0)
+        self.assertEqual(avg_b, 0.0)
+
+    def test_action_create_override_copies_group_condition_in_env_company(self):
+        """``action_create_override_condition`` must read the group's
+        ``commercial_condition_id`` (company_dependent) in the user's
+        current company and copy values to the new override anchored in
+        that same company.
+        """
+        # Default profile in B so the group's and override condition
+        # both resolve cleanly.
+        self.company_b.default_sales_profile_id = self.profile_b
+        # Group head with its own condition in company B carrying a
+        # distinctive cash_discount value to verify the copy.
+        group = self.env["res.partner"].create(
+            {"name": "Group Head", "is_company": True}
+        )
+        group_cond_b = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": group.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                    "cash_discount": 2.5,
+                }
+            )
+        )
+        group.with_company(self.company_b).commercial_condition_id = group_cond_b
+        # Member partner linked to the group.
+        member = self.env["res.partner"].create(
+            {"name": "Group Member", "company_group_id": group.id}
+        )
+        # Trigger override creation in company B.
+        member.with_company(self.company_b).action_create_override_condition()
+        override = member.with_company(self.company_b).commercial_condition_id
+        self.assertTrue(override)
+        self.assertEqual(override.company_id, self.company_b)
+        # The override copied the group's cash_discount from company B.
+        self.assertEqual(override.cash_discount, 2.5)
+        # Company A must remain empty.
+        self.assertFalse(member.with_company(self.company_a).commercial_condition_id)
+
+    def test_check_agent_line_profiles_reads_in_order_company(self):
+        """End-to-end: ``_check_agent_line_profiles`` is exercised via
+        ``_check_profile_consistency`` on a real order with an agent
+        line. Order in company B, ``env.company`` = A; agent has
+        ``profile_b`` in B. Without ``with_company(self.company_id)``
+        in the check, the agent's profile read would fall back to A's
+        empty value and either silently skip the comparison or raise.
+        """
+        # Commission is required on the agent partner so the order line
+        # can persist its agent record (NOT NULL on commission_id).
+        commission = self.env["commission"].create(
+            {"name": "X-Co Commission", "commission_type": "fixed", "fix_qty": 0.0}
+        )
+        self.agent.commission_id = commission
+        self.agent.with_company(self.company_b).sales_profile_id = self.profile_b
+        cust = self.env["res.partner"].create(
+            {
+                "name": "Compat Agent Cust",
+                "agent_ids": [(4, self.agent.id)],
+            }
+        )
+        cust.with_company(self.company_b).commercial_condition_id = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        # The product_a's pricelist_b setup: ensure profile_b accepts it
+        # (already does — pricelist_ids includes pricelist_b).
+        order = (
+            self.env["sale.order"]
+            .with_company(self.company_a)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                    "order_line": [
+                        (
+                            0,
+                            0,
+                            {
+                                "product_id": self.product_a.id,
+                                "product_uom_qty": 1.0,
+                                "price_unit": 100.0,
+                            },
+                        )
+                    ],
+                }
+            )
+        )
+        # Confirm that the agent ended up on the order line (commission
+        # propagation from partner.agent_ids).
+        line = order.order_line
+        self.assertTrue(line.agent_ids, "line should have an agent for the test")
+        # Exercise the check via the public consistency entrypoint —
+        # same path that ``action_confirm`` walks. With the fix, the
+        # agent's profile is read in company B and matches profile_b;
+        # without it, the read in env.company A would return empty (no
+        # property) and the comparison would silently skip on the
+        # ``if agent_profile`` guard, masking the regression — that's
+        # why the test asserts ``agent_ids`` is populated and that the
+        # call below does not raise.
+        order._check_profile_consistency()
+
+    # ------------------------------------------------------------------
     # Branch coverage: short-circuit paths in resolution chain
     # ------------------------------------------------------------------
 

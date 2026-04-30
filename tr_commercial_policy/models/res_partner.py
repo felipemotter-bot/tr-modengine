@@ -80,16 +80,26 @@ class ResPartner(models.Model):
     def action_create_commercial_condition(self):
         """Create a new commercial condition for this partner."""
         self.ensure_one()
+        # Pin the action to the user's current company so the new
+        # condition's company_id and the partner's company-dependent
+        # ``commercial_condition_id`` link both land in the same scope.
+        # Otherwise an inconsistent ``env.company`` (e.g. shared shell)
+        # could create the condition in one company and write the
+        # partner link in another.
+        company = self.env.company
         condition = (
             self.env["partner.commercial.condition"]
             .sudo()
-            .create({"partner_id": self.id})
+            .with_company(company)
+            .create({"partner_id": self.id, "company_id": company.id})
         )
         # ``sudo()`` + explicit ``write()`` (not the attribute-setter
         # shorthand) so that the write actually runs under SUPERUSER
         # and tr_sales_rep_access's guard on Active partners lets
         # this module-owned field update pass.
-        self.sudo().write({"commercial_condition_id": condition.id})
+        self.sudo().with_company(company).write(
+            {"commercial_condition_id": condition.id}
+        )
         return {
             "type": "ir.actions.act_window",
             "res_model": "partner.commercial.condition",
@@ -101,12 +111,18 @@ class ResPartner(models.Model):
     def action_create_override_condition(self):
         """Create an override condition copying values from the group."""
         self.ensure_one()
+        # Pin the action to the user's current company. Reading the
+        # group's ``commercial_condition_id`` (company_dependent) and
+        # writing the partner's link must happen in the same scope, or
+        # the override is created against one company while the link
+        # lands in another.
+        company = self.env.company
         group_condition = (
-            self.company_group_id.commercial_condition_id
+            self.company_group_id.with_company(company).commercial_condition_id
             if self.company_group_id
             else False
         )
-        vals = {"partner_id": self.id}
+        vals = {"partner_id": self.id, "company_id": company.id}
         if group_condition:
             vals.update(
                 {
@@ -117,12 +133,19 @@ class ResPartner(models.Model):
                     "contractual_return": group_condition.contractual_return,
                 }
             )
-        condition = self.env["partner.commercial.condition"].sudo().create(vals)
+        condition = (
+            self.env["partner.commercial.condition"]
+            .sudo()
+            .with_company(company)
+            .create(vals)
+        )
         # ``sudo()`` + explicit ``write()`` (not the attribute-setter
         # shorthand) so that the write actually runs under SUPERUSER
         # and tr_sales_rep_access's guard on Active partners lets
         # this module-owned field update pass.
-        self.sudo().write({"commercial_condition_id": condition.id})
+        self.sudo().with_company(company).write(
+            {"commercial_condition_id": condition.id}
+        )
         return {
             "type": "ir.actions.act_window",
             "res_model": "partner.commercial.condition",
@@ -134,12 +157,17 @@ class ResPartner(models.Model):
     def action_remove_override_condition(self):
         """Remove the override and inherit from group again."""
         self.ensure_one()
-        own_condition = self.commercial_condition_id
+        # Pin the action to the user's current company. Reading the
+        # partner's company-dependent ``commercial_condition_id`` and
+        # the subsequent clear must happen in the same scope so the
+        # right override is identified and unlinked.
+        company = self.env.company
+        own_condition = self.with_company(company).commercial_condition_id
         # ``sudo()`` + explicit ``write()`` (not the attribute-setter
         # shorthand) so that the write actually runs under SUPERUSER
         # and tr_sales_rep_access's guard on Active partners lets
         # this module-owned field update pass.
-        self.sudo().write({"commercial_condition_id": False})
+        self.sudo().with_company(company).write({"commercial_condition_id": False})
         if own_condition and own_condition.partner_id == self:
             own_condition.sudo().unlink()
         return True
