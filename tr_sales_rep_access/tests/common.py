@@ -216,6 +216,21 @@ class SalesRepAccessTestCommon(TransactionCase):
         )
         cls.customer_c3 = cls.env["res.partner"].create({"name": "Customer C3"})
 
+        # Commercial conditions for the customers, so sale.order tests
+        # that call ``action_confirm`` get a resolved profile via the
+        # condition's chain (agent → company default). Without these,
+        # ``_check_sales_profile_required`` fails because the orders
+        # have no ``commercial_condition_id`` and therefore no profile.
+        Condition = cls.env["partner.commercial.condition"]
+        for customer in (cls.customer_c1, cls.customer_c2, cls.customer_c3):
+            cond = Condition.create(
+                {
+                    "partner_id": customer.id,
+                    "pricelist_id": cls.pricelist.id,
+                }
+            )
+            customer.commercial_condition_id = cond
+
     def _make_invoice(self, customer, rep_agent=None):
         """Create a minimal ``account.move`` for visibility-rule tests.
 
