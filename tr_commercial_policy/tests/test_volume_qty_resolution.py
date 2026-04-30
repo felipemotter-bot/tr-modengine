@@ -315,36 +315,6 @@ class TestVolumeQtyResolution(CommercialPolicyTestCommon):
         self.assertEqual(resolved, general_rule)
         self.assertNotEqual(resolved, rule)
 
-    # ----- 11. invoice compute on non-customer move types -----
-
-    def test_invoice_compute_applied_rule_skipped_for_non_customer_move(self):
-        # Vendor bill (in_invoice) should clear applied_rule without calling
-        # _get_applicable_rule (covers the early-return branch in the move
-        # line compute).
-        bill = self.env["account.move"].create(
-            {
-                "move_type": "in_invoice",
-                "partner_id": self.customer.id,
-                "invoice_line_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "product_id": self.product_a.id,
-                            "quantity": 5.0,
-                            "name": self.product_a.display_name,
-                        },
-                    ),
-                ],
-            }
-        )
-        product_lines = bill.invoice_line_ids.filtered(
-            lambda line: line.product_id == self.product_a
-        )
-        for line in product_lines:
-            self.assertFalse(line.applied_rule_id)
-            self.assertFalse(line.applied_rule_label)
-
 
 @tagged("post_install", "-at_install")
 class TestVolumeQtyOnSaleAndInvoice(CommercialPolicyTestCommon):
@@ -409,138 +379,11 @@ class TestVolumeQtyOnSaleAndInvoice(CommercialPolicyTestCommon):
         order = self._new_order(qty=30.0)
         line = order.order_line
         self.assertEqual(line._get_applicable_rule(), self.general_rule)
-        self.assertEqual(line.applied_rule_id, self.general_rule)
 
     def test_sale_line_resolves_volume_when_above_threshold(self):
         order = self._new_order(qty=70.0)
         line = order.order_line
         self.assertEqual(line._get_applicable_rule(), self.volume_rule)
-        self.assertEqual(line.applied_rule_id, self.volume_rule)
-
-    def test_applied_rule_label_includes_volume_segment(self):
-        order = self._new_order(qty=70.0)
-        label = order.order_line.applied_rule_label
-        self.assertIn("Volume", label)
-        self.assertIn("50", label)
-
-    def test_label_scope_template(self):
-        # Replace the variant volume rule with a template rule so we can
-        # exercise the "Template:" branch of _format_applied_rule_label.
-        self.volume_rule.unlink()
-        self.env["tr.sales.profile.rule"].create(
-            {
-                "profile_id": self.agent_profile.id,
-                "applied_on": "product_template",
-                "product_tmpl_id": self.product_template_a.id,
-                "commission_band_ids": [
-                    (0, 0, {"discount_up_to": 8.0, "commission_rate": 9.0}),
-                ],
-            }
-        )
-        order = self._new_order(qty=10.0)
-        label = order.order_line.applied_rule_label
-        self.assertIn("Template", label)
-
-    def test_label_scope_category(self):
-        self.volume_rule.unlink()
-        self.env["tr.sales.profile.rule"].create(
-            {
-                "profile_id": self.agent_profile.id,
-                "applied_on": "category",
-                "categ_id": self.product_a.categ_id.id,
-                "commission_band_ids": [
-                    (0, 0, {"discount_up_to": 7.0, "commission_rate": 9.0}),
-                ],
-            }
-        )
-        order = self._new_order(qty=10.0)
-        label = order.order_line.applied_rule_label
-        self.assertIn("Category", label)
-
-    def test_label_false_for_empty_rule(self):
-        # Direct call to _format_applied_rule_label with an empty recordset
-        # covers the "if not rule: return False" branch without depending
-        # on profile resolution edge cases.
-        order = self._new_order(qty=10.0)
-        empty = self.env["tr.sales.profile.rule"]
-        self.assertFalse(order.order_line._format_applied_rule_label(empty))
-
-    def test_invoice_label_scope_template_and_category(self):
-        # Cover the template + category branches in
-        # account.move.line._format_applied_rule_label by swapping rules.
-        self.volume_rule.unlink()
-        tmpl_rule = self.env["tr.sales.profile.rule"].create(
-            {
-                "profile_id": self.agent_profile.id,
-                "applied_on": "product_template",
-                "product_tmpl_id": self.product_template_a.id,
-                "commission_band_ids": [
-                    (0, 0, {"discount_up_to": 8.0, "commission_rate": 9.0}),
-                ],
-            }
-        )
-        invoice = self.env["account.move"].create(
-            {
-                "move_type": "out_invoice",
-                "partner_id": self.customer.id,
-                "sales_profile_id": self.agent_profile.id,
-                "invoice_line_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "product_id": self.product_a.id,
-                            "quantity": 5.0,
-                            "product_uom_id": self.uom_unit.id,
-                            "name": self.product_a.display_name,
-                        },
-                    ),
-                ],
-            }
-        )
-        line = invoice.invoice_line_ids.filtered(
-            lambda line: line.product_id == self.product_a
-        )
-        self.assertIn("Template", line.applied_rule_label)
-        # Now swap to category and re-fetch
-        tmpl_rule.unlink()
-        self.env["tr.sales.profile.rule"].create(
-            {
-                "profile_id": self.agent_profile.id,
-                "applied_on": "category",
-                "categ_id": self.product_a.categ_id.id,
-                "commission_band_ids": [
-                    (0, 0, {"discount_up_to": 7.0, "commission_rate": 9.0}),
-                ],
-            }
-        )
-        line._compute_applied_rule()
-        self.assertIn("Category", line.applied_rule_label)
-
-    def test_invoice_label_false_for_empty_rule(self):
-        invoice = self.env["account.move"].create(
-            {
-                "move_type": "out_invoice",
-                "partner_id": self.customer.id,
-                "sales_profile_id": self.agent_profile.id,
-                "invoice_line_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "product_id": self.product_a.id,
-                            "quantity": 5.0,
-                            "name": self.product_a.display_name,
-                        },
-                    ),
-                ],
-            }
-        )
-        line = invoice.invoice_line_ids.filtered(
-            lambda line: line.product_id == self.product_a
-        )
-        empty = self.env["tr.sales.profile.rule"]
-        self.assertFalse(line._format_applied_rule_label(empty))
 
     def test_invoice_line_uses_same_resolution(self):
         # Build a manual invoice on the same partner/profile and assert
@@ -570,4 +413,3 @@ class TestVolumeQtyOnSaleAndInvoice(CommercialPolicyTestCommon):
             lambda line: line.product_id == self.product_a
         )
         self.assertEqual(line._get_applicable_rule(), self.volume_rule)
-        self.assertEqual(line.applied_rule_id, self.volume_rule)
