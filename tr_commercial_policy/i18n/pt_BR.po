@@ -3312,5 +3312,82 @@ msgstr "equipe de vendas '%s' (equipe do vendedor)"
 msgid "salesperson '%s'"
 msgstr "vendedor(a) '%s'"
 
+#. module: tr_commercial_policy
+#: model:ir.actions.act_window,name:tr_commercial_policy.tr_sales_profile_my_action
+#: model:ir.actions.server,name:tr_commercial_policy.tr_sales_profile_my_action_server
+#: model:ir.ui.menu,name:tr_commercial_policy.menu_my_sales_profiles
+msgid "My Commercial Profiles"
+msgstr "Meus Perfis Comerciais"
+
+#. module: tr_commercial_policy
+#: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Commercial Profile"
+msgstr "Perfil Comercial"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Company:"
+msgstr "Empresa:"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Maximum:"
+msgstr "Máximo:"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Conditions to grant:"
+msgstr "Condições para conceder:"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Maximum average payment term:"
+msgstr "Prazo médio máximo:"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "days"
+msgstr "dias"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Allowed payment modes:"
+msgstr "Modos de pagamento permitidos:"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Discount Bands by Scope"
+msgstr "Faixas de Desconto por Escopo"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Discount up to (%)"
+msgstr "Desconto até (%)"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Minimum order amount"
+msgstr "Valor mínimo do pedido"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Maximum discount (%)"
+msgstr "Desconto máximo (%)"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
+msgid "No commercial profile assigned to you"
+msgstr "Nenhum perfil comercial atribuído a você"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
+msgid ""
+"A commercial profile defines the discount limits, payment conditions and "
+"commission bands you operate under. Profiles are assigned per company."
+msgstr ""
+"Um perfil comercial define os limites de desconto, condições de pagamento e "
+"bandas de comissão sob os quais você opera. Perfis são atribuídos por empresa."
+
 #~ msgid "Agent detail of commission line in invoice lines"
 #~ msgstr "Detalhe do representante da linha de comissão nas linhas da fatura"

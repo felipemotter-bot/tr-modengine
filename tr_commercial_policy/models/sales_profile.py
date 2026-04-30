@@ -55,6 +55,25 @@ class SalesProfile(models.Model):
         default=lambda self: self.env.company,
     )
 
+    @api.model
+    def _get_my_profile_ids(self):
+        partner = self.env.user.partner_id
+        ids = []
+        for company in self.env.companies:
+            profile = partner.with_company(company).sales_profile_id
+            if profile:
+                ids.append(profile.id)
+        return ids
+
+    @api.model
+    def action_my_profiles(self):
+        ids = self._get_my_profile_ids()
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "tr_commercial_policy.tr_sales_profile_my_action"
+        )
+        action["domain"] = [("id", "in", ids)]
+        return action
+
     @api.constrains("rule_ids", "profile_type")
     def _check_at_least_one_rule(self):
         for profile in self:

@@ -41,6 +41,7 @@
         "data/decimal_precision.xml",
         "data/tier_definition.xml",
         "views/sales_profile_views.xml",
+        "views/sales_profile_my_views.xml",
         "views/partner_commercial_condition_views.xml",
         "views/res_partner_views.xml",
         "views/sale_order_views.xml",
@@ -53,6 +54,8 @@
         "views/menu.xml",
         "data/commission_template.xml",
         "report/sale_order_report.xml",
+        "report/sales_profile_report.xml",
+        "report/sales_profile_report_template.xml",
         "data/cron.xml",
     ],
     "assets": {
