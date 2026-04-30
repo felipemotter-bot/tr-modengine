@@ -439,3 +439,182 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
                     "cash_discount": 10.0,
                 }
             )
+
+    # ------------------------------------------------------------------
+    # Branch coverage: short-circuit paths in resolution chain
+    # ------------------------------------------------------------------
+
+    def test_partner_team_cross_company_skipped_default_pricelist_fallback(self):
+        """Covers two short-circuit branches not exercised by the main
+        chain tests:
+
+        - ``_resolve_applicable_profile_and_source``: ``partner.team_id``
+          has a profile in company A; condition is in company B. The
+          team branch is skipped and resolution falls through to the
+          company default.
+        - ``_resolve_default_pricelist_for_partner``: the resolved
+          profile has no ``pricelist_ids``; the resolver falls back to
+          ``product.pricelist.search`` filtered by company.
+        """
+        team_a = self.env["crm.team"].create(
+            {"name": "X-Co Team A", "company_id": self.company_a.id}
+        )
+        team_a.sales_profile_id = self.profile_a
+        # Default profile in company B *without* pricelist_ids so the
+        # default-pricelist resolver falls into the search branch.
+        default_b_no_pl = (
+            self.env["tr.sales.profile"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "name": "Default B No Pricelist",
+                    "profile_type": "internal",
+                    "company_id": self.company_b.id,
+                    "pricelist_ids": [(6, 0, [])],
+                    "cash_discount_max": 0.0,
+                    "fob_discount_max": 0.0,
+                    "cash_term_avg_days_max": 30,
+                    "manager_extra_limit": 0.0,
+                    "rule_ids": self._placeholder_rule_vals("internal"),
+                }
+            )
+        )
+        self.company_b.default_sales_profile_id = default_b_no_pl
+        customer = self.env["res.partner"].create(
+            {"name": "X-Co Team Customer", "team_id": team_a.id}
+        )
+        Condition = self.env["partner.commercial.condition"].with_company(
+            self.company_b
+        )
+        condition = Condition.create(
+            {
+                "partner_id": customer.id,
+                "company_id": self.company_b.id,
+                "pricelist_id": self.pricelist_b.id,
+            }
+        )
+        self.assertEqual(condition.applicable_profile_id, default_b_no_pl)
+        self.assertEqual(condition.profile_source, "company")
+        # Profile resolved has no pricelist_ids → fallback search by company.
+        pricelist = Condition._resolve_default_pricelist_for_partner(
+            customer, company=self.company_b
+        )
+        self.assertTrue(pricelist)
+        self.assertIn(pricelist.company_id.id or False, (self.company_b.id, False))
+
+    def test_resolve_compatibility_profile_salesperson_team_cross_company(self):
+        """Covers ``sale_order._resolve_compatibility_profile`` short-
+        circuits in the salesperson branch:
+
+        - ``self.user_id`` is truthy.
+        - Salesperson has profile only in company A (cross-company for B).
+        - Salesperson's ``sale_team_id`` exists with profile in A
+          (cross-company) → ``L1096`` short-circuit, branch skipped.
+        - Order's ``team_id`` is empty → ``L1101`` false branch.
+        - Falls through to the company-default branch.
+        """
+        team_a = self.env["crm.team"].create(
+            {"name": "Salesperson Team A", "company_id": self.company_a.id}
+        )
+        team_a.sales_profile_id = self.profile_a
+        salesperson = self.env["res.users"].create(
+            {
+                "name": "Salesperson Cross-Co Team",
+                "login": "xco_sp_team",
+                "groups_id": [(4, self.env.ref("base.group_user").id)],
+                "company_ids": [(4, self.company_b.id), (4, self.company_a.id)],
+                "company_id": self.company_b.id,
+                "sale_team_id": team_a.id,
+            }
+        )
+        salesperson.partner_id.with_company(
+            self.company_a
+        ).sales_profile_id = self.profile_a
+        self.company_b.default_sales_profile_id = self.profile_b
+        # Customer with agent in company B so the condition resolves
+        # cleanly via agent → constraint passes; the order uses that
+        # condition and we only exercise the compatibility resolver.
+        self.agent.with_company(self.company_b).sales_profile_id = self.profile_b
+        cust = self.env["res.partner"].create(
+            {
+                "name": "X-Co Compat Customer",
+                "agent_ids": [(4, self.agent.id)],
+            }
+        )
+        cust.commercial_condition_id = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        order = (
+            self.env["sale.order"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                    "user_id": salesperson.id,
+                    "team_id": False,
+                }
+            )
+        )
+        expected, source = order._resolve_compatibility_profile()
+        self.assertEqual(expected, self.profile_b)
+        self.assertIn("company default", source)
+
+    def test_resolve_compatibility_profile_no_user_no_team_no_default(self):
+        """Covers ``sale_order._resolve_compatibility_profile`` empty
+        return path:
+
+        - Order with ``user_id=False`` → ``L1089`` false branch.
+        - Order with ``team_id=False`` → ``L1101`` false branch.
+        - Company default cleared in company B → no resolution.
+        - Resolver returns ``(empty_recordset, "")`` so the
+          compatibility check becomes a no-op.
+        """
+        # Customer needs a resolvable condition for the order's
+        # constraint, but the compatibility resolver is independent of
+        # that — it traverses user/team/default.
+        self.agent.with_company(self.company_b).sales_profile_id = self.profile_b
+        cust = self.env["res.partner"].create(
+            {
+                "name": "X-Co No-Context Customer",
+                "agent_ids": [(4, self.agent.id)],
+            }
+        )
+        cust.commercial_condition_id = (
+            self.env["partner.commercial.condition"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                }
+            )
+        )
+        # Ensure no company default in B.
+        self.company_b.default_sales_profile_id = False
+        order = (
+            self.env["sale.order"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "partner_id": cust.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                    "user_id": False,
+                    "team_id": False,
+                }
+            )
+        )
+        expected, source = order._resolve_compatibility_profile()
+        self.assertFalse(expected)
+        self.assertEqual(source, "")
