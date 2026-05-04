@@ -2,19 +2,22 @@
 # This file contains the translation of the following modules:
 # 	* tr_commercial_policy
 #
+# Translators:
+# Felipe Motter <felipe@trentoquimica.com.br>, 2026
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-16 18:56+0000\n"
-"PO-Revision-Date: 2026-04-02 13:26+0000\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: pt_BR\n"
+"POT-Creation-Date: 2026-05-04 14:31+0000\n"
+"PO-Revision-Date: 2026-05-04 14:31+0000\n"
+"Last-Translator: Felipe Motter <felipe@trentoquimica.com.br>\n"
+"Language-Team: Portuguese (Brazil)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: \n"
+"Language: pt_BR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #. module: tr_commercial_policy
 #: model:res.groups,comment:tr_commercial_policy.group_sales_director
@@ -60,11 +63,10 @@ msgstr "% sobre preço base)"
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
 #, python-format
 msgid ""
-"%(base)s<br/><br/><strong>Approved with the following policy exceptions:</"
-"strong><br/>%(violations)s"
+"%(base)s<br/><br/><strong>Approved with the following policy "
+"exceptions:</strong><br/>%(violations)s"
 msgstr ""
-"%(base)s<br/><br/><strong>Aprovado com as seguintes exceções de política:</"
-"strong><br/>%(violations)s"
+"%(base)s<br/><br/><strong>Aprovado com as seguintes exceções de política:</strong><br/>%(violations)s"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.sale_order_form_commercial_policy
@@ -84,9 +86,7 @@ msgid ""
 "- '%(product)s': commission '%(comm)s' is not managed by the commercial "
 "policy. Use 'Recalculate Commissions' to fix, or ask a director to confirm."
 msgstr ""
-"- '%(product)s': comissão '%(comm)s' não é gerenciada pela política "
-"comercial. Use 'Recalcular Comissões' para corrigir, ou peça a um diretor "
-"para confirmar."
+"- '%(product)s': comissão '%(comm)s' não é gerenciada pela política comercial. Use 'Recalcular Comissões' para corrigir, ou peça a um diretor para confirmar."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -94,6 +94,11 @@ msgstr ""
 #, python-format
 msgid "- '%(product)s': expected %(expected).2f%%, has %(actual).2f%%"
 msgstr "- '%(product)s': esperado %(expected).2f%%, possui %(actual).2f%%"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_saleorder_document_inherit
+msgid "0,00"
+msgstr "0,00"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_partner_form_commercial_condition
@@ -179,10 +184,30 @@ msgid "<span>Seller Disc.%</span>"
 msgstr "<span>Desc. Vend.%</span>"
 
 #. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "<strong>Condições para conceder:</strong>"
+msgstr "<strong>Condições para conceder:</strong>"
+
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.sale_order_form_commercial_policy
 msgid "<strong>Discount approval required:</strong>"
 msgstr "<strong>Aprovação de desconto necessária:</strong>"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "<strong>Emissão:</strong>"
+msgstr "<strong>Emissão:</strong>"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "<strong>Empresa:</strong>"
+msgstr "<strong>Empresa:</strong>"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "<strong>Perfil:</strong>"
+msgstr "<strong>Perfil:</strong>"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -199,8 +224,7 @@ msgid ""
 "A commercial condition is required to confirm this order. Please set a "
 "commercial condition on the customer '%(partner)s'."
 msgstr ""
-"Uma condição comercial é necessária para confirmar este pedido. Por favor, "
-"defina uma condição comercial no cliente '%(partner)s'."
+"Uma condição comercial é necessária para confirmar este pedido. Por favor, defina uma condição comercial no cliente '%(partner)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -215,8 +239,7 @@ msgstr "Um cliente é necessário para lançar uma fatura de venda manual."
 #, python-format
 msgid ""
 "A line for product template '%(product)s' already exists in this condition."
-msgstr ""
-"Uma linha para o modelo de produto '%(product)s' já existe nesta condição."
+msgstr "Uma linha para o modelo de produto '%(product)s' já existe nesta condição."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -224,8 +247,7 @@ msgstr ""
 #, python-format
 msgid ""
 "A line for product variant '%(product)s' already exists in this condition."
-msgstr ""
-"Uma linha para a variante de produto '%(product)s' já existe nesta condição."
+msgstr "Uma linha para a variante de produto '%(product)s' já existe nesta condição."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -235,6 +257,17 @@ msgid "A reason is required when setting an extra discount."
 msgstr "Um motivo é necessário ao definir um desconto extra."
 
 #. module: tr_commercial_policy
+#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
+msgid ""
+"A sales profile defines the discount limits, payment\n"
+"                conditions and commission bands you operate under.\n"
+"                Profiles are assigned per company."
+msgstr ""
+"Um perfil de vendas define os limites de desconto, condições de pagamento\n"
+"                e faixas de comissão sob os quais você opera.\n"
+"                Perfis são atribuídos por empresa."
+
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
 #, python-format
@@ -242,8 +275,7 @@ msgid ""
 "A sales profile is required to confirm this order. Please set a profile on "
 "the salesperson or sales team."
 msgstr ""
-"Um perfil de vendas é necessário para confirmar este pedido. Por favor, "
-"defina um perfil no vendedor ou na equipe de vendas."
+"Um perfil de vendas é necessário para confirmar este pedido. Por favor, defina um perfil no vendedor ou na equipe de vendas."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -253,8 +285,7 @@ msgid ""
 "A sales profile is required. Review the commercial condition or partner "
 "setup."
 msgstr ""
-"Um perfil de vendas é necessário. Revise a condição comercial ou o cadastro "
-"do parceiro."
+"Um perfil de vendas é necessário. Revise a condição comercial ou o cadastro do parceiro."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__action
@@ -299,8 +330,7 @@ msgid ""
 "Adjust the invoice to match the sale order, or regenerate it from the sale "
 "order if needed."
 msgstr ""
-"Ajuste a fatura para corresponder ao pedido de venda, ou gere-a novamente a "
-"partir do pedido de venda, se necessário."
+"Ajuste a fatura para corresponder ao pedido de venda, ou gere-a novamente a partir do pedido de venda, se necessário."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__adjustment_factor_display
@@ -323,10 +353,37 @@ msgid "Administrative Expense Rate (%)"
 msgstr "Taxa de Despesa Administrativa (%)"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_admin_rate
+msgid ""
+"Administrative expense rate used to compute the contractual return "
+"adjustment factor. Composes additively with tax and freight as a deduction "
+"from the gross price. Changes affect only new documents and drafts that are "
+"recomputed after the change — existing drafts keep their current factor "
+"until touched."
+msgstr ""
+"Alíquota de despesa administrativa usada no cálculo do fator de correção do retorno contratual. Compõe aditivamente com imposto e frete como dedução do preço bruto. Alterações afetam apenas novos documentos e rascunhos que forem recalculados após a mudança — rascunhos existentes mantêm o fator atual até serem alterados."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
+msgid ""
+"Administrative expense rate. Composes\n"
+"                                additively with tax and freight as a deduction\n"
+"                                from the gross price in the adjustment factor."
+msgstr ""
+"Alíquota de despesa administrativa. Compõe\n"
+"                                aditivamente com imposto e frete como dedução\n"
+"                                do preço bruto no fator de correção."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile__profile_type__agent
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_search
 msgid "Agent"
 msgstr "Representante"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_account_invoice_line_agent
+msgid "Agent detail of commission line in invoice lines"
+msgstr "Detalhe do representante na linha de comissão das linhas da fatura"
 
 #. module: tr_commercial_policy
 #: model:ir.model,name:tr_commercial_policy.model_sale_order_line_agent
@@ -338,8 +395,7 @@ msgstr "Detalhe do representante da linha de comissão nas linhas do pedido"
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid "Agent profiles require at least one commission band per rule."
-msgstr ""
-"Perfis de representante exigem pelo menos uma faixa de comissão por regra."
+msgstr "Perfis de representante exigem pelo menos uma faixa de comissão por regra."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__all_same_discount
@@ -361,66 +417,6 @@ msgstr "Modos de Pagamento Permitidos"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__pricelist_ids
 msgid "Allowed Pricelists"
 msgstr "Listas de Preços Permitidas"
-
-#. module: tr_commercial_policy
-#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
-msgid ""
-"Alíquota composta de impostos usada no cálculo\n"
-"                                do fator de correção do retorno contratual."
-msgstr ""
-"Alíquota composta de impostos usada no cálculo\n"
-"                                do fator de correção do retorno contratual."
-
-#. module: tr_commercial_policy
-#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_tax_rate
-msgid ""
-"Alíquota composta de impostos usada no cálculo do fator de correção do "
-"retorno contratual."
-msgstr ""
-"Alíquota composta de impostos usada no cálculo do fator de correção do "
-"retorno contratual."
-
-#. module: tr_commercial_policy
-#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_admin_rate
-msgid ""
-"Alíquota de despesa administrativa usada no cálculo do fator de correção do "
-"retorno contratual. Compõe com imposto e frete como dedução do preço bruto."
-msgstr ""
-"Alíquota de despesa administrativa usada no cálculo do fator de correção do "
-"retorno contratual. Compõe com imposto e frete como dedução do preço bruto."
-
-#. module: tr_commercial_policy
-#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
-msgid ""
-"Alíquota de despesa administrativa. Compõe\n"
-"                                aditivamente com imposto e frete como "
-"dedução\n"
-"                                do preço bruto no cálculo do fator de "
-"correção."
-msgstr ""
-"Alíquota de despesa administrativa. Compõe\n"
-"                                aditivamente com imposto e frete como "
-"dedução\n"
-"                                do preço bruto no cálculo do fator de "
-"correção."
-
-#. module: tr_commercial_policy
-#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
-msgid ""
-"Alíquota de frete usada no cálculo do fator\n"
-"                                de correção do retorno contratual."
-msgstr ""
-"Alíquota de frete usada no cálculo do fator\n"
-"                                de correção do retorno contratual."
-
-#. module: tr_commercial_policy
-#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_freight_rate
-msgid ""
-"Alíquota de frete usada no cálculo do fator de correção do retorno "
-"contratual."
-msgstr ""
-"Alíquota de frete usada no cálculo do fator de correção do retorno "
-"contratual."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -474,8 +470,7 @@ msgid ""
 "Automatically set from the highest band value (commission bands for agents, "
 "order value bands for internals)."
 msgstr ""
-"Definido automaticamente a partir do maior valor da faixa (faixas de "
-"comissão para representantes, faixas por valor de pedido para internos)."
+"Definido automaticamente a partir do maior valor da faixa (faixas de comissão para representantes, faixas por valor de pedido para internos)."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__bands_summary
@@ -526,6 +521,57 @@ msgstr "Cancelar"
 
 #. module: tr_commercial_policy
 #. odoo-python
+#: code:addons/tr_commercial_policy/models/account_move_line_agent.py:0
+#, python-format
+msgid ""
+"Cannot %(action)s commission agent on invoice(s) '%(moves)s': line is "
+"already settled. Only a system admin can."
+msgstr ""
+"Não é possível %(action)s representante de comissão na(s) fatura(s) '%(moves)s': linha já liquidada. Somente um administrador do sistema pode."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/account_move_line_agent.py:0
+#, python-format
+msgid ""
+"Cannot create commission agent on invoice(s) '%(moves)s': past draft. Only a"
+" sales director can."
+msgstr ""
+"Não é possível criar representante de comissão na(s) fatura(s) '%(moves)s': além do rascunho. Somente um diretor de vendas pode."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sale_order_line_agent.py:0
+#, python-format
+msgid ""
+"Cannot create commission agent on order(s) '%(orders)s': past draft. Only a "
+"sales director can."
+msgstr ""
+"Não é possível criar representante de comissão no(s) pedido(s) '%(orders)s': além do rascunho. Somente um diretor de vendas pode."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/account_move_line_agent.py:0
+#, python-format
+msgid ""
+"Cannot modify commission agents on invoice '%(move)s': invoice is past "
+"draft. Only a sales director can."
+msgstr ""
+"Não é possível modificar representantes de comissão na fatura '%(move)s': fatura está além do rascunho. Somente um diretor de vendas pode."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sale_order_line_agent.py:0
+#, python-format
+msgid ""
+"Cannot modify commission agents on order '%(order)s': order is past draft. "
+"Only a sales director can."
+msgstr ""
+"Não é possível modificar representantes de comissão no pedido '%(order)s': pedido está além do rascunho. Somente um diretor de vendas pode."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sale_order.py:0
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
 #, python-format
 msgid "Cannot reload: customer has no commercial condition."
@@ -566,8 +612,7 @@ msgid ""
 "Cash discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) by "
 "sales profile '%(profile)s'."
 msgstr ""
-"Desconto à vista (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo "
-"perfil de vendas '%(profile)s'."
+"Desconto à vista (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -578,8 +623,7 @@ msgid ""
 "Cash discount (%(disc)s%%) exceeds the maximum (%(max)s%%) of profile "
 "'%(profile)s'."
 msgstr ""
-"Desconto à vista (%(disc)s%%) excede o máximo (%(max)s%%) do perfil "
-"'%(profile)s'."
+"Desconto à vista (%(disc)s%%) excede o máximo (%(max)s%%) do perfil '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -620,6 +664,11 @@ msgstr "Limpar Condições Comerciais Órfãs"
 #, python-format
 msgid "Clear"
 msgstr "Limpar"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Comissão (%)"
+msgstr "Comissão (%)"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -684,8 +733,7 @@ msgstr ""
 #: code:addons/tr_commercial_policy/models/account_move.py:0
 #, python-format
 msgid "Commercial revalidation requires at least one sale-order origin."
-msgstr ""
-"A revalidação comercial requer pelo menos um pedido de venda de origem."
+msgstr "A revalidação comercial requer pelo menos um pedido de venda de origem."
 
 #. module: tr_commercial_policy
 #: model:ir.model,name:tr_commercial_policy.model_commission
@@ -700,8 +748,7 @@ msgid ""
 "Commission '%(name)s' is managed by the commercial policy. Its formula must "
 "match the template. Please do not edit it manually."
 msgstr ""
-"A comissão '%(name)s' é gerenciada pela política comercial. Sua fórmula deve "
-"corresponder ao modelo. Por favor, não edite manualmente."
+"A comissão '%(name)s' é gerenciada pela política comercial. Sua fórmula deve corresponder ao modelo. Por favor, não edite manualmente."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move_line__commission_rate
@@ -734,8 +781,7 @@ msgid ""
 "Commission formula template did not produce a numeric result (got %(type)s) "
 "for scenario %(model)s."
 msgstr ""
-"O modelo de fórmula de comissão não produziu um resultado numérico (obteve "
-"%(type)s) para o cenário %(model)s."
+"O modelo de fórmula de comissão não produziu um resultado numérico (obteve %(type)s) para o cenário %(model)s."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -789,9 +835,7 @@ msgid ""
 "scenario %(model)s (base=%(base).0f, rate=%(rate).2f%%, "
 "punctuality=%(punct).0f%%)."
 msgstr ""
-"O modelo de fórmula de comissão produziu %(got).4f, mas o esperado era "
-"%(exp).4f para o cenário %(model)s (base=%(base).0f, rate=%(rate).2f%%, "
-"punctuality=%(punct).0f%%)."
+"O modelo de fórmula de comissão produziu %(got).4f, mas o esperado era %(exp).4f para o cenário %(model)s (base=%(base).0f, rate=%(rate).2f%%, punctuality=%(punct).0f%%)."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -801,8 +845,7 @@ msgid ""
 "Commission formula template produced a negative result (%(val).4f) for "
 "scenario %(model)s."
 msgstr ""
-"O modelo de fórmula de comissão produziu um resultado negativo (%(val).4f) "
-"para o cenário %(model)s."
+"O modelo de fórmula de comissão produziu um resultado negativo (%(val).4f) para o cenário %(model)s."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -820,9 +863,7 @@ msgid ""
 "'%(discount).2f%%' has rate '%(rate).2f%%' which is not less than the "
 "previous rate."
 msgstr ""
-"A taxa de comissão deve ser estritamente decrescente conforme o desconto "
-"aumenta. A faixa '%(discount).2f%%' tem taxa '%(rate).2f%%' que não é menor "
-"que a taxa anterior."
+"A taxa de comissão deve ser estritamente decrescente conforme o desconto aumenta. A faixa '%(discount).2f%%' tem taxa '%(rate).2f%%' que não é menor que a taxa anterior."
 
 #. module: tr_commercial_policy
 #: model:ir.model,name:tr_commercial_policy.model_account_move_line
@@ -844,6 +885,24 @@ msgstr "Empresa"
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition__profile_source__company
 msgid "Company Default"
 msgstr "Padrão da Empresa"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
+msgid ""
+"Composite tax rate used to compute the\n"
+"                                contractual return adjustment factor."
+msgstr ""
+"Alíquota composta de impostos usada no cálculo do\n"
+"                                fator de correção do retorno contratual."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_tax_rate
+msgid ""
+"Composite tax rate used to compute the contractual return adjustment factor."
+" Changes affect only new documents and drafts that are recomputed after the "
+"change — existing drafts keep their current factor until touched."
+msgstr ""
+"Alíquota composta de impostos usada no cálculo do fator de correção do retorno contratual. Alterações afetam apenas novos documentos e rascunhos que forem recalculados após a mudança — rascunhos existentes mantêm o fator atual até serem alterados."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__condition_id
@@ -928,8 +987,7 @@ msgid ""
 "Contractual return percentage (formerly punctuality discount). Used to "
 "adjust reference price."
 msgstr ""
-"Percentual de retorno contratual (antigo desconto de pontualidade). Usado "
-"para ajustar o preço de referência."
+"Percentual de retorno contratual (antigo desconto de pontualidade). Usado para ajustar o preço de referência."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -946,9 +1004,7 @@ msgid ""
 "reference price with discount breakdown. 'Net Price Only' shows only the "
 "final price."
 msgstr ""
-"Controla como os preços aparecem nos documentos impressos. 'Mostrar "
-"Descontos' exibe o preço de referência com detalhamento dos descontos. "
-"'Apenas Preço Líquido' mostra apenas o preço final."
+"Controla como os preços aparecem nos documentos impressos. 'Mostrar Descontos' exibe o preço de referência com detalhamento dos descontos. 'Apenas Preço Líquido' mostra apenas o preço final."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -956,9 +1012,36 @@ msgstr ""
 #, python-format
 msgid ""
 "Could not create managed commission for rate %(rate).2f%%. Please retry."
+msgstr "Não foi possível criar comissão gerenciada para a taxa %(rate).2f%%. Tente novamente."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Could not resolve a sales profile for customer '%(partner)s' in company "
+"'%(company)s'. This change would leave the customer's commercial condition "
+"without a valid sales profile. Configure another agent / team / default "
+"profile for this company before continuing."
 msgstr ""
-"Não foi possível criar comissão gerenciada para a taxa %(rate).2f%%. Tente "
-"novamente."
+"Não foi possível resolver um perfil de vendas para o cliente '%(partner)s' na empresa '%(company)s'. Esta alteração deixaria a condição comercial do cliente sem um perfil de vendas válido. Configure outro representante / equipe / perfil padrão para esta empresa antes de continuar."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/migrations/16.0.2.4.0/post-migration.py:0
+#, python-format
+msgid ""
+"Could not resolve a same-company sales profile for %(total)d commercial condition(s) after upgrade — %(unresolved)d without any profile and %(cross)d still pointing at another company's profile.\n"
+"\n"
+"%(details)s%(suffix)s\n"
+"\n"
+"Configure the agent/team/default sales profile for these customers in their respective companies and re-run the upgrade."
+msgstr ""
+"Não foi possível resolver um perfil de vendas da mesma empresa para %(total)d condição(ões) comercial(is) após o upgrade — %(unresolved)d sem qualquer perfil e %(cross)d ainda apontando para um perfil de outra empresa.\n"
+"\n"
+"%(details)s%(suffix)s\n"
+"\n"
+"Configure o representante/equipe/perfil padrão de vendas para estes clientes em suas respectivas empresas e execute o upgrade novamente."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.actions.act_window,help:tr_commercial_policy.partner_commercial_condition_action
@@ -1052,8 +1135,7 @@ msgid ""
 "Default sales profile for members of this team. Individual profile on the "
 "salesperson takes precedence."
 msgstr ""
-"Perfil de vendas padrão para membros desta equipe. O perfil individual do "
-"vendedor tem precedência."
+"Perfil de vendas padrão para membros desta equipe. O perfil individual do vendedor tem precedência."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
@@ -1062,8 +1144,7 @@ msgid ""
 "                                agent, salesperson, or team profile is found."
 msgstr ""
 "Perfil de vendas padrão usado como fallback quando\n"
-"                                nenhum perfil de agente, vendedor ou equipe "
-"é encontrado."
+"                                nenhum perfil de agente, vendedor ou equipe é encontrado."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__seller_discount
@@ -1071,9 +1152,39 @@ msgid "Default seller discount for products without a specific line."
 msgstr "Desconto do vendedor padrão para produtos sem uma linha específica."
 
 #. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid ""
+"Define the UoM for Min Qty. The unit could not be inferred automatically for"
+" this rule scope."
+msgstr ""
+"Defina a UdM para Qtd Mínima. A unidade não pôde ser inferida automaticamente para o escopo desta regra."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__delivery_carrier_id
 msgid "Delivery Method"
 msgstr "Método de Entrega"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Desconto FOB"
+msgstr "Desconto FOB"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Desconto até (%)"
+msgstr "Desconto até (%)"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Desconto máximo (%)"
+msgstr "Desconto máximo (%)"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Desconto à Vista"
+msgstr "Desconto à Vista"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1083,25 +1194,30 @@ msgid ""
 "Direct editing of price and discount is not allowed on invoice lines. Use "
 "seller discount and extra discount fields instead."
 msgstr ""
-"A edição direta de preço e desconto não é permitida nas linhas da fatura. "
-"Use os campos de desconto do vendedor e desconto extra."
+"A edição direta de preço e desconto não é permitida nas linhas da fatura. Use os campos de desconto do vendedor e desconto extra."
 
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order_line.py:0
 #, python-format
 msgid ""
-"Direct editing of price and discount is not allowed. Use seller discount and "
-"extra discount fields instead."
+"Direct editing of price and discount is not allowed. Use seller discount and"
+" extra discount fields instead."
 msgstr ""
-"A edição direta de preço e desconto não é permitida. Use os campos de "
-"desconto do vendedor e desconto extra."
+"A edição direta de preço e desconto não é permitida. Use os campos de desconto do vendedor e desconto extra."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__account_move__discount_approval_level__director
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__sale_order__discount_approval_level__director
 msgid "Director"
 msgstr "Diretor"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid "Disc. %(start)s-%(end)s%% → Comm. %(rate)s%%"
+msgstr "Desc. %(start)s-%(end)s%% → Com. %(rate)s%%"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_group_condition_wizard__action__inherit
@@ -1187,9 +1303,7 @@ msgstr "Não Salvar"
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__commission_rate
 msgid "Dynamic commission rate based on seller discount and commission bands."
-msgstr ""
-"Taxa de comissão dinâmica baseada no desconto do vendedor e faixas de "
-"comissão."
+msgstr "Taxa de comissão dinâmica baseada no desconto do vendedor e faixas de comissão."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_partner__effective_condition_id
@@ -1264,6 +1378,15 @@ msgid "Extra disc. %(old)s%% → %(new)s%%"
 msgstr "Desc. extra %(old)s%% → %(new)s%%"
 
 #. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/account_move_line.py:0
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#: code:addons/tr_commercial_policy/models/sale_order_line.py:0
+#, python-format
+msgid "Extra discount cannot be combined with a seller markup."
+msgstr "Desconto extra não pode ser combinado com markup do vendedor."
+
+#. module: tr_commercial_policy
 #. odoo-javascript
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/account_move_line.py:0
@@ -1297,8 +1420,7 @@ msgid ""
 "Extra discount on commercial conditions requires manager or director "
 "approval."
 msgstr ""
-"Desconto extra em condições comerciais requer aprovação do gerente ou "
-"diretor."
+"Desconto extra em condições comerciais requer aprovação do gerente ou diretor."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -1313,8 +1435,7 @@ msgid ""
 "Extra discount up to this limit can be approved by manager. Above this "
 "requires director approval."
 msgstr ""
-"Desconto extra até este limite pode ser aprovado pelo gerente. Acima disso "
-"requer aprovação do diretor."
+"Desconto extra até este limite pode ser aprovado pelo gerente. Acima disso requer aprovação do diretor."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -1358,8 +1479,7 @@ msgid ""
 "FOB discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) by "
 "sales profile '%(profile)s'."
 msgstr ""
-"Desconto FOB (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo "
-"perfil de vendas '%(profile)s'."
+"Desconto FOB (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1370,8 +1490,7 @@ msgid ""
 "FOB discount (%(disc)s%%) exceeds the maximum (%(max)s%%) of profile "
 "'%(profile)s'."
 msgstr ""
-"Desconto FOB (%(disc)s%%) excede o máximo (%(max)s%%) do perfil "
-"'%(profile)s'."
+"Desconto FOB (%(disc)s%%) excede o máximo (%(max)s%%) do perfil '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -1386,6 +1505,11 @@ msgstr "O desconto FOB sozinho já excede esse valor."
 #, python-format
 msgid "FOB discount: invoice %(inv).2f%% vs order %(sale).2f%%"
 msgstr "Desconto FOB: fatura %(inv).2f%% vs pedido %(sale).2f%%"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Faixas de Desconto do Vendedor"
+msgstr "Faixas de Desconto do Vendedor"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_follower_ids
@@ -1406,6 +1530,24 @@ msgstr "Ícone Font Awesome, ex.: fa-tasks"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_config_settings__tr_policy_freight_rate
 msgid "Freight Rate (%)"
 msgstr "Taxa de Frete (%)"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
+msgid ""
+"Freight rate used to compute the\n"
+"                                contractual return adjustment factor."
+msgstr ""
+"Alíquota de frete usada no cálculo do\n"
+"                                fator de correção do retorno contratual."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_freight_rate
+msgid ""
+"Freight rate used to compute the contractual return adjustment factor. "
+"Changes affect only new documents and drafts that are recomputed after the "
+"change — existing drafts keep their current factor until touched."
+msgstr ""
+"Alíquota de frete usada no cálculo do fator de correção do retorno contratual. Alterações afetam apenas novos documentos e rascunhos que forem recalculados após a mudança — rascunhos existentes mantêm o fator atual até serem alterados."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile_rule__applied_on__general
@@ -1525,8 +1667,7 @@ msgstr "Interno"
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid "Internal profiles require at least one order value band per rule."
-msgstr ""
-"Perfis internos exigem pelo menos uma faixa por valor de pedido por regra."
+msgstr "Perfis internos exigem pelo menos uma faixa por valor de pedido por regra."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__invoice_discount_pct
@@ -1665,6 +1806,11 @@ msgid "Level of the current condition: general, template or variant."
 msgstr "Nível da condição atual: geral, modelo ou variante."
 
 #. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Limites de Desconto"
+msgstr "Limites de Desconto"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__line_description
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
 msgid "Line"
@@ -1673,14 +1819,13 @@ msgstr "Linha"
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/account_move.py:0
+#: code:addons/tr_commercial_policy/models/account_move.py:0
 #, python-format
 msgid ""
 "Line '%(product)s' has %(count)d sale order lines. The commercial policy "
 "currently supports only one-to-one invoice-to-sale line mapping."
 msgstr ""
-"A linha '%(product)s' tem %(count)d linhas de pedido de venda. A política "
-"comercial suporta apenas mapeamento um-para-um entre linha de fatura e linha "
-"de pedido."
+"A linha '%(product)s' tem %(count)d linhas de pedido de venda. A política comercial suporta apenas mapeamento um-para-um entre linha de fatura e linha de pedido."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1688,12 +1833,10 @@ msgstr ""
 #, python-format
 msgid ""
 "Line '%(product)s' has agent '%(agent)s' with profile '%(agent_profile)s', "
-"but the order uses profile '%(order_profile)s'. All agents must use the same "
-"profile."
+"but the order uses profile '%(order_profile)s'. All agents must use the same"
+" profile."
 msgstr ""
-"A linha '%(product)s' tem o agente '%(agent)s' com perfil "
-"'%(agent_profile)s', mas o pedido usa o perfil '%(order_profile)s'. Todos os "
-"agentes devem usar o mesmo perfil."
+"A linha '%(product)s' tem o agente '%(agent)s' com perfil '%(agent_profile)s', mas o pedido usa o perfil '%(order_profile)s'. Todos os agentes devem usar o mesmo perfil."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1704,8 +1847,7 @@ msgid ""
 "Line '%(product)s': extra discount (%(disc)s%%) exceeds the manager limit "
 "(%(max)s%%)."
 msgstr ""
-"Linha '%(product)s': desconto extra (%(disc)s%%) excede o limite do gerente "
-"(%(max)s%%)."
+"Linha '%(product)s': desconto extra (%(disc)s%%) excede o limite do gerente (%(max)s%%)."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1723,8 +1865,7 @@ msgid ""
 "Line '%(product)s': order amount (R$ %(amount).2f) is below the minimum (R$ "
 "%(min).2f) required for discount (%(disc).2f%%)."
 msgstr ""
-"Linha '%(product)s': valor do pedido (R$ %(amount).2f) está abaixo do mínimo "
-"(R$ %(min).2f) exigido para o desconto (%(disc).2f%%)."
+"Linha '%(product)s': valor do pedido (R$ %(amount).2f) está abaixo do mínimo (R$ %(min).2f) exigido para o desconto (%(disc).2f%%)."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1734,8 +1875,7 @@ msgid ""
 "Line '%(product)s': unit price was directly edited. Use seller/extra "
 "discount instead."
 msgstr ""
-"Linha '%(product)s': o preço unitário foi editado diretamente. Use o "
-"desconto do vendedor/extra."
+"Linha '%(product)s': o preço unitário foi editado diretamente. Use o desconto do vendedor/extra."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1809,19 +1949,17 @@ msgstr "Alterações nas Linhas"
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #, python-format
-msgid "Line applied on 'Product Template' must not have a product variant set."
-msgstr ""
-"Linha aplicada em 'Template de Produto' não deve ter uma variante de produto "
-"definida."
+msgid ""
+"Line applied on 'Product Template' must not have a product variant set."
+msgstr "Linha aplicada em 'Template de Produto' não deve ter uma variante de produto definida."
 
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #, python-format
-msgid "Line applied on 'Product Variant' must not have a product template set."
-msgstr ""
-"Linha aplicada em 'Variante de Produto' não deve ter um template de produto "
-"definido."
+msgid ""
+"Line applied on 'Product Variant' must not have a product template set."
+msgstr "Linha aplicada em 'Variante de Produto' não deve ter um template de produto definido."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__lines_changed_count
@@ -1878,23 +2016,27 @@ msgid "Max Seller Discount (%)"
 msgstr "Máx. Desconto do Vendedor (%)"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move_line__seller_markup_max
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_res_config_settings__tr_policy_seller_markup_max
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order_line__seller_markup_max
+msgid "Max Seller Markup (%)"
+msgstr "Markup Máximo do Vendedor (%)"
+
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid ""
 "Max seller discount must be strictly increasing as order amount increases. "
-"Band 'R$ %(amount).2f' has discount '%(disc).2f%%' which is not greater than "
-"the previous discount."
+"Band 'R$ %(amount).2f' has discount '%(disc).2f%%' which is not greater than"
+" the previous discount."
 msgstr ""
-"O desconto máximo do vendedor deve ser estritamente crescente conforme o "
-"valor do pedido aumenta. A faixa 'R$ %(amount).2f' tem desconto "
-"'%(disc).2f%%' que não é maior que o desconto anterior."
+"O desconto máximo do vendedor deve ser estritamente crescente conforme o valor do pedido aumenta. A faixa 'R$ %(amount).2f' tem desconto '%(disc).2f%%' que não é maior que o desconto anterior."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_tr_sales_profile__cash_term_avg_days_max
 msgid "Maximum average payment term days to allow cash discount."
-msgstr ""
-"Máximo de dias médios do prazo de pagamento para permitir desconto à vista."
+msgstr "Máximo de dias médios do prazo de pagamento para permitir desconto à vista."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
@@ -1902,23 +2044,47 @@ msgid ""
 "Maximum days after sale order confirmation for\n"
 "                                invoice to retain parity. 0 = disabled."
 msgstr ""
+"Dias máximos após a confirmação do pedido de venda\n"
+"                                para que a fatura mantenha paridade. 0 = desabilitado."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_res_company__invoice_validity_days
 #: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__company_invoice_validity_days
 msgid ""
-"Maximum days after sale order confirmation for invoice to retain parity. 0 = "
-"disabled."
+"Maximum days after sale order confirmation for invoice to retain parity. 0 ="
+" disabled."
 msgstr ""
-"Máximo de dias após a confirmação do pedido para a fatura manter paridade. 0 "
-"= desabilitado."
+"Máximo de dias após a confirmação do pedido para a fatura manter paridade. 0 = desabilitado."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__seller_markup_max
+#: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__seller_markup_max
+msgid "Maximum markup (negative seller discount) allowed globally."
+msgstr "Markup máximo (desconto negativo do vendedor) permitido globalmente."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
+msgid ""
+"Maximum percentage the seller can increase the\n"
+"                                price above the reference price. Zero disables\n"
+"                                markup entirely."
+msgstr ""
+"Percentual máximo que o vendedor pode aumentar o\n"
+"                                preço acima do preço de referência. Zero desabilita\n"
+"                                o markup completamente."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_res_config_settings__tr_policy_seller_markup_max
+msgid ""
+"Maximum percentage the seller can increase the price above the reference "
+"price (negative seller discount). Zero means no markup is allowed."
+msgstr ""
+"Percentual máximo que o vendedor pode aumentar o preço acima do preço de referência (desconto negativo do vendedor). Zero significa que nenhum markup é permitido."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__seller_discount_max
 msgid "Maximum seller discount allowed by the sales profile for this product."
-msgstr ""
-"Desconto máximo do vendedor permitido pelo perfil de vendas para este "
-"produto."
+msgstr "Desconto máximo do vendedor permitido pelo perfil de vendas para este produto."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__seller_discount_max
@@ -1936,14 +2102,66 @@ msgid "Messages"
 msgstr "Mensagens"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__qty_min
+msgid "Min Qty"
+msgstr "Qtd Mínima"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid "Min Qty cannot be negative (got %.4f)."
+msgstr "Qtd Mínima não pode ser negativa (recebido %.4f)."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid ""
+"Min Qty is set (%.4f) but Qty UoM is missing. Define a unit of measure so "
+"the line quantity can be compared."
+msgstr ""
+"Qtd Mínima está definida (%.4f) mas UdM da Qtd está ausente. Defina uma unidade de medida para que a quantidade da linha possa ser comparada."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid "Min. %(amount)s → Disc. max %(disc)s%%"
+msgstr "Mín. %(amount)s → Desc. máx %(disc)s%%"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__order_min_amount
 msgid "Minimum Order Amount"
 msgstr "Valor Mínimo do Pedido"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_tr_sales_profile_rule__qty_min
+msgid ""
+"Minimum quantity on the order/invoice line for this rule to be applicable. When 0, the rule applies regardless of quantity. Multiple rules in the same scope (e.g. same product variant) with increasing qty_min values define volume bands — the highest band whose threshold is met wins.\n"
+"\n"
+"Fallback: when the most specific rule does not meet qty_min, resolution moves to the next level (variant → template → category → general). This is by design, not a bug."
+msgstr ""
+"Quantidade mínima na linha do pedido/fatura para que esta regra seja aplicável. Quando 0, a regra se aplica independentemente da quantidade. Múltiplas regras no mesmo escopo (ex. mesma variante de produto) com valores crescentes de qty_min definem faixas de volume — vence a faixa mais alta cujo limite for atingido.\n"
+"\n"
+"Fallback: quando a regra mais específica não atende qty_min, a resolução avança para o próximo nível (variante → modelo → categoria → geral). Isso é por design, não é bug."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Modos de pagamento permitidos:"
+msgstr "Modos de pagamento permitidos:"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__my_activity_date_deadline
 msgid "My Activity Deadline"
 msgstr "Prazo da Minha Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.actions.act_window,name:tr_commercial_policy.tr_sales_profile_my_action
+#: model:ir.actions.server,name:tr_commercial_policy.tr_sales_profile_my_action_server
+#: model:ir.ui.menu,name:tr_commercial_policy.menu_my_sales_profiles
+msgid "My Sales Profiles"
+msgstr "Meus Perfis de Vendas"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__name
@@ -1986,8 +2204,7 @@ msgstr "Sem Perfil de Vendas"
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
 msgid ""
 "No differences found between the order and the\n"
-"                    customer's commercial condition. Everything is up to "
-"date."
+"                    customer's commercial condition. Everything is up to date."
 msgstr ""
 "Nenhuma diferença encontrada entre o pedido e a\n"
 "                    condição comercial do cliente. Tudo está atualizado."
@@ -1998,6 +2215,11 @@ msgstr ""
 #, python-format
 msgid "No order lines."
 msgstr "Sem linhas de pedido."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
+msgid "No sales profile assigned to you"
+msgstr "Nenhum perfil de vendas atribuído a você"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2012,15 +2234,12 @@ msgstr "Nenhum perfil de vendas encontrado para a condição deste cliente."
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move__invoice_divergence_warning
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_payment__invoice_divergence_warning
 msgid ""
-"Non-stored live feedback. When this invoice originates from a sale order and "
-"the user edits something that breaks snapshot parity, the banner lists the "
+"Non-stored live feedback. When this invoice originates from a sale order and"
+" the user edits something that breaks snapshot parity, the banner lists the "
 "divergences so the user can correct them BEFORE the post-time "
 "``_check_invoice_policy`` hard block."
 msgstr ""
-"Feedback ao vivo não persistido. Quando esta fatura vem de um pedido de "
-"venda e o usuário edita algo que quebra a paridade com o snapshot do pedido, "
-"o banner lista as divergências para que o usuário possa corrigi-las ANTES do "
-"bloqueio de ``_check_invoice_policy`` no momento de postar."
+"Feedback ao vivo não persistido. Quando esta fatura vem de um pedido de venda e o usuário edita algo que quebra a paridade com o snapshot do pedido, o banner lista as divergências para que o usuário possa corrigi-las ANTES do bloqueio de ``_check_invoice_policy`` no momento de postar."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__account_move__discount_approval_level__none
@@ -2052,6 +2271,24 @@ msgstr "Número de mensagens com erro de entrega"
 #: model:ir.model.constraint,message:tr_commercial_policy.constraint_partner_commercial_condition_partner_unique
 msgid "Only one commercial condition per partner per company is allowed."
 msgstr "Apenas uma condição comercial por parceiro por empresa é permitida."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Only sales managers can change the pricelist on a commercial condition."
+msgstr "Somente gerentes de vendas podem alterar a lista de preços de uma condição comercial."
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Only sales managers can choose the pricelist on a commercial condition. The "
+"default from the sales profile is used automatically."
+msgstr ""
+"Somente gerentes de vendas podem escolher a lista de preços de uma condição comercial. O padrão do perfil de vendas é usado automaticamente."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -2102,9 +2339,12 @@ msgid ""
 "agents registered. Please remove the commissions or register the agent on "
 "the customer."
 msgstr ""
-"As linhas do pedido possuem comissões de representante, mas o cliente "
-"'%(partner)s' não possui representantes cadastrados. Por favor, remova as "
-"comissões ou cadastre o representante no cliente."
+"As linhas do pedido possuem comissões de representante, mas o cliente '%(partner)s' não possui representantes cadastrados. Por favor, remova as comissões ou cadastre o representante no cliente."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "PERFIL DE VENDAS"
+msgstr "PERFIL DE VENDAS"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__partner_id
@@ -2164,8 +2404,7 @@ msgid ""
 "Payment term average (%(days)s days) exceeds the maximum (%(max)s days) of "
 "profile '%(profile)s'."
 msgstr ""
-"Prazo médio de pagamento (%(days)s dias) excede o máximo (%(max)s dias) do "
-"perfil '%(profile)s'."
+"Prazo médio de pagamento (%(days)s dias) excede o máximo (%(max)s dias) do perfil '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2175,11 +2414,23 @@ msgid "Payment term diverges from the sale order."
 msgstr "O prazo de pagamento diverge do pedido de venda."
 
 #. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Prazo médio máximo:"
+msgstr "Prazo médio máximo:"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__adjustment_factor
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order__adjustment_factor
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__adjustment_factor
 msgid "Price adjustment percentage due to contractual return."
 msgstr "Percentual de ajuste de preço devido ao retorno contratual."
+
+#. module: tr_commercial_policy
+#. odoo-javascript
+#: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.js:0
+#, python-format
+msgid "Price exceeds the maximum allowed markup."
+msgstr "Preço excede o markup máximo permitido."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__base_price
@@ -2192,13 +2443,6 @@ msgstr "Preço da lista de preços (preço base da tabela)."
 #, python-format
 msgid "Price must be greater than zero."
 msgstr "O preço deve ser maior que zero."
-
-#. module: tr_commercial_policy
-#. odoo-javascript
-#: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.js:0
-#, python-format
-msgid "Price must be lower than the reference price."
-msgstr "O preço deve ser menor que o preço de referência."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__effective_pricelist_id
@@ -2220,9 +2464,7 @@ msgstr "Aviso de Lista de Preços"
 #: model:ir.model.fields,help:tr_commercial_policy.field_tr_sales_profile__pricelist_ids
 msgid ""
 "Pricelists allowed for this profile. If empty, any pricelist is accepted."
-msgstr ""
-"Listas de preços permitidas para este perfil. Se vazio, qualquer lista de "
-"preços é aceita."
+msgstr "Listas de preços permitidas para este perfil. Se vazio, qualquer lista de preços é aceita."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
@@ -2282,25 +2524,21 @@ msgstr "Variante de Produto"
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid "Product category is required when applied on 'Product Category'."
-msgstr ""
-"A categoria de produto é obrigatória quando aplicado em 'Categoria de "
-"Produto'."
+msgstr "A categoria de produto é obrigatória quando aplicado em 'Categoria de Produto'."
 
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid "Product template is required when applied on 'Product Template'."
-msgstr ""
-"O modelo de produto é obrigatório quando aplicado em 'Modelo de Produto'."
+msgstr "O modelo de produto é obrigatório quando aplicado em 'Modelo de Produto'."
 
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sales_profile.py:0
 #, python-format
 msgid "Product variant is required when applied on 'Product Variant'."
-msgstr ""
-"A variante de produto é obrigatória quando aplicado em 'Variante de Produto'."
+msgstr "A variante de produto é obrigatória quando aplicado em 'Variante de Produto'."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__profile_id
@@ -2315,8 +2553,7 @@ msgid ""
 "Profile '%s' must have at least one rule. Without a rule, lines using this "
 "profile end up with commissions not managed by the commercial policy."
 msgstr ""
-"O perfil '%s' deve ter pelo menos uma regra. Sem regra, linhas que usam este "
-"perfil terminam com comissões não gerenciadas pela política comercial."
+"O perfil '%s' deve ter pelo menos uma regra. Sem regra, linhas que usam este perfil terminam com comissões não gerenciadas pela política comercial."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_form
@@ -2338,6 +2575,18 @@ msgstr "Tipo de Perfil"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__punctuality_discount
 msgid "Punctuality Discount (%)"
 msgstr "Desconto de Pontualidade (%)"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__qty_uom_id
+msgid "Qty UoM"
+msgstr "UdM da Qtd"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/sales_profile.py:0
+#, python-format
+msgid "Qty UoM Required"
+msgstr "UdM da Qtd Obrigatória"
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -2406,8 +2655,7 @@ msgstr "Remover desconto extra"
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_payment__discount_approval_level
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order__discount_approval_level
 msgid "Required approval level based on discount policy violations."
-msgstr ""
-"Nível de aprovação necessário baseado nas violações da política de desconto."
+msgstr "Nível de aprovação necessário baseado nas violações da política de desconto."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_user_id
@@ -2485,6 +2733,7 @@ msgid "Sales Order Line"
 msgstr "Linha do Pedido de Venda"
 
 #. module: tr_commercial_policy
+#: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
 #: model:ir.model,name:tr_commercial_policy.model_tr_sales_profile
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__sales_profile_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__sales_profile_id
@@ -2493,7 +2742,6 @@ msgstr "Linha do Pedido de Venda"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_partner__sales_profile_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_users__sales_profile_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__sales_profile_id
-#: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_form
 msgid "Sales Profile"
@@ -2517,14 +2765,25 @@ msgid "Sales Team"
 msgstr "Equipe de Vendas"
 
 #. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Sales profile '%(profile)s' belongs to company '%(profile_company)s' but the"
+" commercial condition is for company '%(condition_company)s'. This is an "
+"inconsistency — please review the agent/team/default profile configuration "
+"for this customer and company."
+msgstr ""
+"Perfil de vendas '%(profile)s' pertence à empresa '%(profile_company)s' mas a condição comercial é para a empresa '%(condition_company)s'. Isto é uma inconsistência — revise a configuração de representante/equipe/perfil padrão para este cliente e empresa."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_res_partner__sales_profile_id
 #: model:ir.model.fields,help:tr_commercial_policy.field_res_users__sales_profile_id
 msgid ""
 "Sales profile for this agent/salesperson. Overrides team and global default "
 "profiles."
 msgstr ""
-"Perfil de vendas para este representante/vendedor. Sobrescreve os perfis "
-"padrão da equipe e global."
+"Perfil de vendas para este representante/vendedor. Sobrescreve os perfis padrão da equipe e global."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_action
@@ -2653,8 +2912,7 @@ msgid ""
 "Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) by "
 "sales profile '%(profile)s'."
 msgstr ""
-"Desconto do vendedor (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) "
-"pelo perfil de vendas '%(profile)s'."
+"Desconto do vendedor (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2664,8 +2922,7 @@ msgid ""
 "Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) by "
 "your sales profile '%(profile)s'."
 msgstr ""
-"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido "
-"(%(max).2f%%) pelo seu perfil de vendas '%(profile)s'."
+"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) pelo seu perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2673,22 +2930,20 @@ msgstr ""
 #: code:addons/tr_commercial_policy/models/sale_order_line.py:0
 #, python-format
 msgid ""
-"Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) for "
-"product '%(product)s'."
+"Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) for"
+" product '%(product)s'."
 msgstr ""
-"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido "
-"(%(max).2f%%) para o produto '%(product)s'."
+"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) para o produto '%(product)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #, python-format
 msgid ""
-"Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) for "
-"the customer's average order amount (R$ %(avg).2f)."
+"Seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) for"
+" the customer's average order amount (R$ %(avg).2f)."
 msgstr ""
-"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido "
-"(%(max).2f%%) para o valor médio de pedido do cliente (R$ %(avg).2f)."
+"O desconto do vendedor (%(disc).2f%%) excede o máximo permitido (%(max).2f%%) para o valor médio de pedido do cliente (R$ %(avg).2f)."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -2696,6 +2951,23 @@ msgstr ""
 #, python-format
 msgid "Seller discount:"
 msgstr "Desconto do vendedor:"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/policy_utils.py:0
+#, python-format
+msgid ""
+"Seller markup (%(markup).2f%%) exceeds the maximum allowed markup "
+"(%(max).2f%%)."
+msgstr ""
+"Markup do vendedor (%(markup).2f%%) excede o markup máximo permitido (%(max).2f%%)."
+
+#. module: tr_commercial_policy
+#. odoo-javascript
+#: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.xml:0
+#, python-format
+msgid "Seller markup:"
+msgstr "Markup do vendedor:"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__sequence
@@ -2708,6 +2980,7 @@ msgid "Show Discounts"
 msgstr "Mostrar Descontos"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_invoice_line_agent__smart_search
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__smart_search
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move_line__smart_search
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_commission__smart_search
@@ -2741,11 +3014,10 @@ msgstr "Pesquisa Inteligente"
 #: code:addons/tr_commercial_policy/models/account_move.py:0
 #, python-format
 msgid ""
-"Some lines have commissions not managed by the commercial policy: %s. Review "
-"them before posting."
+"Some lines have commissions not managed by the commercial policy: %s. Review"
+" them before posting."
 msgstr ""
-"Algumas linhas possuem comissões não gerenciadas pela política comercial: "
-"%s. Revise-as antes de lançar."
+"Algumas linhas possuem comissões não gerenciadas pela política comercial: %s. Revise-as antes de lançar."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2755,9 +3027,7 @@ msgid ""
 "Some lines have commissions not managed by the commercial policy: %s. Use "
 "'Recalculate Commissions' to fix, or a director can confirm as-is."
 msgstr ""
-"Algumas linhas possuem comissões não gerenciadas pela política comercial: "
-"%s. Use 'Recalcular Comissões' para corrigir, ou um diretor pode confirmar "
-"como está."
+"Algumas linhas possuem comissões não gerenciadas pela política comercial: %s. Use 'Recalcular Comissões' para corrigir, ou um diretor pode confirmar como está."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2832,9 +3102,7 @@ msgid ""
 "sales profile. Please assign a profile to the agent before linking it to a "
 "customer."
 msgstr ""
-"O representante '%(agent)s' atribuído ao cliente '%(partner)s' não possui um "
-"perfil de vendas. Por favor, atribua um perfil ao representante antes de "
-"vinculá-lo a um cliente."
+"O representante '%(agent)s' atribuído ao cliente '%(partner)s' não possui um perfil de vendas. Por favor, atribua um perfil ao representante antes de vinculá-lo a um cliente."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2844,9 +3112,7 @@ msgid ""
 "The commercial condition belongs to '%(owner)s' and cannot be assigned to "
 "'%(partner)s'. A condition can only be shared within the same company group."
 msgstr ""
-"A condição comercial pertence a '%(owner)s' e não pode ser atribuída a "
-"'%(partner)s'. Uma condição só pode ser compartilhada dentro do mesmo grupo "
-"de empresas."
+"A condição comercial pertence a '%(owner)s' e não pode ser atribuída a '%(partner)s'. Uma condição só pode ser compartilhada dentro do mesmo grupo de empresas."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_commission__tr_rate
@@ -2866,8 +3132,7 @@ msgid ""
 "The customer '%(partner)s' can have at most one sales agent. Please remove "
 "the extra agents."
 msgstr ""
-"O cliente '%(partner)s' pode ter no máximo um representante de vendas. Por "
-"favor, remova os representantes extras."
+"O cliente '%(partner)s' pode ter no máximo um representante de vendas. Por favor, remova os representantes extras."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2877,9 +3142,7 @@ msgid ""
 "The customer '%(partner)s' has a sales agent '%(agent)s' but the agent has "
 "no sales profile assigned. Please set a profile on the agent."
 msgstr ""
-"O cliente '%(partner)s' possui um representante de vendas '%(agent)s', mas o "
-"representante não possui perfil de vendas atribuído. Por favor, defina um "
-"perfil no representante."
+"O cliente '%(partner)s' possui um representante de vendas '%(agent)s', mas o representante não possui perfil de vendas atribuído. Por favor, defina um perfil no representante."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order__punctuality_discount
@@ -2905,8 +3168,7 @@ msgid ""
 "The group '%(group)s' has a commercial condition that will be inherited by "
 "this customer."
 msgstr ""
-"O grupo '%(group)s' possui uma condição comercial que será herdada por este "
-"cliente."
+"O grupo '%(group)s' possui uma condição comercial que será herdada por este cliente."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2917,9 +3179,7 @@ msgid ""
 "condition will override it. To inherit the group condition instead, go to "
 "the Sales & Purchase tab and click 'Remove Override'."
 msgstr ""
-"O grupo '%(group)s' possui uma condição comercial, mas a condição própria "
-"deste cliente irá sobrescrevê-la. Para herdar a condição do grupo, vá na aba "
-"Vendas e Compras e clique em 'Remover Substituição'."
+"O grupo '%(group)s' possui uma condição comercial, mas a condição própria deste cliente irá sobrescrevê-la. Para herdar a condição do grupo, vá na aba Vendas e Compras e clique em 'Remover Substituição'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2930,9 +3190,7 @@ msgid ""
 "Invoice discounts are managed by the commercial policy via seller/extra "
 "discount. Please uninstall the legacy module before posting invoices."
 msgstr ""
-"O módulo 'engenere_account_invoice_br_discount' ainda está instalado. "
-"Descontos de fatura são gerenciados pela política comercial via desconto do "
-"vendedor/extra. Desinstale o módulo legado antes de postar faturas."
+"O módulo 'engenere_account_invoice_br_discount' ainda está instalado. Descontos de fatura são gerenciados pela política comercial via desconto do vendedor/extra. Desinstale o módulo legado antes de postar faturas."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2943,9 +3201,7 @@ msgid ""
 "are managed by the commercial policy bands. Please uninstall the legacy "
 "module before confirming orders."
 msgstr ""
-"O módulo 'sale_commission_pricelist' ainda está instalado. As taxas de "
-"comissão são gerenciadas pelas faixas da política comercial. Por favor, "
-"desinstale o módulo legado antes de confirmar pedidos."
+"O módulo 'sale_commission_pricelist' ainda está instalado. As taxas de comissão são gerenciadas pelas faixas da política comercial. Por favor, desinstale o módulo legado antes de confirmar pedidos."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2955,8 +3211,7 @@ msgid ""
 "The order pricelist '%(order_pl)s' is not allowed by the sales profile "
 "'%(profile)s'. Allowed pricelists: %(allowed)s."
 msgstr ""
-"A lista de preços do pedido '%(order_pl)s' não é permitida pelo perfil de "
-"vendas '%(profile)s'. Listas de preços permitidas: %(allowed)s."
+"A lista de preços do pedido '%(order_pl)s' não é permitida pelo perfil de vendas '%(profile)s'. Listas de preços permitidas: %(allowed)s."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2966,8 +3221,7 @@ msgid ""
 "The order uses internal profile '%(profile)s' but line '%(product)s' has "
 "agent commissions. Internal orders should not have agent commissions."
 msgstr ""
-"O pedido usa perfil interno '%(profile)s' mas a linha '%(product)s' tem "
-"comissões de agente. Pedidos internos não devem ter comissões de agente."
+"O pedido usa perfil interno '%(profile)s' mas a linha '%(product)s' tem comissões de agente. Pedidos internos não devem ter comissões de agente."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2977,8 +3231,7 @@ msgid ""
 "The order uses profile '%(order_profile)s' (from commercial condition) but "
 "the %(source)s has profile '%(expected)s'."
 msgstr ""
-"O pedido usa o perfil '%(order_profile)s' (da condição comercial) mas o(a) "
-"%(source)s tem o perfil '%(expected)s'."
+"O pedido usa o perfil '%(order_profile)s' (da condição comercial) mas o(a) %(source)s tem o perfil '%(expected)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2988,8 +3241,7 @@ msgid ""
 "The pricelist '%(pricelist)s' is not allowed by the sales profile "
 "'%(profile)s'."
 msgstr ""
-"A lista de preços '%(pricelist)s' não é permitida pelo perfil de vendas "
-"'%(profile)s'."
+"A lista de preços '%(pricelist)s' não é permitida pelo perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2999,8 +3251,7 @@ msgid ""
 "The pricelist is not in the allowed pricelists of your sales profile "
 "'%(profile)s'."
 msgstr ""
-"A lista de preços não está entre as listas permitidas do seu perfil de "
-"vendas '%(profile)s'."
+"A lista de preços não está entre as listas permitidas do seu perfil de vendas '%(profile)s'."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3011,9 +3262,7 @@ msgid ""
 "%s. Add a band that covers the discount or adjust the discount before "
 "confirming."
 msgstr ""
-"Estas linhas têm desconto do vendedor fora das faixas de comissão "
-"configuradas: %s. Adicione uma faixa que cubra o desconto ou ajuste o "
-"desconto antes de confirmar."
+"Estas linhas têm desconto do vendedor fora das faixas de comissão configuradas: %s. Adicione uma faixa que cubra o desconto ou ajuste o desconto antes de confirmar."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3032,13 +3281,14 @@ msgstr "Esta fatura agrupa pedidos com condições comerciais diferentes."
 #. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/account_move.py:0
+#: code:addons/tr_commercial_policy/models/account_move.py:0
+#: code:addons/tr_commercial_policy/models/account_move.py:0
 #, python-format
 msgid ""
 "This invoice groups orders with different commercial conditions. Please "
 "invoice each order separately."
 msgstr ""
-"Esta fatura agrupa pedidos com condições comerciais diferentes. Por favor, "
-"fature cada pedido separadamente."
+"Esta fatura agrupa pedidos com condições comerciais diferentes. Por favor, fature cada pedido separadamente."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3048,19 +3298,18 @@ msgid ""
 "This invoice mixes sale-origin and manual lines. Please use separate "
 "invoices."
 msgstr ""
-"Esta fatura mistura linhas de origem de venda e linhas manuais. Por favor, "
-"use faturas separadas."
+"Esta fatura mistura linhas de origem de venda e linhas manuais. Por favor, use faturas separadas."
 
 #. module: tr_commercial_policy
 #. odoo-python
+#: code:addons/tr_commercial_policy/models/account_move.py:0
 #: code:addons/tr_commercial_policy/models/account_move.py:0
 #, python-format
 msgid ""
 "This invoice requires approval before posting. Request validation from the "
 "approval panel."
 msgstr ""
-"Esta fatura requer aprovação antes de ser lançada. Solicite a validação no "
-"painel de aprovação."
+"Esta fatura requer aprovação antes de ser lançada. Solicite a validação no painel de aprovação."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3070,13 +3319,13 @@ msgid ""
 "This order has no sales profile. Pricing may be incorrect and confirmation "
 "will be blocked."
 msgstr ""
-"Este pedido não tem perfil de vendas. Os preços podem estar incorretos e a "
-"confirmação será bloqueada."
+"Este pedido não tem perfil de vendas. Os preços podem estar incorretos e a confirmação será bloqueada."
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_partner_form_commercial_condition
 msgid ""
-"This will remove the specific condition and inherit from the group. Continue?"
+"This will remove the specific condition and inherit from the group. "
+"Continue?"
 msgstr ""
 "Isso removerá a condição específica e herdará do grupo. Deseja continuar?"
 
@@ -3098,11 +3347,10 @@ msgstr "Desconto Total (%)"
 #: code:addons/tr_commercial_policy/models/sale_order_line.py:0
 #, python-format
 msgid ""
-"Total discount (seller %(seller).2f%% + extra %(extra).2f%% = %(total).2f%%) "
-"cannot exceed 99%%."
+"Total discount (seller %(seller).2f%% + extra %(extra).2f%% = %(total).2f%%)"
+" cannot exceed 99%%."
 msgstr ""
-"Desconto total (vendedor %(seller).2f%% + extra %(extra).2f%% = "
-"%(total).2f%%) não pode exceder 99%%."
+"Desconto total (vendedor %(seller).2f%% + extra %(extra).2f%% = %(total).2f%%) não pode exceder 99%%."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -3118,9 +3366,7 @@ msgid ""
 "discount is applied after the line unit price and is not related to seller "
 "or extra discounts on individual lines."
 msgstr ""
-"Desconto total aplicado ao pedido (desconto à vista + desconto FOB). Este "
-"desconto é aplicado após o preço unitário da linha e não está relacionado "
-"aos descontos do vendedor ou extras nas linhas individuais."
+"Desconto total aplicado ao pedido (desconto à vista + desconto FOB). Este desconto é aplicado após o preço unitário da linha e não está relacionado aos descontos do vendedor ou extras nas linhas individuais."
 
 #. module: tr_commercial_policy
 #. odoo-javascript
@@ -3142,24 +3388,22 @@ msgid ""
 "Total monetary value of the order discount (cash discount + FOB discount). "
 "Corresponds to the Order Discount (%) applied to each line."
 msgstr ""
-"Valor monetário total do desconto do pedido (desconto à vista + desconto "
-"FOB). Corresponde ao Desconto do Pedido (%) aplicado a cada linha."
+"Valor monetário total do desconto do pedido (desconto à vista + desconto FOB). Corresponde ao Desconto do Pedido (%) aplicado a cada linha."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_commission__tr_managed
-msgid "Policy Managed"
-msgstr "Gerenciado pela política"
+msgid "Tr Managed"
+msgstr "Gerenciado pela Trento"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_commission__tr_rate
-msgid "Policy Rate"
-msgstr "Taxa da política"
+msgid "Tr Rate"
+msgstr "Alíquota Trento"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__discount_changed
 msgid "True when seller/extra discount differs from the commercial condition."
-msgstr ""
-"Verdadeiro quando o desconto do vendedor/extra difere da condição comercial."
+msgstr "Verdadeiro quando o desconto do vendedor/extra difere da condição comercial."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_res_partner__condition_is_override
@@ -3168,8 +3412,7 @@ msgid ""
 "True when this partner has its own condition that overrides the group "
 "condition."
 msgstr ""
-"Verdadeiro quando este parceiro possui sua própria condição que sobrescreve "
-"a condição do grupo."
+"Verdadeiro quando este parceiro possui sua própria condição que sobrescreve a condição do grupo."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__activity_exception_decoration
@@ -3182,6 +3425,16 @@ msgstr "Tipo da atividade de exceção no registro."
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.sale_order_form_commercial_policy
 msgid "Unit Price"
 msgstr "Preço Unitário"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_tr_sales_profile_rule__qty_uom_id
+msgid ""
+"Unit of measure used to compare the line quantity with qty_min. Required "
+"when qty_min > 0. The line quantity is converted to this UoM before "
+"comparison. If conversion is not possible (different UoM categories), the "
+"rule is ignored and resolution falls back to the next level."
+msgstr ""
+"Unidade de medida usada para comparar a quantidade da linha com qty_min. Obrigatória quando qty_min > 0. A quantidade da linha é convertida para esta UdM antes da comparação. Se a conversão não for possível (categorias de UdM diferentes), a regra é ignorada e a resolução volta para o próximo nível."
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3221,8 +3474,12 @@ msgid ""
 "Use 'Resync From Sale Order' to restore inherited values, or adjust the "
 "invoice to match the order."
 msgstr ""
-"Use 'Ressincronizar do Pedido de Venda' para restaurar os valores herdados, "
-"ou ajuste a fatura para corresponder ao pedido."
+"Use 'Ressincronizar do Pedido de Venda' para restaurar os valores herdados, ou ajuste a fatura para corresponder ao pedido."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "Valor mínimo do pedido"
+msgstr "Valor mínimo do pedido"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_line_wizard__save_as__variant
@@ -3254,8 +3511,7 @@ msgid ""
 "When enabled, users can directly edit price_unit and discount on invoice "
 "lines for products in this category."
 msgstr ""
-"Quando habilitado, usuários podem editar diretamente price_unit e desconto "
-"em linhas de fatura para produtos desta categoria."
+"Quando habilitado, usuários podem editar diretamente price_unit e desconto em linhas de fatura para produtos desta categoria."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__wizard_id
@@ -3265,6 +3521,7 @@ msgstr "Assistente"
 
 #. module: tr_commercial_policy
 #. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #, python-format
 msgid "You need a sales profile to edit commercial conditions."
@@ -3286,6 +3543,18 @@ msgstr "também possui uma. O que você gostaria de fazer?"
 #, python-format
 msgid "company default"
 msgstr "padrão da empresa"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
+msgid "dias"
+msgstr "dias"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/tests/test_volume_qty_resolution.py:0
+#, python-format
+msgid "forced for test"
+msgstr "forçado para teste"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_partner_form_commercial_condition
@@ -3312,27 +3581,3 @@ msgstr "equipe de vendas '%s' (equipe do vendedor)"
 #, python-format
 msgid "salesperson '%s'"
 msgstr "vendedor(a) '%s'"
-
-#. module: tr_commercial_policy
-#: model:ir.actions.act_window,name:tr_commercial_policy.tr_sales_profile_my_action
-#: model:ir.actions.server,name:tr_commercial_policy.tr_sales_profile_my_action_server
-#: model:ir.ui.menu,name:tr_commercial_policy.menu_my_sales_profiles
-msgid "My Sales Profiles"
-msgstr "Meus Perfis de Vendas"
-
-#. module: tr_commercial_policy
-#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
-msgid "No sales profile assigned to you"
-msgstr "Nenhum perfil de vendas atribuído a você"
-
-#. module: tr_commercial_policy
-#: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
-msgid ""
-"A sales profile defines the discount limits, payment conditions and "
-"commission bands you operate under. Profiles are assigned per company."
-msgstr ""
-"Um perfil de vendas define os limites de desconto, condições de pagamento e "
-"bandas de comissão sob os quais você opera. Perfis são atribuídos por empresa."
-
-#~ msgid "Agent detail of commission line in invoice lines"
-#~ msgstr "Detalhe do representante da linha de comissão nas linhas da fatura"
