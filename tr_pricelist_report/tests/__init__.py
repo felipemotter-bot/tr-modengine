@@ -10,6 +10,7 @@ from . import test_exceptions_section
 from . import test_invalid_price_filter
 from . import test_layout_geral
 from . import test_layout_historico
+from . import test_layout_historico_template_grouping
 from . import test_marca_discovery
 from . import test_partner_action_binding
 from . import test_pdf_render

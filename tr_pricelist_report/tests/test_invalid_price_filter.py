@@ -105,7 +105,9 @@ class TestInvalidPriceFilter(PricelistReportTestCommon):
         )
         order.action_confirm()
         wizard = self._open_wizard(
-            category_ids=[self.categ_chemicals.id], layout="historico"
+            category_ids=[self.categ_chemicals.id],
+            layout="historico",
+            history_grouping="variante",
         )
         values = wizard._get_report_values(wizard.ids)
         products_in_history = self.env["product.product"]

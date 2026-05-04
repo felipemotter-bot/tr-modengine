@@ -110,6 +110,24 @@
                 color: #111;
             }
 
+            /* ---------- Inline variant exceptions (history template) -- */
+            /* Sub-row of a template: visually nested via padding +
+               accent border on the description cell, lighter font,
+               and a translucent stripe so the eye groups it with the
+               parent row above. */
+            .pricelist-table tbody tr.pricelist-row-exception td {
+                font-size: 9pt;
+                color: #555;
+                background: #f3f5fb !important;
+                border-bottom: 1px solid #e5e7ef !important;
+            }
+            .pricelist-table tbody tr.pricelist-row-exception
+                td.pricelist-cell-exception {
+                padding-left: 28pt;
+                border-left: 3px solid #c8d0e4 !important;
+                font-style: italic;
+            }
+
             /* ---------- Historico explanatory note (inline after
                            the Condições Comerciais block) ----------------- */
             .pricelist-history-note {

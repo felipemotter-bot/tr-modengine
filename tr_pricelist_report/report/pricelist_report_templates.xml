@@ -60,11 +60,11 @@
                                         <tr>
                                             <td class="pricelist-cell-description">
                                                 <t
-                          t-if="layout == 'historico'"
+                          t-if="row.get('product')"
                           t-esc="row['product'].display_name"
                         />
                                                 <t
-                          t-if="layout != 'historico'"
+                          t-if="not row.get('product')"
                           t-esc="row['template'].display_name"
                         />
                                             </td>
@@ -105,6 +105,55 @@
                         />
                                             </td>
                                         </tr>
+                                        <tr
+                      t-foreach="row.get('inline_exceptions') or []"
+                      t-as="exc"
+                      class="pricelist-row-exception"
+                    >
+                                            <td
+                        class="pricelist-cell-description pricelist-cell-exception"
+                      >
+                                                <t
+                          t-esc="exc['product'].display_name"
+                        />
+                                            </td>
+                                            <td>
+                                                <span
+                          t-esc="exc['qty']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        /> <t t-esc="exc['uom_label']" />
+                                            </td>
+                                            <t
+                        t-if="discount_display == 'show_discounts'"
+                      >
+                                                <td>
+                                                    <span
+                            t-if="exc['total_discount'] >= 0"
+                            t-esc="exc['reference']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                    <span
+                            t-else=""
+                            t-esc="exc['price_unit']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                </td>
+                                                <td>
+                                                    <span
+                            t-if="exc['total_discount'] >= 0"
+                            t-esc="exc['total_discount']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          />
+                                                    <span t-else="">0,00</span>
+                                                </td>
+                                            </t>
+                                            <td class="pricelist-cell-price">
+                                                <span
+                          t-esc="exc['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </td>
+                                        </tr>
                                     </t>
                                 </tbody>
                             </table>
@@ -123,6 +172,10 @@
                                         <th
                       class="pricelist-cell-description"
                     >Descrição</th>
+                                        <th
+                      t-if="layout == 'historico' and history_grouping == 'template'"
+                      style="width: 12%;"
+                    >Qtd.</th>
                                         <th style="width: 14%;">Preço</th>
                                     </tr>
                                 </thead>
@@ -132,6 +185,14 @@
                       class="pricelist-cell-description"
                       t-esc="exc['product'].display_name"
                     />
+                                        <td
+                      t-if="layout == 'historico' and history_grouping == 'template'"
+                    >
+                                            <span
+                        t-esc="exc['qty']"
+                        t-options="{'widget': 'float', 'precision': 2}"
+                      /> <t t-esc="exc['uom_label']" />
+                                        </td>
                                         <td class="pricelist-cell-price">
                                             <span
                         t-esc="exc['price_unit']"
