@@ -90,3 +90,33 @@ class TestPricingConsistency(PricelistReportTestCommon):
         ):
             pricing = wizard._compute_pricing(self.product_a, rates)
         self.assertEqual(pricing["seller_discount"], 0.0)
+
+    def test_extra_discount_applied_to_price_unit(self):
+        """Partner extra discount is applied on top of seller discount."""
+        from odoo.addons.tr_commercial_policy.models.policy_utils import (
+            calc_price_unit,
+            get_policy_rates,
+        )
+
+        self.condition.with_user(self.manager_user).line_ids = [
+            (
+                0,
+                0,
+                {
+                    "product_tmpl_id": self.product_template_a.id,
+                    "applied_on": "product_template",
+                    "seller_discount": 5.0,
+                    "extra_discount": 3.0,
+                },
+            )
+        ]
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        rates = get_policy_rates(self.env)
+        pricing = wizard._compute_pricing(self.product_a, rates)
+        expected = calc_price_unit(pricing["reference"], 5.0, 3.0)
+        self.assertAlmostEqual(pricing["price_unit"], expected, places=2)
+        # Parity with sale.order.line (which already applies extra).
+        order_pricing = self._get_order_line_price(self.product_a)
+        self.assertAlmostEqual(
+            pricing["price_unit"], order_pricing["price_unit"], places=2
+        )

@@ -303,9 +303,10 @@ class PricelistReportWizard(models.TransientModel):
             )
         if self._pricelist_blocks_discounts(pricelist):
             seller = 0.0
+            extra = 0.0
         else:
-            seller, _extra, _level = condition._resolve_discount_for_product(product)
-        price_unit = calc_price_unit(reference, seller, 0.0)
+            seller, extra, _level = condition._resolve_discount_for_product(product)
+        price_unit = calc_price_unit(reference, seller, extra)
         return {
             "product": product,
             "base": base,
