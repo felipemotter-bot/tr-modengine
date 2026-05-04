@@ -28,6 +28,9 @@
         "eng_punctuality_discount",
         "trento_sale_usability",
         "trento_invoice_usability",
+        # Provides ``external_layout_boxed_compact`` reused by the
+        # commercial profile and pricelist reports.
+        "trento_report_utils",
         "sale_product_configurator",
         "sale_tier_validation",
         "account_move_tier_validation",
@@ -55,6 +58,7 @@
         "data/commission_template.xml",
         "report/sale_order_report.xml",
         "report/sales_profile_report.xml",
+        "report/sales_profile_report_styles.xml",
         "report/sales_profile_report_template.xml",
         "data/cron.xml",
     ],
