@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <!--
+        Stylesheet for the sales profile report. Mirrors
+        ``tr_pricelist_report.report_pricelist_styles`` so both reports
+        share the same visual identity (centered header, blue
+        section-title border, zebra rows, compact paddings). Classes are
+        scoped to ``.profile-*`` to avoid leaking outside the report DOM.
+    -->
+    <template id="report_sales_profile_styles">
+        <style>
+            /* ---------- Header (title + meta) ----------------------- */
+            .profile-header {
+                margin-top: 4pt;
+                margin-bottom: 12pt;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 8pt;
+            }
+            .profile-header-title {
+                font-size: 15pt;
+                font-weight: 600;
+                letter-spacing: 1px;
+                text-align: center;
+                margin: 0 0 8pt 0;
+            }
+            .profile-header-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 10pt;
+                color: #444;
+                gap: 16pt;
+            }
+            .profile-header-meta strong { color: #222; }
+
+            /* ---------- Section titles ------------------------------ */
+            .profile-section { margin-top: 14pt; }
+            .profile-section-title {
+                font-size: 11pt;
+                font-weight: 600;
+                letter-spacing: 0.8px;
+                padding: 4pt 0 3pt 8pt;
+                border-left: 3px solid #002FA7;
+                color: #333;
+                text-transform: uppercase;
+                margin-bottom: 6pt;
+            }
+
+            /* ---------- Limits row (cash + fob side by side) --------
+               wkhtmltopdf does not render CSS flex/grid reliably, so
+               we use floats. Two columns at 48% with a 4% gutter. */
+            .profile-limits-row { margin-top: 6pt; }
+            .profile-limits-row::after {
+                content: "";
+                display: block;
+                clear: both;
+            }
+            .profile-limits-col {
+                float: left;
+                width: 48%;
+                box-sizing: border-box;
+            }
+            .profile-limits-col + .profile-limits-col {
+                margin-left: 4%;
+            }
+            .profile-limit-label {
+                font-size: 10pt;
+                font-weight: 600;
+                color: #002FA7;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                margin-bottom: 2pt;
+            }
+            .profile-limit-value {
+                font-size: 14pt;
+                font-weight: 600;
+                color: #111;
+                margin-bottom: 4pt;
+            }
+            .profile-limit-meta {
+                font-size: 9.5pt;
+                color: #555;
+            }
+            .profile-limit-meta ul {
+                margin: 2pt 0 0 16pt;
+                padding: 0;
+            }
+            .profile-limit-meta li { margin: 0; }
+
+            /* ---------- Band tables ---------------------------------
+               Cards flow in a two-column grid (float-based to survive
+               wkhtmltopdf), wrapping naturally as more rules show up.
+               Each card holds a subtitle + the band table at full
+               width of the column. */
+            .profile-bands-grid::after {
+                content: "";
+                display: block;
+                clear: both;
+            }
+            .profile-band-block {
+                float: left;
+                width: 48%;
+                margin-top: 10pt;
+                box-sizing: border-box;
+            }
+            .profile-band-block:nth-child(odd) {
+                clear: left;
+                margin-right: 4%;
+            }
+            .profile-band-subtitle {
+                font-size: 10pt;
+                font-weight: 600;
+                color: #333;
+                margin: 0 0 3pt 0;
+            }
+            .profile-band-subtitle .profile-band-qualifier {
+                font-weight: 400;
+                color: #666;
+            }
+            .profile-band-table {
+                width: 100%;
+                margin: 0;
+            }
+            .profile-band-table,
+            .profile-band-table thead,
+            .profile-band-table tbody,
+            .profile-band-table tr,
+            .profile-band-table th,
+            .profile-band-table td {
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            .profile-band-table {
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+            }
+            .profile-band-table thead th {
+                font-size: 8.5pt;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                color: #666;
+                border-bottom: 1px solid #cfcfcf !important;
+                padding: 6pt 8pt;
+                text-align: right;
+                white-space: nowrap;
+            }
+            .profile-band-table tbody td {
+                padding: 5pt 8pt;
+                border-bottom: 1px solid #eee !important;
+                text-align: right;
+                font-size: 10pt;
+            }
+            .profile-band-table tbody tr:nth-child(even) {
+                background: #fafafa;
+            }
+        </style>
+    </template>
+
+</odoo>

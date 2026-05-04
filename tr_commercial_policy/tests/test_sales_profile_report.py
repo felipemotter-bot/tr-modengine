@@ -68,24 +68,51 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
 
     def test_render_agent_profile(self):
         html = self._render(self.agent_profile)
-        self.assertIn("Commercial Profile", html)
+        self.assertIn("PERFIL DE VENDAS", html)
         self.assertIn(self.agent_profile.name, html)
-        self.assertIn("Cash Discount", html)
-        self.assertIn("FOB Discount", html)
+        self.assertIn("Limites de Desconto", html)
+        self.assertIn("Desconto à Vista", html)
+        self.assertIn("Desconto FOB", html)
+        self.assertIn("Faixas de Desconto do Vendedor", html)
+        # Scope label rendered for the seeded "general" rule
+        self.assertIn("Geral", html)
+        # Qty qualifier for a rule with qty_min == 0
+        self.assertIn("Sem quantidade mínima", html)
         # Agent → commission columns
-        self.assertIn("Discount up to", html)
-        self.assertIn("Commission", html)
-        # Bands rendered (locale-tolerant: en_US vs pt_BR)
+        self.assertIn("Desconto até", html)
+        self.assertIn("Comissão", html)
+        # Bands rendered
         self.assertTrue("5.00" in html or "5,00" in html)
         self.assertTrue("10.00" in html or "10,00" in html)
+
+    def test_render_volume_band_qty_qualifier(self):
+        """Rule with qty_min > 0 must render the 'A partir de X <UoM>'
+        qualifier so the same scope (e.g. two 'Geral' rules) is no
+        longer ambiguous in the PDF."""
+        kg = self.env.ref("uom.product_uom_kgm")
+        self.env["tr.sales.profile.rule"].create(
+            {
+                "profile_id": self.agent_profile.id,
+                "applied_on": "general",
+                "qty_min": 100.0,
+                "qty_uom_id": kg.id,
+                "commission_band_ids": [
+                    (0, 0, {"discount_up_to": 8.0, "commission_rate": 6.0}),
+                ],
+            }
+        )
+        html = self._render(self.agent_profile)
+        # UoM name casing depends on the demo data ("kg" vs "KG"); compare
+        # case-insensitively so the test stays robust across DB seeds.
+        self.assertIn("a partir de 100 kg", html.lower())
 
     def test_render_internal_profile(self):
         html = self._render(self.internal_profile)
         self.assertIn(self.internal_profile.name, html)
         # Internal → order-value columns, not commission
-        self.assertIn("Minimum order amount", html)
-        self.assertIn("Maximum discount", html)
-        self.assertNotIn("Commission (%)", html)
+        self.assertIn("Valor mínimo do pedido", html)
+        self.assertIn("Desconto máximo", html)
+        self.assertNotIn("Comissão (%)", html)
 
     def test_my_profiles_returns_user_profile(self):
         self.salesperson.partner_id.with_company(
