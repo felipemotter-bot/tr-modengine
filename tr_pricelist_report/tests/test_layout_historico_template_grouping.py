@@ -236,3 +236,67 @@ class TestLayoutHistoricoTemplateGrouping(PricelistReportTestCommon):
         # And red doesn't show up as exception either (invalid, not divergent).
         product_ids = [exc["product"].id for exc in values["variant_exceptions"]]
         self.assertNotIn(self.variant_red.id, product_ids)
+
+    # ------------------------------------------------------------------
+    # Markup (negative discount) protection on inline exceptions
+    # ------------------------------------------------------------------
+
+    def test_inline_exception_with_markup_hides_reference_and_discount(self):
+        """Sub-row of a divergent variant with markup (negative
+        ``total_discount``) mirrors the main row's protection in
+        ``show_discounts`` mode: the reference column shows
+        ``price_unit`` and the discount column renders as ``0,00``
+        instead of exposing the negative percent to the customer.
+        """
+        # Allow markup on this test only — default config is 0%.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_commercial_policy.seller_markup_max_pct", "20.0"
+        )
+        # A condition line with a negative seller_discount on red
+        # produces total_discount < 0 — markup. Created with
+        # manager_user because writing seller_discount on a condition
+        # line is gated by profile checks.
+        self.condition.with_user(self.manager_user).line_ids = [
+            (
+                0,
+                0,
+                {
+                    "applied_on": "product",
+                    "product_id": self.variant_red.id,
+                    "seller_discount": -10.0,
+                    "extra_discount": 0.0,
+                },
+            )
+        ]
+        self._place_order(self.variant_red, 1)
+        self._place_order(self.variant_blue, 1)
+        self._place_order(self.variant_green, 1)
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_grouping": "template",
+                "discount_display": "show_discounts",
+            }
+        )
+        values = wizard._get_report_values(wizard.ids)
+        template_rows = [
+            row
+            for section in values["sections"]
+            for row in section["rows"]
+            if row["template"] == self.multi_template
+        ]
+        self.assertEqual(len(template_rows), 1)
+        inline = template_rows[0]["inline_exceptions"]
+        self.assertEqual(len(inline), 1)
+        # Sanity check: the divergent variant's pricing dict carries
+        # the negative total_discount we provoked.
+        self.assertLess(inline[0]["total_discount"], 0)
+        # And in the rendered HTML, the negative percent must not
+        # appear — the QWeb conditional path falls back to "0,00".
+        html, _type = self.env["ir.actions.report"]._render_qweb_html(
+            "tr_pricelist_report.action_report_pricelist", wizard.ids
+        )
+        # Negative values can serialize as -10,00 (pt_BR) or -10.00.
+        self.assertNotIn(b"-10,00", html)
+        self.assertNotIn(b"-10.00", html)

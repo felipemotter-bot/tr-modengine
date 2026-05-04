@@ -128,15 +128,23 @@
                       >
                                                 <td>
                                                     <span
+                            t-if="exc['total_discount'] >= 0"
                             t-esc="exc['reference']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                    <span
+                            t-else=""
+                            t-esc="exc['price_unit']"
                             t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                           />
                                                 </td>
                                                 <td>
                                                     <span
+                            t-if="exc['total_discount'] >= 0"
                             t-esc="exc['total_discount']"
                             t-options="{'widget': 'float', 'precision': 2}"
                           />
+                                                    <span t-else="">0,00</span>
                                                 </td>
                                             </t>
                                             <td class="pricelist-cell-price">
