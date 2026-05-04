@@ -661,13 +661,13 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
         self.assertEqual(avg_b, 0.0)
 
     def test_seller_discount_validation_uses_condition_company_avg(self):
-        """End-to-end: writing ``seller_discount`` on a condition with
+        """End-to-end: creating a condition with ``seller_discount`` and
         ``company_id=B`` while ``env.company=A`` must validate against
         company B's order history, not A's. This covers the full chain
-        ``create/write -> _validate_discount_limits ->
+        ``create -> _validate_discount_limits ->
         _validate_seller_discount -> _get_partner_avg_order_amount`` and
         catches a regression if anyone drops the ``company`` kwarg
-        anywhere along the way.
+        anywhere along the way. Same chain is reused on ``write``.
 
         Setup picks bands and a discount value so that:
         - In A (high avg from existing orders) the discount would be
