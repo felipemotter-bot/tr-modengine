@@ -156,3 +156,21 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
         )
         self.assertEqual(action["res_model"], "tr.sales.profile")
         self.assertIn(("id", "in", [self.agent_profile.id]), action["domain"])
+
+    def test_my_profiles_server_action_runs_for_non_director(self):
+        """Regression: ir.actions.server.run() falls back to a write
+        access check on the target model when groups_id is empty.
+        Without explicit groups_id on the server action, a salesperson
+        (no write on tr.sales.profile) gets AccessError when opening
+        the 'My Commercial Profiles' menu — exactly the symptom the
+        external sales rep hit in production.
+        """
+        self.salesperson.partner_id.with_company(
+            self.company
+        ).sales_profile_id = self.agent_profile
+        server_action = self.env.ref(
+            "tr_commercial_policy.tr_sales_profile_my_action_server"
+        )
+        result = server_action.with_user(self.salesperson).run()
+        self.assertTrue(result)
+        self.assertEqual(result["res_model"], "tr.sales.profile")
