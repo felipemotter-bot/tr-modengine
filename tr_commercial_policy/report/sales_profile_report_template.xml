@@ -71,7 +71,7 @@
                     <div class="profile-section">
                         <h3
             class="profile-section-title"
-          >Faixas de Desconto por Escopo</h3>
+          >Faixas de Desconto do Vendedor</h3>
                         <div class="profile-bands-grid">
                             <t t-foreach="doc.rule_ids" t-as="rule">
                             <!-- Scope label: textual description of the rule's applied_on. -->

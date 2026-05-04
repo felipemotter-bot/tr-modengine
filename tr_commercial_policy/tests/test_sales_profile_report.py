@@ -73,7 +73,7 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
         self.assertIn("Limites de Desconto", html)
         self.assertIn("Desconto à Vista", html)
         self.assertIn("Desconto FOB", html)
-        self.assertIn("Faixas de Desconto por Escopo", html)
+        self.assertIn("Faixas de Desconto do Vendedor", html)
         # Scope label rendered for the seeded "general" rule
         self.assertIn("Geral", html)
         # Qty qualifier for a rule with qty_min == 0
