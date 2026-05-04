@@ -174,3 +174,6 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
         result = server_action.with_user(self.salesperson).run()
         self.assertTrue(result)
         self.assertEqual(result["res_model"], "tr.sales.profile")
+        # Domain calculated in the user's context, not sudo: the
+        # salesperson's own profile is the one returned.
+        self.assertIn(("id", "in", [self.agent_profile.id]), result["domain"])
