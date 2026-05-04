@@ -117,14 +117,16 @@
                 font-weight: 600;
                 color: #333;
                 margin: 0 0 3pt 0;
-                /* Pin line-height so 1 vs 2 line subtitles share the
-                   exact same total height (line_height × 2 = min_height).
-                   Reserves vertical space for up to 2 lines so band
-                   tables in the same row of the 2-column grid line up
-                   even when one scope label wraps (e.g. long variant
-                   name) and the other doesn't. */
-                line-height: 1.3;
-                min-height: 2.6em;
+                /* Pin line-height + min-height in absolute units (pt)
+                   so wkhtmltopdf reserves the exact same vertical
+                   space for 1 and 2 line subtitles. Without absolute
+                   units the engine measures ``em`` against an
+                   inherited font-size that can differ by sub-pixel
+                   amounts and the band tables drift out of alignment.
+                   Math: font-size 10pt × line-height 1.3 × 2 lines
+                   = 26pt. */
+                line-height: 13pt;
+                min-height: 26pt;
             }
             .profile-band-subtitle .profile-band-qualifier {
                 font-weight: 400;
