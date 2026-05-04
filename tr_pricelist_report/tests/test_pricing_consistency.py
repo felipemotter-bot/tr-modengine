@@ -115,6 +115,9 @@ class TestPricingConsistency(PricelistReportTestCommon):
         pricing = wizard._compute_pricing(self.product_a, rates)
         expected = calc_price_unit(pricing["reference"], 5.0, 3.0)
         self.assertAlmostEqual(pricing["price_unit"], expected, places=2)
+        # The DESC. % column shows seller + extra so the displayed
+        # discount matches the actual reduction on price_unit.
+        self.assertAlmostEqual(pricing["total_discount"], 8.0, places=2)
         # Parity with sale.order.line (which already applies extra).
         order_pricing = self._get_order_line_price(self.product_a)
         self.assertAlmostEqual(

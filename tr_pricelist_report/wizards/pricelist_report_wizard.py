@@ -312,6 +312,7 @@ class PricelistReportWizard(models.TransientModel):
             "base": base,
             "reference": reference,
             "seller_discount": seller,
+            "total_discount": (seller or 0.0) + (extra or 0.0),
             "simulated_contractual_return": 0.0,
             "price_unit": price_unit,
         }

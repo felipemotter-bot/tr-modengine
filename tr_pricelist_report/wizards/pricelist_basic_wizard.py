@@ -95,6 +95,7 @@ class PricelistBasicWizard(models.TransientModel):
             "base": base,
             "reference": base,
             "seller_discount": 0.0,
+            "total_discount": 0.0,
             "simulated_contractual_return": simulated,
             "price_unit": base * (1.0 - simulated / 100.0),
         }
