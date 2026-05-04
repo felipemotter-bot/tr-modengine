@@ -566,19 +566,29 @@ class PricelistReportWizard(models.TransientModel):
             rows, variant_exceptions = self._consolidate_templates(
                 by_category[category], resolver
             )
-            for row in rows:
-                tmpl = row["template"]
-                row["qty"] = qty_by_template[tmpl]
-                row["uom_label"] = self._format_uom_label(tmpl.uom_id)
+            # Group exceptions by template so the QWeb can render each
+            # divergent variant inline as a sub-row right under its
+            # template — easier to read than a separate "specials"
+            # block at the end of the PDF, given that a customer's
+            # history typically lists only a handful of templates.
+            inline_by_template = defaultdict(list)
             for exc in variant_exceptions:
                 product = exc["product"]
                 exc["qty"] = qty_by_variant[product]
                 exc["uom_label"] = self._format_uom_label(product.uom_id)
+                inline_by_template[product.product_tmpl_id].append(exc)
+            for row in rows:
+                tmpl = row["template"]
+                row["qty"] = qty_by_template[tmpl]
+                row["uom_label"] = self._format_uom_label(tmpl.uom_id)
+                row["inline_exceptions"] = inline_by_template.get(tmpl, [])
             sections.append(
                 {
                     "title": category.name if category else "",
                     "rows": rows,
-                    "variant_exceptions": variant_exceptions,
+                    # Exceptions are emitted inline below each template
+                    # row, not aggregated in the bottom "specials" block.
+                    "variant_exceptions": [],
                 }
             )
         return sections

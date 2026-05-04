@@ -105,6 +105,47 @@
                         />
                                             </td>
                                         </tr>
+                                        <tr
+                      t-foreach="row.get('inline_exceptions') or []"
+                      t-as="exc"
+                      class="pricelist-row-exception"
+                    >
+                                            <td
+                        class="pricelist-cell-description pricelist-cell-exception"
+                      >
+                                                ↳ <t
+                          t-esc="exc['product'].display_name"
+                        />
+                                            </td>
+                                            <td>
+                                                <span
+                          t-esc="exc['qty']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        /> <t t-esc="exc['uom_label']" />
+                                            </td>
+                                            <t
+                        t-if="discount_display == 'show_discounts'"
+                      >
+                                                <td>
+                                                    <span
+                            t-esc="exc['reference']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                </td>
+                                                <td>
+                                                    <span
+                            t-esc="exc['total_discount']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          />
+                                                </td>
+                                            </t>
+                                            <td class="pricelist-cell-price">
+                                                <span
+                          t-esc="exc['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </td>
+                                        </tr>
                                     </t>
                                 </tbody>
                             </table>

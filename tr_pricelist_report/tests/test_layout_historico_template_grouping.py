@@ -155,12 +155,14 @@ class TestLayoutHistoricoTemplateGrouping(PricelistReportTestCommon):
     # Divergent variant → exception
     # ------------------------------------------------------------------
 
-    def test_divergent_variant_emits_exception(self):
-        """Variant with its own price line surfaces as exception.
+    def test_divergent_variant_emits_inline_exception(self):
+        """Variant with its own price line surfaces as inline exception.
 
         The template row's qty includes the divergent variant's qty too
         — the customer sees the total movement of the template family.
-        Exception row carries its own qty + uom_label.
+        Exception row sits as a sub-row of the template
+        (``inline_exceptions``), not in the global
+        ``variant_exceptions`` list.
         """
         # Per-variant override on red so its price diverges from the
         # template-level fixed_price (45 vs 50).
@@ -187,14 +189,15 @@ class TestLayoutHistoricoTemplateGrouping(PricelistReportTestCommon):
         self.assertEqual(len(template_rows), 1)
         # Sum of all variants (red 2 + blue 7 + green 1).
         self.assertAlmostEqual(template_rows[0]["qty"], 10.0)
-        exceptions = [
-            exc
-            for exc in values["variant_exceptions"]
-            if exc["product"] == self.variant_red
-        ]
-        self.assertEqual(len(exceptions), 1)
-        self.assertAlmostEqual(exceptions[0]["qty"], 2.0)
-        self.assertTrue(exceptions[0]["uom_label"])
+        # Divergent variant nests under the template row.
+        inline = template_rows[0]["inline_exceptions"]
+        self.assertEqual(len(inline), 1)
+        self.assertEqual(inline[0]["product"], self.variant_red)
+        self.assertAlmostEqual(inline[0]["qty"], 2.0)
+        self.assertTrue(inline[0]["uom_label"])
+        # Bottom "specials" block stays empty in template mode — no
+        # double-display.
+        self.assertEqual(values["variant_exceptions"], [])
 
     # ------------------------------------------------------------------
     # Invalid price filtering before aggregation
