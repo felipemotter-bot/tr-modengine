@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <record id="action_report_sales_profile" model="ir.actions.report">
-        <field name="name">Commercial Profile</field>
+        <field name="name">Sales Profile</field>
         <field name="model">tr.sales.profile</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">tr_commercial_policy.report_sales_profile</field>

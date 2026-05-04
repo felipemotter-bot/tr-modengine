@@ -29,7 +29,7 @@
         "trento_sale_usability",
         "trento_invoice_usability",
         # Provides ``external_layout_boxed_compact`` reused by the
-        # commercial profile and pricelist reports.
+        # sales profile and pricelist reports.
         "trento_report_utils",
         "sale_product_configurator",
         "sale_tier_validation",

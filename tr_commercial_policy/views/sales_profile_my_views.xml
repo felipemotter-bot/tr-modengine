@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <record id="tr_sales_profile_my_action" model="ir.actions.act_window">
-        <field name="name">My Commercial Profiles</field>
+        <field name="name">My Sales Profiles</field>
         <field name="res_model">tr.sales.profile</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No commercial profile assigned to you
+                No sales profile assigned to you
             </p>
             <p>
-                A commercial profile defines the discount limits, payment
+                A sales profile defines the discount limits, payment
                 conditions and commission bands you operate under.
                 Profiles are assigned per company.
             </p>
@@ -17,7 +17,7 @@
     </record>
 
     <record id="tr_sales_profile_my_action_server" model="ir.actions.server">
-        <field name="name">My Commercial Profiles</field>
+        <field name="name">My Sales Profiles</field>
         <field name="model_id" ref="model_tr_sales_profile" />
         <field name="state">code</field>
         <field name="code">action = model.action_my_profiles()</field>
@@ -25,7 +25,7 @@
 
     <menuitem
     id="menu_my_sales_profiles"
-    name="My Commercial Profiles"
+    name="My Sales Profiles"
     parent="sale.menu_sale_report"
     action="tr_sales_profile_my_action_server"
     sequence="100"

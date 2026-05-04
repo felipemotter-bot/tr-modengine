@@ -6,7 +6,7 @@
 <odoo>
 
     <!--
-        Stylesheet for the commercial profile report. Mirrors
+        Stylesheet for the sales profile report. Mirrors
         ``tr_pricelist_report.report_pricelist_styles`` so both reports
         share the same visual identity (centered header, blue
         section-title border, zebra rows, compact paddings). Classes are

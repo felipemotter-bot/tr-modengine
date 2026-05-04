@@ -199,14 +199,14 @@ geraria mensagens incoerentes.
 2. Usuário vendedor → perfil do usuário
 3. Equipe de vendas → perfil da equipe
 
-### Relatório "Commercial Profile" + Menu "My Commercial Profiles"
+### Relatório "Sales Profile" + Menu "My Sales Profiles"
 
 PDF (`tr_commercial_policy.report_sales_profile`) imprime os parâmetros de um
 `tr.sales.profile`: limite de desconto à vista (com prazo médio máximo e modos de
 pagamento permitidos), limite FOB e tabelas de bandas por escopo (comissão para `agent`,
 valor mínimo para `internal`). Disparado pelo botão **Print** padrão do form.
 
-O menu **Sales → Reporting → My Commercial Profiles** abre uma lista filtrada via
+O menu **Sales → Reporting → My Sales Profiles** abre uma lista filtrada via
 `tr.sales.profile._get_my_profile_ids()`, que itera `env.companies` (companies ativas no
 seletor multi-company da sessão) e lê
 `env.user.partner_id.with_company(c).sales_profile_id` (`company_dependent`). **Sem

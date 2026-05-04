@@ -1923,7 +1923,7 @@ msgstr ""
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__seller_discount_max
 msgid "Maximum seller discount from the effective sales profile."
-msgstr "Desconto máximo do vendedor conforme o perfil comercial vigente."
+msgstr "Desconto máximo do vendedor conforme o perfil de vendas vigente."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_has_error
@@ -2493,6 +2493,7 @@ msgstr "Linha do Pedido de Venda"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_partner__sales_profile_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_users__sales_profile_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__sales_profile_id
+#: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_form
 msgid "Sales Profile"
@@ -3316,26 +3317,21 @@ msgstr "vendedor(a) '%s'"
 #: model:ir.actions.act_window,name:tr_commercial_policy.tr_sales_profile_my_action
 #: model:ir.actions.server,name:tr_commercial_policy.tr_sales_profile_my_action_server
 #: model:ir.ui.menu,name:tr_commercial_policy.menu_my_sales_profiles
-msgid "My Commercial Profiles"
-msgstr "Meus Perfis Comerciais"
-
-#. module: tr_commercial_policy
-#: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
-msgid "Commercial Profile"
-msgstr "Perfil Comercial"
+msgid "My Sales Profiles"
+msgstr "Meus Perfis de Vendas"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
-msgid "No commercial profile assigned to you"
-msgstr "Nenhum perfil comercial atribuído a você"
+msgid "No sales profile assigned to you"
+msgstr "Nenhum perfil de vendas atribuído a você"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.actions.act_window,help:tr_commercial_policy.tr_sales_profile_my_action
 msgid ""
-"A commercial profile defines the discount limits, payment conditions and "
+"A sales profile defines the discount limits, payment conditions and "
 "commission bands you operate under. Profiles are assigned per company."
 msgstr ""
-"Um perfil comercial define os limites de desconto, condições de pagamento e "
+"Um perfil de vendas define os limites de desconto, condições de pagamento e "
 "bandas de comissão sob os quais você opera. Perfis são atribuídos por empresa."
 
 #~ msgid "Agent detail of commission line in invoice lines"

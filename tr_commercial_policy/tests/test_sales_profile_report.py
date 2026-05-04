@@ -68,7 +68,7 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
 
     def test_render_agent_profile(self):
         html = self._render(self.agent_profile)
-        self.assertIn("PERFIL COMERCIAL", html)
+        self.assertIn("PERFIL DE VENDAS", html)
         self.assertIn(self.agent_profile.name, html)
         self.assertIn("Limites de Desconto", html)
         self.assertIn("Desconto à Vista", html)
