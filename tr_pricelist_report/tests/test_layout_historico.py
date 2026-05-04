@@ -21,9 +21,13 @@ class TestLayoutHistorico(PricelistReportTestCommon):
             "tr_pricelist_report.history_months_back", "6"
         )
 
-    def _open_history_wizard(self):
+    def _open_history_wizard(self, history_grouping="variante"):
         return self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id, "layout": "historico"}
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_grouping": history_grouping,
+            }
         )
 
     def _place_confirmed_order(self, product, qty, date_order, uom=None, state="sale"):

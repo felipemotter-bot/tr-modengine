@@ -29,7 +29,7 @@ class TestWizard(PricelistReportTestCommon):
         ``category_ids`` is empty. No more "pick at least one" block.
         """
         wizard = self.env["tr.pricelist.report.wizard"].create(
-            {"condition_id": self.condition.id}
+            {"condition_id": self.condition.id, "layout": "geral"}
         )
         action = wizard.action_generate()
         self.assertEqual(action["type"], "ir.actions.report")

@@ -35,13 +35,25 @@ class PricelistReportWizard(models.TransientModel):
             ("historico", "Customer History"),
         ],
         required=True,
-        default="geral",
+        default="historico",
     )
     group_axis = fields.Selection(
         [("marca", "By Brand"), ("categoria", "By Category")],
         required=True,
         default="marca",
         help="Grouping axis for the General Pricelist layout.",
+    )
+    history_grouping = fields.Selection(
+        [
+            ("variante", "By Variant"),
+            ("template", "By Product Template"),
+        ],
+        required=True,
+        default="template",
+        help="Detail level for the Customer History layout. By Variant prints "
+        "one row per purchased SKU; By Product Template collapses variants "
+        "with the same price into a single template row, with divergent "
+        "variants listed below as exceptions.",
     )
     category_ids = fields.Many2many(
         "product.category",
@@ -464,18 +476,35 @@ class PricelistReportWizard(models.TransientModel):
     def _build_sections_from_history(self, rates):
         """Build report sections for the customer-history layout.
 
-        One row per purchased variant, grouped by the shared category
-        resolver so sections align with the other layouts' depth
-        setting. No template consolidation — the customer bought each
-        variant specifically, and the report must reflect that.
+        Two grouping modes:
+
+        - ``variante`` — one row per purchased variant.
+        - ``template`` — variants of the same template with the same
+          price collapse into a single template row; variants with a
+          divergent price surface as ``variant_exceptions``. The
+          template row's ``qty`` is the sum across **all** valid
+          variants of that template (dominant + divergent), so the
+          customer sees the total movement of the template family.
         """
         quantities = self._resolve_history_quantities()
-        depth = self._get_category_depth()
-        by_category = defaultdict(list)
+        # Pre-compute pricing and drop invalid-priced variants once,
+        # before any aggregation. A variant that won't print must not
+        # inflate a template-level qty either.
+        pricings = {}
         for product, qty in quantities.items():
             pricing = self._compute_pricing(product, rates)
             if not self._is_valid_price(pricing["price_unit"]):
                 continue
+            pricings[product] = (pricing, qty)
+        if self.history_grouping == "variante":
+            return self._build_sections_from_history_by_variant(pricings)
+        return self._build_sections_from_history_by_template(pricings)
+
+    def _build_sections_from_history_by_variant(self, pricings):
+        """Variant-level history: one row per SKU, no consolidation."""
+        depth = self._get_category_depth()
+        by_category = defaultdict(list)
+        for product, (pricing, qty) in pricings.items():
             grouping = self._resolve_grouping_category(product, depth)
             by_category[grouping].append(
                 {
@@ -483,12 +512,7 @@ class PricelistReportWizard(models.TransientModel):
                     "product": product,
                     "pricing": pricing,
                     "qty": qty,
-                    # "CAIXA" is the common pt_BR uom name; Felipe prefers
-                    # the shorter "CX" form used on the product labels and
-                    # physical stock. One-liner replace covers every
-                    # variation ("CAIXA", "CAIXA COM 10 UNIDADES",
-                    # "CAIXA/1000UN", ...).
-                    "uom_label": (product.uom_id.name or "").replace("CAIXA", "CX"),
+                    "uom_label": self._format_uom_label(product.uom_id),
                     # Consolidation doesn't apply here — no inline variants.
                     "variants": [],
                 }
@@ -515,6 +539,58 @@ class PricelistReportWizard(models.TransientModel):
             )
         return sections
 
+    def _build_sections_from_history_by_template(self, pricings):
+        """Template-level history: collapse same-price variants per template.
+
+        Reuses ``_consolidate_templates`` from the section builder
+        (kept pure — no qty awareness there) and injects the
+        history-specific ``qty`` / ``uom_label`` afterwards.
+        """
+        depth = self._get_category_depth()
+        by_category = defaultdict(lambda: self.env["product.product"])
+        qty_by_template = defaultdict(float)
+        qty_by_variant = {}
+        for product, (_pricing, qty) in pricings.items():
+            grouping = self._resolve_grouping_category(product, depth)
+            by_category[grouping] |= product
+            qty_by_template[product.product_tmpl_id] += qty
+            qty_by_variant[product] = qty
+
+        def resolver(product):
+            return pricings[product][0]
+
+        sections = []
+        for category in sorted(
+            by_category, key=lambda cat: cat.complete_name if cat else ""
+        ):
+            rows, variant_exceptions = self._consolidate_templates(
+                by_category[category], resolver
+            )
+            for row in rows:
+                tmpl = row["template"]
+                row["qty"] = qty_by_template[tmpl]
+                row["uom_label"] = self._format_uom_label(tmpl.uom_id)
+            for exc in variant_exceptions:
+                product = exc["product"]
+                exc["qty"] = qty_by_variant[product]
+                exc["uom_label"] = self._format_uom_label(product.uom_id)
+            sections.append(
+                {
+                    "title": category.name if category else "",
+                    "rows": rows,
+                    "variant_exceptions": variant_exceptions,
+                }
+            )
+        return sections
+
+    @staticmethod
+    def _format_uom_label(uom):
+        # "CAIXA" is the common pt_BR uom name; Felipe prefers the
+        # shorter "CX" form used on the product labels and physical
+        # stock. One-liner replace covers every variation ("CAIXA",
+        # "CAIXA COM 10 UNIDADES", "CAIXA/1000UN", ...).
+        return (uom.name or "").replace("CAIXA", "CX")
+
     # ------------------------------------------------------------------
     # Entry point used by the report engine
     # ------------------------------------------------------------------
@@ -525,7 +601,9 @@ class PricelistReportWizard(models.TransientModel):
         rates = get_policy_rates(self.env)
         if wizard.layout == "historico":
             sections = wizard._build_sections_from_history(rates)
-            variant_exceptions = []
+            variant_exceptions = [
+                exc for section in sections for exc in section["variant_exceptions"]
+            ]
             qty_exceptions = []
         else:
             products = wizard._resolve_products()
@@ -570,6 +648,7 @@ class PricelistReportWizard(models.TransientModel):
             "history_months_back": history_months_back,
             "discount_display": wizard.discount_display,
             "layout": wizard.layout,
+            "history_grouping": wizard.history_grouping,
             "sections": sections,
             "variant_exceptions": variant_exceptions,
             "qty_exceptions": qty_exceptions,

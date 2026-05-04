@@ -19,6 +19,11 @@
                 name="group_axis"
                 attrs="{'invisible': [('layout', '!=', 'geral')]}"
               />
+                            <field
+                name="history_grouping"
+                widget="radio"
+                attrs="{'invisible': [('layout', '!=', 'historico')]}"
+              />
                             <field name="discount_display" />
                             <field name="send_by_email" />
                         </group>

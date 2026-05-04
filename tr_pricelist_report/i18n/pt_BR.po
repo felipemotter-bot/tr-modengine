@@ -119,6 +119,16 @@ msgid "By Category"
 msgstr "Por Categoria"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__history_grouping__template
+msgid "By Product Template"
+msgstr "Por Modelo do Produto"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__history_grouping__variante
+msgid "By Variant"
+msgstr "Por Variante"
+
+#. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_pricelist_basic_wizard_form
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.view_pricelist_report_wizard_form
 msgid "Cancel"
@@ -216,6 +226,19 @@ msgid "Desc. %"
 msgstr "Desc. %"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__history_grouping
+msgid ""
+"Detail level for the Customer History layout. By Variant prints one row per "
+"purchased SKU; By Product Template collapses variants with the same price "
+"into a single template row, with divergent variants listed below as "
+"exceptions."
+msgstr ""
+"Nível de detalhe do layout de Histórico do Cliente. Por Variante imprime "
+"uma linha por SKU comprado; Por Modelo do Produto colapsa variantes com o "
+"mesmo preço numa única linha do modelo, com variantes divergentes listadas "
+"abaixo como exceções."
+
+#. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_basic_document
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "Descrição"
@@ -262,6 +285,11 @@ msgstr "Eixo de Agrupamento"
 #: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__group_axis
 msgid "Grouping axis for the General Pricelist layout."
 msgstr "Eixo de agrupamento para o layout Geral."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__history_grouping
+msgid "History Grouping"
+msgstr "Agrupamento do Histórico"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_basic_wizard__id
