@@ -660,6 +660,122 @@ class TestProfileResolutionWithCompany(CommercialPolicyTestCommon):
         self.assertGreater(avg_a, 0.0)
         self.assertEqual(avg_b, 0.0)
 
+    def test_seller_discount_validation_uses_condition_company_avg(self):
+        """End-to-end: writing ``seller_discount`` on a condition with
+        ``company_id=B`` while ``env.company=A`` must validate against
+        company B's order history, not A's. This covers the full chain
+        ``create/write -> _validate_discount_limits ->
+        _validate_seller_discount -> _get_partner_avg_order_amount`` and
+        catches a regression if anyone drops the ``company`` kwarg
+        anywhere along the way.
+
+        Setup picks bands and a discount value so that:
+        - In A (high avg from existing orders) the discount would be
+          accepted (high band, high max).
+        - In B (no orders, avg=0) the same discount must be rejected
+          (low band, low max).
+
+        With the fix the write raises ValidationError; without it the
+        avg leaks from env.company=A and the write silently passes.
+        """
+        # Internal profile in B with two bands so avg controls the cap.
+        internal_b = (
+            self.env["tr.sales.profile"]
+            .with_company(self.company_b)
+            .create(
+                {
+                    "name": "Internal B",
+                    "profile_type": "internal",
+                    "company_id": self.company_b.id,
+                    "pricelist_ids": [(6, 0, [self.pricelist_b.id])],
+                    "cash_discount_max": 20.0,
+                    "fob_discount_max": 20.0,
+                    "cash_term_avg_days_max": 60,
+                    "manager_extra_limit": 0.0,
+                    "rule_ids": [
+                        (
+                            0,
+                            0,
+                            {
+                                "applied_on": "general",
+                                "order_value_band_ids": [
+                                    (
+                                        0,
+                                        0,
+                                        {
+                                            "order_min_amount": 0.0,
+                                            "seller_discount_max": 2.0,
+                                        },
+                                    ),
+                                    (
+                                        0,
+                                        0,
+                                        {
+                                            "order_min_amount": 1000.0,
+                                            "seller_discount_max": 20.0,
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                    ],
+                }
+            )
+        )
+        self.company_b.default_sales_profile_id = internal_b
+        # Fresh customer (no agent) so the resolver lands on the
+        # company-B default profile in B.
+        customer = self.env["res.partner"].create({"name": "Internal Cust X-Co"})
+        # High-value confirmed order in company A so A's avg is well
+        # above the high band's threshold.
+        # The order must belong to the salesperson — otherwise the
+        # default "Personal Orders" rule hides it during search and the
+        # avg comes back as 0 even when env.company=A leaks (masking
+        # the bug we want to catch).
+        order_a = self.env["sale.order"].create(
+            {
+                "partner_id": customer.id,
+                "company_id": self.company_a.id,
+                "pricelist_id": self.pricelist_a.id,
+                "user_id": self.salesperson.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": self.product_a.id,
+                            "product_uom_qty": 50.0,
+                            "price_unit": 100.0,
+                        },
+                    )
+                ],
+            }
+        )
+        order_a.sudo().write({"state": "sale"})
+        # Discount = 5% > 2% (B band 0) but < 20% (A band 1). With the
+        # fix the validation reads B's avg=0 → rejects. Without the
+        # fix the avg leaks from A → accepts silently.
+        # env.company stays as A (active company A) but B is in
+        # allowed_companies so the partner/pricelist of B are readable.
+        # Only the explicit ``company`` kwarg propagation brings B
+        # into the validation; if anyone drops it, env.company=A leaks
+        # and the avg from A's order accepts the discount silently.
+        Condition = (
+            self.env["partner.commercial.condition"]
+            .with_user(self.salesperson)
+            .with_context(allowed_company_ids=[self.company_a.id, self.company_b.id])
+            .with_company(self.company_a)
+        )
+        with self.assertRaises(ValidationError):
+            Condition.create(
+                {
+                    "partner_id": customer.id,
+                    "company_id": self.company_b.id,
+                    "pricelist_id": self.pricelist_b.id,
+                    "seller_discount": 5.0,
+                }
+            )
+
     def test_action_create_override_copies_group_condition_in_env_company(self):
         """``action_create_override_condition`` must read the group's
         ``commercial_condition_id`` (company_dependent) in the user's
