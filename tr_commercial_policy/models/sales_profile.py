@@ -192,8 +192,12 @@ class SalesProfileRule(models.Model):
                 prev = 0.0
                 for band in bands:
                     parts.append(
-                        f"Disc. {fmt(prev)}-{fmt(band.discount_up_to)}%"
-                        f" → Comm. {fmt(band.commission_rate)}%"
+                        _(
+                            "Disc. %(start)s-%(end)s%% → Comm. %(rate)s%%",
+                            start=fmt(prev),
+                            end=fmt(band.discount_up_to),
+                            rate=fmt(band.commission_rate),
+                        )
                     )
                     prev = band.discount_up_to
                 rule.bands_summary = "\n".join(parts)
@@ -208,7 +212,13 @@ class SalesProfileRule(models.Model):
                         currency_obj=self.env.company.currency_id,
                     )
                     fmt_disc = fmt(band.seller_discount_max)
-                    parts.append(f"Min. {fmt_amount} → Disc. max {fmt_disc}%")
+                    parts.append(
+                        _(
+                            "Min. %(amount)s → Disc. max %(disc)s%%",
+                            amount=fmt_amount,
+                            disc=fmt_disc,
+                        )
+                    )
                 rule.bands_summary = "\n".join(parts)
             else:
                 rule.bands_summary = False
