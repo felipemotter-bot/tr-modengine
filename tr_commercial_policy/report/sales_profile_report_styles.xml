@@ -117,6 +117,11 @@
                 font-weight: 600;
                 color: #333;
                 margin: 0 0 3pt 0;
+                /* Reserves vertical space for up to 2 lines so band
+                   tables in the same row of the 2-column grid line up
+                   even when one scope label wraps (e.g. long variant
+                   name) and the other doesn't. */
+                min-height: 2.6em;
             }
             .profile-band-subtitle .profile-band-qualifier {
                 font-weight: 400;
