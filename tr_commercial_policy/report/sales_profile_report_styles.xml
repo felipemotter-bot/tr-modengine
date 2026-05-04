@@ -51,15 +51,22 @@
                 margin-bottom: 6pt;
             }
 
-            /* ---------- Limits row (cash + fob side by side) -------- */
-            .profile-limits-row {
-                display: flex;
-                gap: 16pt;
-                margin-top: 6pt;
+            /* ---------- Limits row (cash + fob side by side) --------
+               wkhtmltopdf does not render CSS flex/grid reliably, so
+               we use floats. Two columns at 48% with a 4% gutter. */
+            .profile-limits-row { margin-top: 6pt; }
+            .profile-limits-row::after {
+                content: "";
+                display: block;
+                clear: both;
             }
             .profile-limits-col {
-                flex: 1 1 0;
-                min-width: 0;
+                float: left;
+                width: 48%;
+                box-sizing: border-box;
+            }
+            .profile-limits-col + .profile-limits-col {
+                margin-left: 4%;
             }
             .profile-limit-label {
                 font-size: 10pt;
@@ -85,8 +92,26 @@
             }
             .profile-limit-meta li { margin: 0; }
 
-            /* ---------- Band tables --------------------------------- */
-            .profile-band-block { margin-top: 10pt; }
+            /* ---------- Band tables ---------------------------------
+               Cards flow in a two-column grid (float-based to survive
+               wkhtmltopdf), wrapping naturally as more rules show up.
+               Each card holds a subtitle + the band table at full
+               width of the column. */
+            .profile-bands-grid::after {
+                content: "";
+                display: block;
+                clear: both;
+            }
+            .profile-band-block {
+                float: left;
+                width: 48%;
+                margin-top: 10pt;
+                box-sizing: border-box;
+            }
+            .profile-band-block:nth-child(odd) {
+                clear: left;
+                margin-right: 4%;
+            }
             .profile-band-subtitle {
                 font-size: 10pt;
                 font-weight: 600;
@@ -98,7 +123,7 @@
                 color: #666;
             }
             .profile-band-table {
-                width: 60%;
+                width: 100%;
                 margin: 0;
             }
             .profile-band-table,

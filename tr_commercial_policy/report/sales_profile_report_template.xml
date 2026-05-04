@@ -72,17 +72,18 @@
                         <h3
             class="profile-section-title"
           >Faixas de Desconto por Escopo</h3>
-                        <t t-foreach="doc.rule_ids" t-as="rule">
+                        <div class="profile-bands-grid">
+                            <t t-foreach="doc.rule_ids" t-as="rule">
                             <!-- Scope label: textual description of the rule's applied_on. -->
                             <t
-              t-set="scope_label"
-              t-value="rule.applied_on == 'general' and 'Geral' or (rule.applied_on == 'category' and ('Categoria: ' + rule.categ_id.display_name)) or (rule.applied_on == 'product_template' and ('Linha de Produto: ' + rule.product_tmpl_id.display_name)) or (rule.applied_on == 'product' and ('Variante: ' + rule.product_id.display_name)) or ''"
-            />
+                t-set="scope_label"
+                t-value="rule.applied_on == 'general' and 'Geral' or (rule.applied_on == 'category' and ('Categoria: ' + rule.categ_id.display_name)) or (rule.applied_on == 'product_template' and ('Linha de Produto: ' + rule.product_tmpl_id.display_name)) or (rule.applied_on == 'product' and ('Variante: ' + rule.product_id.display_name)) or ''"
+              />
                             <!-- Qty qualifier: differentiates volume bands within the same scope. -->
                             <t
-              t-set="qty_label"
-              t-value="rule.qty_min and ('A partir de %s %s' % (('%g' % rule.qty_min), rule.qty_uom_id.name or '')) or 'Sem quantidade mínima'"
-            />
+                t-set="qty_label"
+                t-value="rule.qty_min and ('A partir de %s %s' % (('%g' % rule.qty_min), rule.qty_uom_id.name or '')) or 'Sem quantidade mínima'"
+              />
                             <div class="profile-band-block">
                                 <div class="profile-band-subtitle">
                                     <span t-esc="scope_label" />
@@ -100,18 +101,18 @@
                                         </thead>
                                         <tbody>
                                             <tr
-                      t-foreach="rule.commission_band_ids.sorted('discount_up_to')"
-                      t-as="band"
-                    >
+                        t-foreach="rule.commission_band_ids.sorted('discount_up_to')"
+                        t-as="band"
+                      >
                                                 <td>
                                                     <span
-                          t-esc="'%.2f' % band.discount_up_to"
-                        />
+                            t-esc="'%.2f' % band.discount_up_to"
+                          />
                                                 </td>
                                                 <td>
                                                     <span
-                          t-esc="'%.2f' % band.commission_rate"
-                        />
+                            t-esc="'%.2f' % band.commission_rate"
+                          />
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -127,19 +128,19 @@
                                         </thead>
                                         <tbody>
                                             <tr
-                      t-foreach="rule.order_value_band_ids.sorted('order_min_amount')"
-                      t-as="band"
-                    >
+                        t-foreach="rule.order_value_band_ids.sorted('order_min_amount')"
+                        t-as="band"
+                      >
                                                 <td>
                                                     <span
-                          t-field="band.order_min_amount"
-                          t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'
-                        />
+                            t-field="band.order_min_amount"
+                            t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'
+                          />
                                                 </td>
                                                 <td>
                                                     <span
-                          t-esc="'%.2f' % band.seller_discount_max"
-                        />
+                            t-esc="'%.2f' % band.seller_discount_max"
+                          />
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -147,6 +148,7 @@
                                 </t>
                             </div>
                         </t>
+                        </div>
                     </div>
 
             </div>
