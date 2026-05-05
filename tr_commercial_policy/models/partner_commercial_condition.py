@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, ValidationError
+from odoo.tools.misc import formatLang
 
 from .policy_utils import (
     calc_adjustment_factor,
@@ -138,6 +139,18 @@ class PartnerCommercialCondition(models.Model):
         inverse_name="condition_id",
         string="Product Lines",
     )
+    has_any_band = fields.Boolean(
+        compute="_compute_has_any_band",
+        help="True when at least one line has qty bands defined. Used "
+        "by the lines tree to hide the Bands column when no line uses "
+        "the feature.",
+    )
+
+    @api.depends("line_ids.band_ids")
+    def _compute_has_any_band(self):
+        for condition in self:
+            condition.has_any_band = any(line.band_ids for line in condition.line_ids)
+
     company_id = fields.Many2one(
         comodel_name="res.company",
         default=lambda self: self.env.company,
@@ -508,32 +521,38 @@ class PartnerCommercialCondition(models.Model):
             self._sync_to_partners()
         return result
 
-    def _resolve_discount_for_product(self, product):
+    def _resolve_discount_for_product(self, product, qty=0.0, uom=None):
         """Resolve discount for a product: variant > template > general.
 
         Pure resolution — no side effects on any record.
         Returns (seller_discount, extra_discount, source_level).
+
+        ``qty`` is the quantity of the order/invoice line (NOT the
+        order total). ``uom`` is the line's UoM; defaults to
+        ``product.uom_id`` when omitted.
+
+        Each line's effective discount is selected from its
+        ``band_ids`` based on ``qty`` (highest ``qty_min`` ≤ qty
+        wins, after UoM normalization). When no band fits or
+        ``band_ids`` is empty, the line's direct
+        ``seller_discount``/``extra_discount`` fields are used as
+        the implicit qty_min=0 band.
         """
         self.ensure_one()
+        line_uom = uom or product.uom_id
         # 1. Variant-specific line
         variant_line = self.line_ids.filtered(lambda cline: cline.product_id == product)
         if variant_line:
-            return (
-                variant_line[0].seller_discount,
-                variant_line[0].extra_discount,
-                "variant",
-            )
+            seller, extra = variant_line[0]._resolve_discount_for_qty(qty, line_uom)
+            return (seller, extra, "variant")
         # 2. Template-specific line
         tmpl_line = self.line_ids.filtered(
             lambda cline: cline.product_tmpl_id == product.product_tmpl_id
             and cline.applied_on == "product_template"
         )
         if tmpl_line:
-            return (
-                tmpl_line[0].seller_discount,
-                tmpl_line[0].extra_discount,
-                "template",
-            )
+            seller, extra = tmpl_line[0]._resolve_discount_for_qty(qty, line_uom)
+            return (seller, extra, "template")
         # 3. General
         return (self.seller_discount or 0.0, 0.0, "general")
 
@@ -696,6 +715,65 @@ class PartnerCommercialConditionLine(models.Model):
     )
     seller_discount = fields.Float(string="Seller Discount (%)")
     extra_discount = fields.Float(string="Extra Discount (%)")
+    band_ids = fields.One2many(
+        comodel_name="partner.commercial.condition.line.band",
+        inverse_name="line_id",
+        string="Quantity Bands",
+        help="Additional discount tiers that activate when the order/"
+        "invoice line quantity reaches a threshold. The line's direct "
+        "Seller/Extra Discount fields are the implicit qty_min=0 band; "
+        "bands defined here represent qty thresholds above zero.",
+    )
+    bands_summary = fields.Text(
+        string="Bands",
+        compute="_compute_bands_summary",
+        help="Human-readable summary of the line's qty bands, shown "
+        "in the condition tree so cadastrators can see thresholds at "
+        "a glance without opening the line form.",
+    )
+
+    @api.depends(
+        "band_ids",
+        "band_ids.qty_min",
+        "band_ids.qty_uom_id",
+        "band_ids.seller_discount",
+        "band_ids.extra_discount",
+    )
+    def _compute_bands_summary(self):
+        def fmt(val):
+            return formatLang(self.env, val, digits=2)
+
+        SELLER_EXTRA_TPL = _("≥%(qty)s %(uom)s → Sell %(sell)s%% / Extra %(ext)s%%")
+        SELLER_ONLY_TPL = _("≥%(qty)s %(uom)s → %(sell)s%%")
+        for line in self:
+            if not line.band_ids:
+                line.bands_summary = False
+                continue
+            parts = []
+            for band in line.band_ids.sorted("qty_min"):
+                seller = band.seller_discount or 0.0
+                extra = band.extra_discount or 0.0
+                uom_name = band.qty_uom_id.name or ""
+                if extra:
+                    parts.append(
+                        SELLER_EXTRA_TPL
+                        % {
+                            "qty": fmt(band.qty_min),
+                            "uom": uom_name,
+                            "sell": fmt(seller),
+                            "ext": fmt(extra),
+                        }
+                    )
+                else:
+                    parts.append(
+                        SELLER_ONLY_TPL
+                        % {
+                            "qty": fmt(band.qty_min),
+                            "uom": uom_name,
+                            "sell": fmt(seller),
+                        }
+                    )
+            line.bands_summary = "\n".join(parts)
 
     @api.constrains("seller_discount", "extra_discount")
     def _check_seller_discount_markup(self):
@@ -706,12 +784,78 @@ class PartnerCommercialConditionLine(models.Model):
                     _("Extra discount cannot be combined with a seller markup.")
                 )
 
+    def _get_band_reference_uom(self):
+        """UoM used to normalize bands for comparison.
+
+        Variant line → variant's uom_id. Template line → template's
+        uom_id. No product context → False (callers should skip).
+        """
+        self.ensure_one()
+        if self.product_id:
+            return self.product_id.uom_id
+        if self.product_tmpl_id:
+            return self.product_tmpl_id.uom_id
+        return False
+
+    def _resolve_discount_for_qty(self, qty, line_uom):
+        """Return ``(seller, extra)`` for ``qty`` in ``line_uom``.
+
+        Picks the highest ``qty_min`` ≤ qty across ``band_ids`` after
+        UoM normalization to ``line_uom``. Bands whose UoM is in a
+        different category than ``line_uom`` (uncomparable) are
+        skipped. When no band fits, returns the line's direct
+        ``seller_discount``/``extra_discount`` (qty_min=0 implicit
+        band).
+        """
+        self.ensure_one()
+        if not self.band_ids:
+            return (self.seller_discount or 0.0, self.extra_discount or 0.0)
+        candidates = []
+        for band in self.band_ids:
+            normalized = band._normalize_qty_min(line_uom)
+            if normalized is None:
+                continue
+            if (qty or 0.0) + 1e-9 >= normalized:
+                candidates.append((normalized, band))
+        if not candidates:
+            return (self.seller_discount or 0.0, self.extra_discount or 0.0)
+        candidates.sort(key=lambda nb: nb[0])
+        winning = candidates[-1][1]
+        return (winning.seller_discount or 0.0, winning.extra_discount or 0.0)
+
     @api.onchange("applied_on")
     def _onchange_applied_on(self):
         if self.applied_on == "product_template":
             self.product_id = False
         if self.applied_on == "product":
             self.product_tmpl_id = False
+
+    def action_open_band_form(self):
+        """Open the line's form view so the user can manage band_ids.
+
+        The tree is editable inline for the simple seller/extra fields;
+        bands live on a nested tree inside the line form, so this
+        button is the entry point. Forces the dedicated form view so
+        the dialog doesn't fall back to Odoo's auto-generated form
+        (which exposes ``condition_id`` and other context fields).
+        """
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": self._name,
+            "res_id": self.id,
+            "view_mode": "form",
+            "target": "new",
+            "name": _("Manage Bands"),
+            "views": [
+                (
+                    self.env.ref(
+                        "tr_commercial_policy." "partner_commercial_condition_line_form"
+                    ).id,
+                    "form",
+                )
+            ],
+        }
 
     def _get_applicable_profile(self, condition=None):
         """Delegate to parent condition to resolve partner's profile.
@@ -886,3 +1030,266 @@ class PartnerCommercialConditionLine(models.Model):
                         )
                         % {"product": line.product_tmpl_id.display_name}
                     )
+
+
+class PartnerCommercialConditionLineBand(models.Model):
+    """Quantity tier on a commercial condition line.
+
+    Represents "if the line quantity reaches X, apply discount Y%".
+    Bands extend the line's direct ``seller_discount``/
+    ``extra_discount`` (which act as the implicit qty_min=0 band).
+    Resolution at order/invoice time picks the highest ``qty_min``
+    that the line quantity reaches, after UoM normalization.
+    """
+
+    _name = "partner.commercial.condition.line.band"
+    _description = "Partner Commercial Condition Line Band"
+    _order = "line_id, qty_min"
+
+    line_id = fields.Many2one(
+        comodel_name="partner.commercial.condition.line",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    qty_min = fields.Float(
+        string="Min Qty",
+        required=True,
+        help="Minimum line quantity (in ``Qty UoM``) to activate this "
+        "band. Must be greater than zero — qty_min=0 is the line's "
+        "direct discount fields.",
+    )
+    qty_uom_id = fields.Many2one(
+        comodel_name="uom.uom",
+        string="Qty UoM",
+        required=True,
+        default=lambda self: self._default_qty_uom_id(),
+        help="Unit of measure of ``Min Qty``. The order/invoice line "
+        "quantity is converted into this UoM before comparison. Must "
+        "be in the same UoM category as the product's UoM.",
+    )
+    seller_discount = fields.Float(string="Seller Discount (%)")
+    extra_discount = fields.Float(string="Extra Discount (%)")
+
+    @api.model
+    def _default_qty_uom_id(self):
+        line = self.env["partner.commercial.condition.line"].browse(
+            self.env.context.get("default_line_id")
+        )
+        ref = line._get_band_reference_uom() if line else False
+        return ref.id if ref else False
+
+    @api.onchange("qty_min", "line_id")
+    def _onchange_qty_min_default_uom(self):
+        """Fill ``qty_uom_id`` from the line's product when blank.
+
+        The model-level default works only when the band is created
+        from a saved line; in the inline form (band added before
+        the line is saved), the default callback can't read
+        ``line_id``. This onchange fills it once the user types a
+        ``qty_min`` value, mirroring the equivalent helper on
+        ``tr.sales.profile.rule``.
+        """
+        # ref always resolves once line has product/template; assigning
+        # an empty recordset is a harmless no-op when not, so no extra
+        # guard is needed.
+        for band in self:
+            if band.qty_uom_id:
+                continue
+            band.qty_uom_id = band.line_id._get_band_reference_uom()
+
+    @api.constrains("qty_min")
+    def _check_qty_min_positive(self):
+        for band in self:
+            if (band.qty_min or 0.0) <= 0:
+                raise ValidationError(
+                    _(
+                        "Band quantity threshold must be greater than zero. Use the line's Seller/Extra Discount fields for the qty_min=0 base discount."
+                    )
+                )
+
+    @api.constrains("qty_uom_id", "line_id")
+    def _check_qty_uom_category(self):
+        # qty_uom_id is required at the field level and the line's
+        # _check_applied_on_product constraint enforces exactly one of
+        # product_id/product_tmpl_id is set, so ref_uom always
+        # resolves to a real UoM.
+        for band in self:
+            ref_uom = band.line_id._get_band_reference_uom()
+            if ref_uom.category_id != band.qty_uom_id.category_id:
+                raise ValidationError(
+                    _(
+                        "Band UoM (%(band_uom)s) must be in the same category as the product's UoM (%(prod_uom)s)."
+                    )
+                    % {"band_uom": band.qty_uom_id.name, "prod_uom": ref_uom.name}
+                )
+
+    @api.constrains("seller_discount", "extra_discount")
+    def _check_seller_discount_markup(self):
+        for band in self:
+            validate_seller_markup(self.env, band.seller_discount)
+            if (band.seller_discount or 0) < 0 and (band.extra_discount or 0) > 0:
+                raise ValidationError(
+                    _("Extra discount cannot be combined with a seller markup.")
+                )
+
+    @api.constrains("qty_min", "qty_uom_id", "line_id")
+    def _check_qty_min_unique_on_line(self):
+        """Two bands resolving to the same threshold (after UoM normalization) is configuration-ambiguous — reject it."""
+        DUP_MSG = _(
+            "Two bands resolve to the same threshold (%(qty).2f %(uom)s). Bands must define distinct quantity thresholds."
+        )
+        # ref_uom always resolves (line constrains exactly one of
+        # product/template). _normalize_qty_min only returns None if
+        # the band's qty_uom_id is in a different category — also
+        # blocked upstream by _check_qty_uom_category.
+        for band in self:
+            ref_uom = band.line_id._get_band_reference_uom()
+            this_normalized = band._normalize_qty_min(ref_uom)
+            for other in band.line_id.band_ids - band:
+                other_normalized = other._normalize_qty_min(ref_uom)
+                if abs(other_normalized - this_normalized) < 1e-6:
+                    raise ValidationError(
+                        DUP_MSG % {"qty": this_normalized, "uom": ref_uom.name}
+                    )
+
+    def _normalize_qty_min(self, target_uom):
+        """Return ``qty_min`` converted to ``target_uom``, or None when
+        conversion is impossible (different UoM category)."""
+        self.ensure_one()
+        if not self.qty_uom_id or not target_uom:
+            return None
+        if self.qty_uom_id == target_uom:
+            return self.qty_min or 0.0
+        if self.qty_uom_id.category_id != target_uom.category_id:
+            return None
+        return self.qty_uom_id._compute_quantity(
+            self.qty_min or 0.0, target_uom, round=False
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        bands = super().create(vals_list)
+        bands._validate_against_profile()
+        return bands
+
+    def write(self, vals):
+        res = super().write(vals)
+        # ``line_id`` change moves the band to a different product /
+        # template, which switches the applicable profile and the
+        # extra_discount gate context — must re-validate.
+        if {
+            "qty_min",
+            "qty_uom_id",
+            "seller_discount",
+            "extra_discount",
+            "line_id",
+        } & set(vals):
+            self._validate_against_profile()
+        return res
+
+    def _validate_against_profile(self):
+        """Validate each band's ``seller_discount`` against the user's profile, qty-aware. Director bypasses; template-line bands use first active variant as proxy. Mirrors the line-level extra_discount gate: extra_discount > 0 requires manager or director."""
+        if self.env.user.has_group("tr_commercial_policy.group_sales_director"):
+            return
+        # Mirror line-level gate: extra discount on a band is a
+        # negotiated concession; require manager/director just like
+        # the line itself does in _validate_line_discount_limits.
+        is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
+        if not is_manager:
+            for band in self:
+                if (band.extra_discount or 0.0) > 0:
+                    raise AccessError(
+                        _(
+                            "Extra discount on a band requires manager or "
+                            "director approval."
+                        )
+                    )
+        OVER_MSG = _(
+            "Band seller discount (%(disc).2f%%) exceeds the maximum allowed (%(max).2f%%) by your sales profile '%(profile)s' for qty ≥ %(qty).2f %(uom)s."
+        )
+        for band in self:
+            line = band.line_id
+            condition = line.condition_id
+            profile = line._get_applicable_profile(condition=condition)
+            if not profile:
+                continue
+            product_arg = False
+            if line.applied_on == "product" and line.product_id:
+                product_arg = line.product_id
+            elif line.applied_on == "product_template" and line.product_tmpl_id:
+                product_arg = line.product_tmpl_id.product_variant_ids.filtered(
+                    "active"
+                )[:1]
+            if not product_arg:
+                continue
+            rule = self._resolve_profile_rule_qty_aware(
+                profile, product_arg, band.qty_min, band.qty_uom_id
+            )
+            if not rule:
+                continue
+            seller = band.seller_discount or 0.0
+            if seller > rule.seller_discount_max:
+                raise ValidationError(
+                    OVER_MSG
+                    % {
+                        "disc": seller,
+                        "max": rule.seller_discount_max,
+                        "profile": profile.name,
+                        "qty": band.qty_min,
+                        "uom": band.qty_uom_id.name,
+                    }
+                )
+
+    def _resolve_profile_rule_qty_aware(self, profile, product, qty, uom):
+        """Find the profile rule that applies to ``product`` at ``qty``: variant → template → category → general."""
+
+        def _qty_min_normalized(rule):
+            if not rule.qty_uom_id or not uom:
+                return rule.qty_min or 0.0
+            if rule.qty_uom_id == uom:
+                return rule.qty_min or 0.0
+            if rule.qty_uom_id.category_id != uom.category_id:
+                return None
+            return rule.qty_uom_id._compute_quantity(
+                rule.qty_min or 0.0, uom, round=False
+            )
+
+        def _pick_best(rules):
+            candidates = []
+            for r in rules:
+                normalized = _qty_min_normalized(r)
+                if normalized is None:
+                    continue
+                if (qty or 0.0) + 1e-9 >= normalized:
+                    candidates.append((normalized, r))
+            if not candidates:
+                return False
+            candidates.sort(key=lambda nr: nr[0])
+            return candidates[-1][1]
+
+        rules = profile.rule_ids
+        variant_rules = rules.filtered(
+            lambda r: r.applied_on == "product" and r.product_id == product
+        )
+        winner = _pick_best(variant_rules)
+        if winner:
+            return winner
+        tmpl_rules = rules.filtered(
+            lambda r: r.applied_on == "product_template"
+            and r.product_tmpl_id == product.product_tmpl_id
+        )
+        winner = _pick_best(tmpl_rules)
+        if winner:
+            return winner
+        categ = product.categ_id
+        while categ:
+            categ_rules = rules.filtered(
+                lambda r, c=categ: r.applied_on == "category" and r.categ_id == c
+            )
+            winner = _pick_best(categ_rules)
+            if winner:
+                return winner
+            categ = categ.parent_id
+        general_rules = rules.filtered(lambda r: r.applied_on == "general")
+        return _pick_best(general_rules)

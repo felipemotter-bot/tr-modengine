@@ -424,7 +424,11 @@ class AccountMove(models.Model):
             seller_discount,
             extra_discount,
             _source,
-        ) = condition._resolve_discount_for_product(line.product_id)
+        ) = condition._resolve_discount_for_product(
+            line.product_id,
+            qty=line.quantity,
+            uom=line.product_uom_id,
+        )
         base_price = line._compute_manual_base_price()
         tax_rate, freight_rate, admin_rate = get_policy_rates(self.env)
         reference_price = calc_reference_price(
