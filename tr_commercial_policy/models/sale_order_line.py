@@ -203,10 +203,19 @@ class SaleOrderLine(models.Model):
 
     @api.depends(
         "seller_discount",
+        "extra_discount",
         "product_id",
+        "product_uom",
+        "product_uom_qty",
         "order_id.commercial_condition_id",
         "order_id.commercial_condition_id.seller_discount",
         "order_id.commercial_condition_id.line_ids.seller_discount",
+        "order_id.commercial_condition_id.line_ids.extra_discount",
+        "order_id.commercial_condition_id.line_ids.band_ids",
+        "order_id.commercial_condition_id.line_ids.band_ids.qty_min",
+        "order_id.commercial_condition_id.line_ids.band_ids.qty_uom_id",
+        "order_id.commercial_condition_id.line_ids.band_ids.seller_discount",
+        "order_id.commercial_condition_id.line_ids.band_ids.extra_discount",
     )
     def _compute_discount_changed(self):
         for line in self:
@@ -215,10 +224,16 @@ class SaleOrderLine(models.Model):
                 continue
             (
                 cond_seller,
-                _cond_extra,
+                cond_extra,
                 _source,
-            ) = line.order_id._get_condition_discount_for_product(line.product_id)
-            line.discount_changed = line.seller_discount != cond_seller
+            ) = line.order_id._get_condition_discount_for_product(
+                line.product_id,
+                qty=line.product_uom_qty,
+                uom=line.product_uom,
+            )
+            line.discount_changed = (line.seller_discount or 0.0) != (
+                cond_seller or 0.0
+            ) or (line.extra_discount or 0.0) != (cond_extra or 0.0)
 
     @api.depends("seller_discount", "extra_discount")
     def _compute_total_seller_extra_discount(self):
@@ -329,7 +344,20 @@ class SaleOrderLine(models.Model):
 
     def write(self, vals):
         self._check_direct_price_edit(vals)
+        # Capture pre-write alignment for qty/uom/product changes so we
+        # can re-apply the condition band without overwriting manual
+        # override.
+        band_triggers = {"product_uom_qty", "product_uom", "product_id"}
+        old_alignment = {}
+        if band_triggers & set(vals):
+            old_alignment = {
+                line.id: line._is_aligned_with_condition_band() for line in self
+            }
         res = super().write(vals)
+        if old_alignment:
+            for line in self:
+                if old_alignment.get(line.id):
+                    line._reapply_condition_band()
         if any(
             field in vals
             for field in ("seller_discount", "extra_discount", "reference_price")
@@ -597,3 +625,61 @@ class SaleOrderLine(models.Model):
             if band.discount_up_to >= seller_disc:
                 return band.commission_rate
         return False
+
+    # ------------------------------------------------------------------
+    # Qty-band re-application (condition.line.band)
+    # ------------------------------------------------------------------
+
+    def _is_aligned_with_condition_band(self):
+        """Check if seller/extra match what the condition would produce
+        for the line's CURRENT product/qty/uom.
+
+        Used by ``write()`` BEFORE applying changes to detect manual
+        override (so we don't overwrite it on qty/uom edits).
+        """
+        self.ensure_one()
+        condition = self.order_id.commercial_condition_id
+        if not condition or not self.product_id:
+            return True  # No condition → "aligned" trivially.
+        seller, extra, _src = condition._resolve_discount_for_product(
+            self.product_id,
+            qty=self.product_uom_qty,
+            uom=self.product_uom,
+        )
+        return (self.seller_discount or 0.0) == (seller or 0.0) and (
+            self.extra_discount or 0.0
+        ) == (extra or 0.0)
+
+    def _reapply_condition_band(self):
+        """Re-apply seller/extra from condition without override check.
+
+        Caller is responsible for deciding whether re-application is
+        appropriate (e.g. user-was-aligned-pre-edit).
+        """
+        for line in self:
+            condition = line.order_id.commercial_condition_id
+            if not condition or not line.product_id:
+                continue
+            seller, extra, _src = condition._resolve_discount_for_product(
+                line.product_id,
+                qty=line.product_uom_qty,
+                uom=line.product_uom,
+            )
+            line.seller_discount = seller
+            line.extra_discount = extra
+
+    @api.onchange("product_uom_qty", "product_uom")
+    def _onchange_qty_uom_apply_band(self):
+        """Re-apply condition band when qty/uom change in the form.
+
+        Preserves manual override: only re-applies when ``_origin``
+        (the persisted record) was aligned with the condition. New
+        unsaved lines have empty ``_origin`` and re-apply normally.
+        """
+        for line in self:
+            origin = line._origin
+            if not origin or not origin.id:
+                line._reapply_condition_band()
+                continue
+            if origin._is_aligned_with_condition_band():
+                line._reapply_condition_band()

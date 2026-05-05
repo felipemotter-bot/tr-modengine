@@ -128,6 +128,24 @@
                 font-style: italic;
             }
 
+            /* ---------- Inline qty bands (condition.line.band) ------- */
+            /* Same nested-row pattern as inline exceptions: indented
+               description, accent border, lighter font. Distinct hue
+               (greenish) so when both bands and variant exceptions
+               coexist on the same template, the eye separates them. */
+            .pricelist-table tbody tr.pricelist-row-band td {
+                font-size: 9pt;
+                color: #555;
+                background: #f0f5f1 !important;
+                border-bottom: 1px solid #e0e6e1 !important;
+            }
+            .pricelist-table tbody tr.pricelist-row-band
+                td.pricelist-cell-exception {
+                padding-left: 28pt;
+                border-left: 3px solid #b9d4be !important;
+                font-style: italic;
+            }
+
             /* ---------- Historico explanatory note (inline after
                            the Condições Comerciais block) ----------------- */
             .pricelist-history-note {

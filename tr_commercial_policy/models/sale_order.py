@@ -441,7 +441,9 @@ class SaleOrder(models.Model):
         # Resolve expected values
         new_base_price = self._get_fresh_base_price(line, condition)
         cond_seller, cond_extra, _source = self._get_condition_discount_for_product(
-            line.product_id
+            line.product_id,
+            qty=line.product_uom_qty,
+            uom=line.product_uom,
         )
         base = new_base_price if new_base_price else line.base_price
         tax_rate, freight_rate, admin_rate = get_policy_rates(self.env)
@@ -574,10 +576,18 @@ class SaleOrder(models.Model):
         product_lines._resolve_agent_commissions()
 
     def _apply_condition_to_line(self, line, condition):
-        """Apply commercial condition discounts to a sale order line."""
+        """Apply commercial condition discounts to a sale order line.
+
+        Passes line qty/uom so condition.line.band_ids are resolved
+        against the actual line quantity (qty_min thresholds honored).
+        """
         if not condition or not line.product_id:
             return
-        seller, extra, _level = condition._resolve_discount_for_product(line.product_id)
+        seller, extra, _level = condition._resolve_discount_for_product(
+            line.product_id,
+            qty=line.product_uom_qty,
+            uom=line.product_uom,
+        )
         line.seller_discount = seller
         line.extra_discount = extra
         line.discount_fixed = True
@@ -1181,7 +1191,11 @@ class SaleOrder(models.Model):
                 current_seller,
                 current_extra,
                 source,
-            ) = self._get_condition_discount_for_product(line.product_id)
+            ) = self._get_condition_discount_for_product(
+                line.product_id,
+                qty=line.product_uom_qty,
+                uom=line.product_uom,
+            )
             if (
                 line.seller_discount != current_seller
                 or line.extra_discount != current_extra
@@ -1240,17 +1254,18 @@ class SaleOrder(models.Model):
         condition = self.commercial_condition_id
         return condition.seller_discount if condition else 0.0
 
-    def _get_condition_discount_for_product(self, product):
+    def _get_condition_discount_for_product(self, product, qty=0.0, uom=None):
         """Resolve current condition discount for a product.
 
         Returns (seller_discount, extra_discount, source_level).
-        Delegates to condition._resolve_discount_for_product.
+        Delegates to condition._resolve_discount_for_product, passing
+        ``qty``/``uom`` so qty bands on condition lines are honored.
         """
         self.ensure_one()
         condition = self.commercial_condition_id
         if not condition:
             return 0.0, 0.0, "general"
-        return condition._resolve_discount_for_product(product)
+        return condition._resolve_discount_for_product(product, qty=qty, uom=uom)
 
     def _get_invoice_grouping_keys(self):
         """Add commercial policy fields to invoice grouping keys.

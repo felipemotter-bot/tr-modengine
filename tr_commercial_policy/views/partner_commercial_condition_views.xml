@@ -55,6 +55,7 @@
                     </group>
                     <notebook>
                         <page string="Product Lines" name="lines">
+                            <field name="has_any_band" invisible="1" />
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="applied_on" />
@@ -68,7 +69,51 @@
                   />
                                     <field name="seller_discount" />
                                     <field name="extra_discount" />
+                                    <field
+                    name="bands_summary"
+                    readonly="1"
+                    attrs="{'column_invisible': [('parent.has_any_band', '=', False)]}"
+                  />
+                                    <button
+                    name="action_open_band_form"
+                    type="object"
+                    string="Manage Bands"
+                    icon="fa-bars"
+                  />
                                 </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="applied_on" />
+                                                <field
+                          name="product_tmpl_id"
+                          attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+                        />
+                                                <field
+                          name="product_id"
+                          attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+                        />
+                                            </group>
+                                            <group>
+                                                <field name="seller_discount" />
+                                                <field name="extra_discount" />
+                                            </group>
+                                        </group>
+                                        <separator string="Quantity Bands" />
+                                        <p
+                      class="text-muted"
+                    >Optional. Define qty thresholds where the discount changes (e.g. ≥50 CX → 15%). Above the threshold, the band's discounts replace the line's base discount above. Below, the line's direct discounts apply.</p>
+                                        <field name="band_ids">
+                                            <tree editable="bottom">
+                                                <field name="qty_min" />
+                                                <field name="qty_uom_id" />
+                                                <field name="seller_discount" />
+                                                <field name="extra_discount" />
+                                            </tree>
+                                        </field>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                     </notebook>
@@ -78,6 +123,47 @@
                     <field name="activity_ids" />
                     <field name="message_ids" />
                 </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Commercial Condition Line Form (used by Manage Bands button) -->
+    <record id="partner_commercial_condition_line_form" model="ir.ui.view">
+        <field name="name">partner.commercial.condition.line.form</field>
+        <field name="model">partner.commercial.condition.line</field>
+        <field name="arch" type="xml">
+            <form string="Condition Line">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="applied_on" />
+                            <field
+                name="product_tmpl_id"
+                attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+              />
+                            <field
+                name="product_id"
+                attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+              />
+                        </group>
+                        <group>
+                            <field name="seller_discount" />
+                            <field name="extra_discount" />
+                        </group>
+                    </group>
+                    <separator string="Quantity Bands" />
+                    <p
+            class="text-muted"
+          >Optional. Define qty thresholds where the discount changes (e.g. ≥50 CX → 15%). Above the threshold, the band's discounts replace the line's base discount above. Below, the line's direct discounts apply.</p>
+                    <field name="band_ids">
+                        <tree editable="bottom">
+                            <field name="qty_min" />
+                            <field name="qty_uom_id" />
+                            <field name="seller_discount" />
+                            <field name="extra_discount" />
+                        </tree>
+                    </field>
+                </sheet>
             </form>
         </field>
     </record>

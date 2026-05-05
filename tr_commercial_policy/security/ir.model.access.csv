@@ -11,6 +11,8 @@ access_commercial_condition_user,partner.commercial.condition user,model_partner
 access_commercial_condition_manager,partner.commercial.condition manager,model_partner_commercial_condition,group_sales_manager,1,1,1,1
 access_commercial_condition_line_user,partner.commercial.condition.line user,model_partner_commercial_condition_line,base.group_user,1,1,1,1
 access_commercial_condition_line_manager,partner.commercial.condition.line manager,model_partner_commercial_condition_line,group_sales_manager,1,1,1,1
+access_commercial_condition_line_band_user,partner.commercial.condition.line.band user,model_partner_commercial_condition_line_band,base.group_user,1,1,1,1
+access_commercial_condition_line_band_manager,partner.commercial.condition.line.band manager,model_partner_commercial_condition_line_band,group_sales_manager,1,1,1,1
 access_save_condition_wizard,tr.save.condition.wizard,model_tr_save_condition_wizard,base.group_user,1,1,1,1
 access_save_condition_wizard_line,tr.save.condition.wizard.line,model_tr_save_condition_wizard_line,base.group_user,1,1,1,1
 access_save_condition_line_wizard,tr.save.condition.line.wizard,model_tr_save_condition_line_wizard,base.group_user,1,1,1,1

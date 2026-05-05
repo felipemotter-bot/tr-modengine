@@ -3581,3 +3581,148 @@ msgstr "equipe de vendas '%s' (equipe do vendedor)"
 #, python-format
 msgid "salesperson '%s'"
 msgstr "vendedor(a) '%s'"
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line__band_ids
+msgid ""
+"Additional discount tiers that activate when the order/invoice line "
+"quantity reaches a threshold. The line's direct Seller/Extra Discount "
+"fields are the implicit qty_min=0 band; bands defined here represent qty "
+"thresholds above zero."
+msgstr ""
+"Faixas adicionais de desconto que ativam quando a quantidade da linha do "
+"pedido/fatura atinge um limite. Os campos Desconto do Vendedor/Extra da "
+"linha funcionam como a faixa implícita qty_min=0; as faixas definidas "
+"aqui representam limites acima de zero."
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Band UoM (%(band_uom)s) must be in the same category as the product's UoM "
+"(%(prod_uom)s)."
+msgstr ""
+"A UdM da faixa (%(band_uom)s) deve ser da mesma categoria da UdM do produto "
+"(%(prod_uom)s)."
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Band quantity threshold must be greater than zero. Use the line's "
+"Seller/Extra Discount fields for the qty_min=0 base discount."
+msgstr ""
+"O limite de quantidade da faixa deve ser maior que zero. Use os campos "
+"Desconto do Vendedor/Extra da linha para o desconto base com qty_min=0."
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Band seller discount (%(disc).2f%%) exceeds the maximum allowed "
+"(%(max).2f%%) by your sales profile '%(profile)s' for qty ≥ %(qty).2f "
+"%(uom)s."
+msgstr ""
+"O desconto de vendedor da faixa (%(disc).2f%%) ultrapassa o máximo "
+"permitido (%(max).2f%%) pelo seu perfil de vendas '%(profile)s' para qty ≥ "
+"%(qty).2f %(uom)s."
+
+#. module: tr_commercial_policy
+#: model:ir.actions.act_window,name:tr_commercial_policy.action_open_band_form
+msgid "Condition Line"
+msgstr "Linha da Condição"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__has_any_band
+msgid "Has Any Band"
+msgstr "Tem Faixa"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line__bands_summary
+msgid ""
+"Human-readable summary of the line's qty bands, shown in the condition tree "
+"so cadastrators can see thresholds at a glance without opening the line "
+"form."
+msgstr ""
+"Resumo legível das faixas de quantidade da linha, mostrado na árvore da "
+"condição para que se vejam os limites de relance sem abrir o formulário "
+"da linha."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
+msgid "Manage Bands"
+msgstr "Gerenciar Faixas"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line_band__qty_min
+msgid ""
+"Minimum line quantity (in ``Qty UoM``) to activate this band. Must be "
+"greater than zero — qty_min=0 is the line's direct discount fields."
+msgstr ""
+"Quantidade mínima da linha (em ``UdM da Qtd``) para ativar esta faixa. Deve "
+"ser maior que zero — qty_min=0 é representado pelos campos de desconto "
+"diretos da linha."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_line_form
+msgid ""
+"Optional. Define qty thresholds where the discount changes (e.g. ≥50 CX → "
+"15%). Above the threshold, the band's discounts replace the line's base "
+"discount above. Below, the line's direct discounts apply."
+msgstr ""
+"Opcional. Defina limites de quantidade onde o desconto muda (ex.: ≥50 CX → "
+"15%). Acima do limite, os descontos da faixa substituem o desconto base da "
+"linha acima. Abaixo, valem os descontos diretos da linha."
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_partner_commercial_condition_line_band
+msgid "Partner Commercial Condition Line Band"
+msgstr "Faixa de Linha da Condição Comercial"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__band_ids
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_line_form
+msgid "Quantity Bands"
+msgstr "Faixas de Quantidade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__has_any_band
+msgid ""
+"True when at least one line has qty bands defined. Used by the lines tree "
+"to hide the Bands column when no line uses the feature."
+msgstr ""
+"Verdadeiro quando ao menos uma linha tem faixas de quantidade definidas. "
+"Usado pela árvore das linhas para ocultar a coluna Faixas quando nenhuma "
+"linha usa o recurso."
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid ""
+"Two bands resolve to the same threshold (%(qty).2f %(uom)s). Bands must "
+"define distinct quantity thresholds."
+msgstr ""
+"Duas faixas resolvem para o mesmo limite (%(qty).2f %(uom)s). As faixas "
+"devem definir limites de quantidade distintos."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line_band__qty_uom_id
+msgid ""
+"Unit of measure of ``Min Qty``. The order/invoice line quantity is "
+"converted into this UoM before comparison. Must be in the same UoM "
+"category as the product's UoM."
+msgstr ""
+"Unidade de medida da ``Qtd Mínima``. A quantidade da linha do "
+"pedido/fatura é convertida para esta UdM antes da comparação. Deve ser da "
+"mesma categoria da UdM do produto."
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "≥%(qty)s %(uom)s → %(sell)s%%"
+msgstr "≥%(qty)s %(uom)s → %(sell)s%%"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "≥%(qty)s %(uom)s → Sell %(sell)s%% / Extra %(ext)s%%"
+msgstr "≥%(qty)s %(uom)s → Vend. %(sell)s%% / Extra %(ext)s%%"

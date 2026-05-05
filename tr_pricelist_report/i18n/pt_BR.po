@@ -675,3 +675,18 @@ msgstr ""
 #: model:mail.template,subject:tr_pricelist_report.email_template_pricelist
 msgid "{{ 'Price List - ' + (object.partner_id.name or '') }}"
 msgstr "{{ 'Lista de Preços - ' + (object.partner_id.name or '') }}"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "0,00"
+msgstr "0,00"
+
+#. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<span>&gt;= </span>"
+msgstr "<span>&gt;= </span>"
+
+#. module: tr_pricelist_report
+#: model:ir.actions.report,name:tr_pricelist_report.action_report_pricelist_basic
+msgid "Basic Pricelist Report"
+msgstr "Relatório de Tabela Básica"

@@ -298,9 +298,11 @@ class PricelistReportWizard(models.TransientModel):
     def _compute_pricing(self, product, rates, qty=1.0):
         """Return full pricing dict for a product.
 
-        ``qty`` is forwarded to ``_compute_base_price`` so pricing at a
-        quantity tier reflects the ``pricelist_item`` matched for that
-        qty — not the unit-level price.
+        ``qty`` is forwarded to ``_compute_base_price`` AND to
+        ``_resolve_discount_for_product`` so both the pricelist tier
+        AND the condition.line band that match that qty are honored.
+        For the main row, ``qty`` defaults to 1.0 (unit-level pricing).
+        ``inline_bands`` re-prices each band using its own qty.
         """
         condition = self.condition_id
         base = self._compute_base_price(product, qty=qty)
@@ -316,8 +318,14 @@ class PricelistReportWizard(models.TransientModel):
         if self._pricelist_blocks_discounts(pricelist):
             seller = 0.0
             extra = 0.0
+            inline_bands = []
         else:
-            seller, extra, _level = condition._resolve_discount_for_product(product)
+            seller, extra, _level = condition._resolve_discount_for_product(
+                product, qty=qty, uom=product.uom_id
+            )
+            # Each band re-resolves base (pricelist tier may shift at
+            # band qty) AND its own seller/extra (condition.line band).
+            inline_bands = self._resolve_inline_bands(product, condition, rates)
         price_unit = calc_price_unit(reference, seller, extra)
         return {
             "product": product,
@@ -327,7 +335,61 @@ class PricelistReportWizard(models.TransientModel):
             "total_discount": (seller or 0.0) + (extra or 0.0),
             "simulated_contractual_return": 0.0,
             "price_unit": price_unit,
+            "inline_bands": inline_bands,
         }
+
+    def _resolve_inline_bands(self, product, condition, rates):
+        """Return per-band pricing rows for the product.
+
+        For each band on the matching ``condition.line``, re-prices
+        the product at the band's qty so the sub-row reflects:
+        - the pricelist's ``min_quantity`` tier active at that qty
+          (e.g. fixed_price=80 if qty>=50 in the pricelist)
+        - the band's seller/extra discount on top
+        Without this, sub-rows would mis-state the price when both
+        the pricelist and the condition.line have qty thresholds.
+        """
+        line = condition.line_ids.filtered(lambda cl: cl.product_id == product)
+        if not line:
+            line = condition.line_ids.filtered(
+                lambda cl: cl.product_tmpl_id == product.product_tmpl_id
+                and cl.applied_on == "product_template"
+            )
+        if not line or not line[0].band_ids:
+            return []
+        cr = condition.contractual_return or 0.0
+        tax_rate, freight_rate, admin_rate = rates
+        pricelist = condition.pricelist_id
+        rows = []
+        for band in line[0].band_ids.sorted("qty_min"):
+            # Convert band.qty_min to the product's UoM so pricelist
+            # tier matching is consistent.
+            band_qty = band._normalize_qty_min(product.uom_id) or band.qty_min
+            band_base = self._compute_base_price(product, qty=band_qty)
+            if self._pricelist_skip_adjustment(pricelist):
+                band_reference = band_base
+            else:
+                band_reference = calc_reference_price(
+                    band_base, cr, tax_rate, freight_rate, admin_rate
+                )
+            band_seller = band.seller_discount or 0.0
+            band_extra = band.extra_discount or 0.0
+            rows.append(
+                {
+                    "qty_min": band.qty_min or 0.0,
+                    "qty_uom_label": (band.qty_uom_id.name or "").replace(
+                        "CAIXA", "CX"
+                    ),
+                    "seller_discount": band_seller,
+                    "extra_discount": band_extra,
+                    "total_discount": band_seller + band_extra,
+                    "reference": band_reference,
+                    "price_unit": calc_price_unit(
+                        band_reference, band_seller, band_extra
+                    ),
+                }
+            )
+        return rows
 
     def _resolve_qty_exceptions(self, products, rates):
         """Return tier-quantity exceptions for the scope products.

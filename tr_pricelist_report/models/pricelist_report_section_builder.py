@@ -178,6 +178,31 @@ class PricelistReportSectionBuilder(models.AbstractModel):
                 continue
             price_buckets = defaultdict(list)
             for pricing in pricings:
+                # Include ``inline_bands`` in the consolidation key
+                # so variants with the same base price but different
+                # qty bands don't collapse — otherwise the printed
+                # sub-rows would represent only the dominant variant's
+                # bands, hiding distinct policies on other variants.
+                bands_key = tuple(
+                    (
+                        float_round(b.get("qty_min", 0.0), precision_digits=2),
+                        b.get("qty_uom_label", ""),
+                        float_round(b.get("seller_discount", 0.0), precision_digits=2),
+                        float_round(b.get("extra_discount", 0.0), precision_digits=2),
+                        # Include the computed reference and price_unit
+                        # so two variants with same band qty/uom/discounts
+                        # but divergent pricelist tiers at that qty don't
+                        # consolidate (the printed price would otherwise
+                        # be wrong for one of them).
+                        float_round(
+                            b.get("reference", 0.0), precision_digits=precision
+                        ),
+                        float_round(
+                            b.get("price_unit", 0.0), precision_digits=precision
+                        ),
+                    )
+                    for b in (pricing.get("inline_bands") or [])
+                )
                 key = (
                     float_round(pricing["price_unit"], precision_digits=precision),
                     float_round(pricing["reference"], precision_digits=precision),
@@ -185,6 +210,7 @@ class PricelistReportSectionBuilder(models.AbstractModel):
                     float_round(
                         pricing["simulated_contractual_return"], precision_digits=2
                     ),
+                    bands_key,
                 )
                 price_buckets[key].append(pricing)
             dominant_key = max(price_buckets, key=lambda k: (len(price_buckets[k]), k))

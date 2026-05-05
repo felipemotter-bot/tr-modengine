@@ -514,9 +514,75 @@ class AccountMoveLine(models.Model):
 
     def write(self, vals):
         self._check_direct_price_edit(vals)
+        # Capture pre-write alignment for qty/uom/product changes so we
+        # can re-apply the condition band without overwriting manual
+        # override (mirror of sale.order.line write override).
+        triggers = {"quantity", "product_uom_id", "product_id"}
+        old_alignment = {}
+        if triggers & set(vals):
+            for line in self.filtered(
+                lambda li: li.move_id.move_type in ("out_invoice", "out_refund")
+                and not li.sale_line_ids
+                and li.product_id
+            ):
+                old_alignment[line.id] = line._is_aligned_with_condition_band()
         result = super().write(vals)
+        if old_alignment:
+            for line in self:
+                if line.id in old_alignment and old_alignment[line.id]:
+                    line._reapply_condition_band()
         if {"seller_discount", "extra_discount"} & set(vals):
             moves_to_sync = self.mapped("move_id").filtered("review_ids")
             for move in moves_to_sync:
                 move._sync_discount_validation_state()
         return result
+
+    @api.onchange("quantity", "product_uom_id")
+    def _onchange_qty_uom_apply_band(self):
+        """Re-apply condition band when qty/uom change in form.
+
+        Manual-only invoice lines (no ``sale_line_ids``). Sale-origin
+        lines inherit discounts from sale.order.line and shouldn't
+        re-resolve here.
+        """
+        for line in self:
+            if line.sale_line_ids or not line.product_id:
+                continue
+            move = line.move_id
+            if move.move_type not in ("out_invoice", "out_refund"):
+                continue
+            origin = line._origin
+            if not origin or not origin.id:
+                line._reapply_condition_band()
+                continue
+            if origin._is_aligned_with_condition_band():
+                line._reapply_condition_band()
+
+    def _is_aligned_with_condition_band(self):
+        """Same semantics as sale.order.line's helper, for invoice lines."""
+        self.ensure_one()
+        condition = self.move_id.commercial_condition_id
+        if not condition or not self.product_id:
+            return True
+        seller, extra, _src = condition._resolve_discount_for_product(
+            self.product_id,
+            qty=self.quantity,
+            uom=self.product_uom_id,
+        )
+        return (self.seller_discount or 0.0) == (seller or 0.0) and (
+            self.extra_discount or 0.0
+        ) == (extra or 0.0)
+
+    def _reapply_condition_band(self):
+        """Re-apply seller/extra from condition for current qty/uom."""
+        for line in self:
+            condition = line.move_id.commercial_condition_id
+            if not condition or not line.product_id:
+                continue
+            seller, extra, _src = condition._resolve_discount_for_product(
+                line.product_id,
+                qty=line.quantity,
+                uom=line.product_uom_id,
+            )
+            line.seller_discount = seller
+            line.extra_discount = extra

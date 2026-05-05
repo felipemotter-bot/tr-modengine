@@ -123,3 +123,116 @@ class TestPricingConsistency(PricelistReportTestCommon):
         self.assertAlmostEqual(
             pricing["price_unit"], order_pricing["price_unit"], places=2
         )
+
+    def test_inline_bands_emitted_when_condition_line_has_bands(self):
+        """``_compute_pricing`` returns ``inline_bands`` for each band on the
+        product's condition line. Each band entry carries the composed
+        ``price_unit`` and the qty threshold + UoM label.
+        """
+        from odoo.addons.tr_commercial_policy.models.policy_utils import (
+            calc_price_unit,
+            get_policy_rates,
+        )
+
+        line = self.condition.with_user(self.manager_user).line_ids = [
+            (
+                0,
+                0,
+                {
+                    "applied_on": "product",
+                    "product_id": self.product_a.id,
+                    "seller_discount": 5.0,
+                    "extra_discount": 0.0,
+                },
+            ),
+        ]
+        del line  # Just to silence unused-var; assignment is the side effect.
+        cond_line = self.condition.line_ids.filtered(
+            lambda cl: cl.product_id == self.product_a
+        )
+        self.env["partner.commercial.condition.line.band"].with_user(
+            self.director_user
+        ).create(
+            {
+                "line_id": cond_line.id,
+                "qty_min": 50.0,
+                "qty_uom_id": self.product_a.uom_id.id,
+                "seller_discount": 8.0,
+                "extra_discount": 0.0,
+            }
+        )
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        rates = get_policy_rates(self.env)
+        pricing = wizard._compute_pricing(self.product_a, rates)
+        self.assertEqual(len(pricing["inline_bands"]), 1)
+        band_row = pricing["inline_bands"][0]
+        self.assertAlmostEqual(band_row["qty_min"], 50.0)
+        self.assertAlmostEqual(band_row["total_discount"], 8.0, places=2)
+        self.assertAlmostEqual(
+            band_row["price_unit"],
+            calc_price_unit(pricing["reference"], 8.0, 0.0),
+            places=2,
+        )
+
+    def test_inline_band_uses_pricelist_tier_at_band_qty(self):
+        """Sub-row price reflects pricelist tier active at the band qty.
+
+        When the pricelist has a min_quantity tier matching the band's
+        qty_min, the sub-row must use the tier's base price — not the
+        unit-level price. Otherwise the customer sees inconsistent
+        pricing between the printed sub-row and what they'd get on a
+        real order at that qty.
+        """
+        from odoo.addons.tr_commercial_policy.models.policy_utils import (
+            get_policy_rates,
+        )
+
+        # Add a pricelist tier at qty>=50 with a lower fixed_price.
+        self.env["product.pricelist.item"].create(
+            {
+                "pricelist_id": self.pricelist.id,
+                "applied_on": "0_product_variant",
+                "product_id": self.product_a.id,
+                "compute_price": "fixed",
+                "fixed_price": 80.0,
+                "min_quantity": 50,
+            }
+        )
+        # Cadastra linha + banda no produto.
+        self.condition.with_user(self.manager_user).line_ids = [
+            (
+                0,
+                0,
+                {
+                    "applied_on": "product",
+                    "product_id": self.product_a.id,
+                    "seller_discount": 5.0,
+                    "extra_discount": 0.0,
+                },
+            ),
+        ]
+        cond_line = self.condition.line_ids.filtered(
+            lambda cl: cl.product_id == self.product_a
+        )
+        self.env["partner.commercial.condition.line.band"].with_user(
+            self.director_user
+        ).create(
+            {
+                "line_id": cond_line.id,
+                "qty_min": 50.0,
+                "qty_uom_id": self.product_a.uom_id.id,
+                "seller_discount": 8.0,
+                "extra_discount": 0.0,
+            }
+        )
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        rates = get_policy_rates(self.env)
+        pricing = wizard._compute_pricing(self.product_a, rates)
+        band_row = pricing["inline_bands"][0]
+        # Main row uses qty=1 → base=100.
+        self.assertAlmostEqual(pricing["base"], 100.0, places=2)
+        # Band row uses qty=50 → base=80 (pricelist tier).
+        # Reference may differ from base by contractual return; verify
+        # base via reference's relationship: reference = adjusted base.
+        # Easier: check that band row reference < main row reference.
+        self.assertLess(band_row["reference"], pricing["reference"])

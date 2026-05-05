@@ -106,42 +106,38 @@
                                             </td>
                                         </tr>
                                         <tr
-                      t-foreach="row.get('inline_exceptions') or []"
-                      t-as="exc"
-                      class="pricelist-row-exception"
+                      t-foreach="row['pricing'].get('inline_bands') or []"
+                      t-as="band"
+                      class="pricelist-row-band"
                     >
                                             <td
                         class="pricelist-cell-description pricelist-cell-exception"
                       >
-                                                <t
-                          t-esc="exc['product'].display_name"
-                        />
-                                            </td>
-                                            <td>
-                                                <span
-                          t-esc="exc['qty']"
+                                                <span>&gt;= </span><span
+                          t-esc="band['qty_min']"
                           t-options="{'widget': 'float', 'precision': 2}"
-                        /> <t t-esc="exc['uom_label']" />
+                        /> <t t-esc="band['qty_uom_label']" />
                                             </td>
+                                            <td t-if="layout == 'historico'" />
                                             <t
                         t-if="discount_display == 'show_discounts'"
                       >
                                                 <td>
                                                     <span
-                            t-if="exc['total_discount'] >= 0"
-                            t-esc="exc['reference']"
+                            t-if="band['total_discount'] >= 0"
+                            t-esc="band['reference']"
                             t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                           />
                                                     <span
                             t-else=""
-                            t-esc="exc['price_unit']"
+                            t-esc="band['price_unit']"
                             t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                           />
                                                 </td>
                                                 <td>
                                                     <span
-                            t-if="exc['total_discount'] >= 0"
-                            t-esc="exc['total_discount']"
+                            t-if="band['total_discount'] >= 0"
+                            t-esc="band['total_discount']"
                             t-options="{'widget': 'float', 'precision': 2}"
                           />
                                                     <span t-else="">0,00</span>
@@ -149,11 +145,106 @@
                                             </t>
                                             <td class="pricelist-cell-price">
                                                 <span
-                          t-esc="exc['price_unit']"
+                          t-esc="band['price_unit']"
                           t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
                         />
                                             </td>
                                         </tr>
+                                        <t
+                      t-foreach="row.get('inline_exceptions') or []"
+                      t-as="exc"
+                    >
+                                            <tr class="pricelist-row-exception">
+                                                <td
+                          class="pricelist-cell-description pricelist-cell-exception"
+                        >
+                                                    <t
+                            t-esc="exc['product'].display_name"
+                          />
+                                                </td>
+                                                <td>
+                                                    <span
+                            t-esc="exc['qty']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          /> <t t-esc="exc['uom_label']" />
+                                                </td>
+                                                <t
+                          t-if="discount_display == 'show_discounts'"
+                        >
+                                                    <td>
+                                                        <span
+                              t-if="exc['total_discount'] >= 0"
+                              t-esc="exc['reference']"
+                              t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                            />
+                                                        <span
+                              t-else=""
+                              t-esc="exc['price_unit']"
+                              t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                            />
+                                                    </td>
+                                                    <td>
+                                                        <span
+                              t-if="exc['total_discount'] >= 0"
+                              t-esc="exc['total_discount']"
+                              t-options="{'widget': 'float', 'precision': 2}"
+                            />
+                                                        <span t-else="">0,00</span>
+                                                    </td>
+                                                </t>
+                                                <td class="pricelist-cell-price">
+                                                    <span
+                            t-esc="exc['price_unit']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                                </td>
+                                            </tr>
+                                            <tr
+                        t-foreach="exc.get('inline_bands') or []"
+                        t-as="excband"
+                        class="pricelist-row-band"
+                      >
+                                            <td
+                          class="pricelist-cell-description pricelist-cell-exception"
+                        >
+                                                <span>&gt;= </span><span
+                            t-esc="excband['qty_min']"
+                            t-options="{'widget': 'float', 'precision': 2}"
+                          /> <t t-esc="excband['qty_uom_label']" />
+                                            </td>
+                                            <td t-if="layout == 'historico'" />
+                                            <t
+                          t-if="discount_display == 'show_discounts'"
+                        >
+                                                <td>
+                                                    <span
+                              t-if="excband['total_discount'] >= 0"
+                              t-esc="excband['reference']"
+                              t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                            />
+                                                    <span
+                              t-else=""
+                              t-esc="excband['price_unit']"
+                              t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                            />
+                                                </td>
+                                                <td>
+                                                    <span
+                              t-if="excband['total_discount'] >= 0"
+                              t-esc="excband['total_discount']"
+                              t-options="{'widget': 'float', 'precision': 2}"
+                            />
+                                                    <span t-else="">0,00</span>
+                                                </td>
+                                            </t>
+                                            <td class="pricelist-cell-price">
+                                                <span
+                            t-esc="excband['price_unit']"
+                            t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                          />
+                                            </td>
+                                        </tr>
+                                    </t>
                                     </t>
                                 </tbody>
                             </table>
@@ -180,26 +271,51 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr t-foreach="variant_exceptions" t-as="exc">
-                                        <td
-                      class="pricelist-cell-description"
-                      t-esc="exc['product'].display_name"
-                    />
-                                        <td
-                      t-if="layout == 'historico' and history_grouping == 'template'"
-                    >
-                                            <span
-                        t-esc="exc['qty']"
-                        t-options="{'widget': 'float', 'precision': 2}"
-                      /> <t t-esc="exc['uom_label']" />
-                                        </td>
-                                        <td class="pricelist-cell-price">
-                                            <span
-                        t-esc="exc['price_unit']"
-                        t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                                    <t t-foreach="variant_exceptions" t-as="exc">
+                                        <tr>
+                                            <td
+                        class="pricelist-cell-description"
+                        t-esc="exc['product'].display_name"
                       />
-                                        </td>
-                                    </tr>
+                                            <td
+                        t-if="layout == 'historico' and history_grouping == 'template'"
+                      >
+                                                <span
+                          t-esc="exc['qty']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        /> <t t-esc="exc['uom_label']" />
+                                            </td>
+                                            <td class="pricelist-cell-price">
+                                                <span
+                          t-esc="exc['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </td>
+                                        </tr>
+                                        <tr
+                      t-foreach="exc.get('inline_bands') or []"
+                      t-as="excband"
+                      class="pricelist-row-band"
+                    >
+                                            <td
+                        class="pricelist-cell-description pricelist-cell-exception"
+                      >
+                                                <span>&gt;= </span><span
+                          t-esc="excband['qty_min']"
+                          t-options="{'widget': 'float', 'precision': 2}"
+                        /> <t t-esc="excband['qty_uom_label']" />
+                                            </td>
+                                            <td
+                        t-if="layout == 'historico' and history_grouping == 'template'"
+                      />
+                                            <td class="pricelist-cell-price">
+                                                <span
+                          t-esc="excband['price_unit']"
+                          t-options="{'widget': 'monetary', 'display_currency': condition.pricelist_id.currency_id}"
+                        />
+                                            </td>
+                                        </tr>
+                                    </t>
                                 </tbody>
                             </table>
                         </div>
