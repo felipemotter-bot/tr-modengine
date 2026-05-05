@@ -146,6 +146,14 @@
                 font-style: italic;
             }
 
+            /* Banda de uma variante divergente (exceção) precisa de
+               indent extra pra deixar claro que é sub-sub-item da
+               linha do template, não sub-item dele. */
+            .pricelist-table tbody tr.pricelist-row-band-of-exception
+                td.pricelist-cell-exception {
+                padding-left: 56pt;
+            }
+
             /* ---------- Historico explanatory note (inline after
                            the Condições Comerciais block) ----------------- */
             .pricelist-history-note {
