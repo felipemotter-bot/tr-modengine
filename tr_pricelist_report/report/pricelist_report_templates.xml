@@ -202,7 +202,7 @@
                                             <tr
                         t-foreach="exc.get('inline_bands') or []"
                         t-as="excband"
-                        class="pricelist-row-band"
+                        class="pricelist-row-band pricelist-row-band-of-exception"
                       >
                                             <td
                           class="pricelist-cell-description pricelist-cell-exception"
@@ -295,7 +295,7 @@
                                         <tr
                       t-foreach="exc.get('inline_bands') or []"
                       t-as="excband"
-                      class="pricelist-row-band"
+                      class="pricelist-row-band pricelist-row-band-of-exception"
                     >
                                             <td
                         class="pricelist-cell-description pricelist-cell-exception"
