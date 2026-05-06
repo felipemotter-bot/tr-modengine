@@ -33,3 +33,4 @@ from . import test_rep_sales_profile_visibility
 from . import test_rep_allowed_pricelist
 from . import test_rep_default_pricelist
 from . import test_rep_agent_flip_applies_defaults
+from . import test_rep_multi_line_fiscal

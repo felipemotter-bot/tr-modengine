@@ -130,6 +130,15 @@ class SaleOrder(models.Model):
         # defined by the backoffice. Reps can see them but must not edit.
         # Inject readonly modifier directly on the arch nodes inside
         # the order_line inline form.
+        #
+        # ``force_save="1"`` is required: Odoo's web client strips
+        # readonly fields from the vals on save, which on new lines
+        # would discard the ``default_fiscal_operation_id`` /
+        # ``default_partner_id`` / ``default_company_id`` carried by
+        # the order_line widget context. Without force_save, multi-
+        # line orders saved by reps end up with empty fiscal_operation_id
+        # on every new line, breaking _compute_fiscal_operation_line_id
+        # / cfop_id / amount_tax / total_financeiro downstream.
         readonly_line_fields = (
             "fiscal_operation_id",
             "fiscal_operation_line_id",
@@ -144,6 +153,20 @@ class SaleOrder(models.Model):
                 modifiers["readonly"] = True
                 node.set("modifiers", json.dumps(modifiers))
                 node.set("readonly", "1")
+                node.set("force_save", "1")
+        # Header fields defined by the backoffice: rep can see but not edit.
+        # ``force_save="1"`` for the same reason as the line readonly block
+        # above — keep the value in the save vals despite the readonly modifier.
+        readonly_header_fields = ("carrier_id",)
+        for fname in readonly_header_fields:
+            for node in arch.xpath(
+                f"//sheet//field[@name='{fname}'][not(ancestor::field[@name='order_line'])]"
+            ):
+                modifiers = json.loads(node.get("modifiers") or "{}")
+                modifiers["readonly"] = True
+                node.set("modifiers", json.dumps(modifiers))
+                node.set("readonly", "1")
+                node.set("force_save", "1")
         return arch, view
 
     @api.model_create_multi
