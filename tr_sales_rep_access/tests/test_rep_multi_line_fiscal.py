@@ -61,6 +61,67 @@ class TestRepMultiLineFiscal(SalesRepAccessTestCommon):
         missing = order.order_line.filtered(lambda line: not line.fiscal_operation_id)
         self.assertFalse(missing, "admin lines missing fiscal op: %s" % missing.ids)
 
+    def test_rep_name_readonly_only_on_product_lines(self):
+        """Inspect the rep arch: the ``name`` field inside the order_line
+        form must be readonly when ``display_type`` is False (product
+        lines) and editable otherwise (section/note rows).
+        """
+        import json as _json
+        from lxml import etree
+
+        SaleOrder = self.env["sale.order"].with_user(self.user_u1)
+        view = SaleOrder.get_view(view_type="form")
+        arch = etree.fromstring(view["arch"])
+        nodes = arch.xpath("//field[@name='order_line']/form//field[@name='name']")
+        self.assertTrue(nodes, "rep arch must contain the line name field")
+        for node in nodes:
+            modifiers = _json.loads(node.get("modifiers") or "{}")
+            self.assertEqual(
+                modifiers.get("readonly"),
+                [["display_type", "=", False]],
+                "name must be readonly only when display_type is False, "
+                "got modifiers=%s" % modifiers,
+            )
+
+    def test_rep_can_write_section_and_note_name(self):
+        """Section/note rows reuse ``name`` as their body. The rep
+        readonly on ``name`` must be conditional on ``display_type``
+        so a section/note line is writable. ``display_type`` is invisible
+        in the o2m form, so we exercise the model path the o2m widget
+        ultimately uses (create with display_type set, then write name).
+        """
+        order = (
+            self.env["sale.order"]
+            .with_user(self.user_u1)
+            .create({"partner_id": self.customer_c1.id})
+        )
+        section = (
+            self.env["sale.order.line"]
+            .with_user(self.user_u1)
+            .create(
+                {
+                    "order_id": order.id,
+                    "display_type": "line_section",
+                    "name": "Section A",
+                }
+            )
+        )
+        note = (
+            self.env["sale.order.line"]
+            .with_user(self.user_u1)
+            .create(
+                {
+                    "order_id": order.id,
+                    "display_type": "line_note",
+                    "name": "Note B",
+                }
+            )
+        )
+        section.with_user(self.user_u1).write({"name": "Section A edited"})
+        note.with_user(self.user_u1).write({"name": "Note B edited"})
+        self.assertEqual(section.name, "Section A edited")
+        self.assertEqual(note.name, "Note B edited")
+
     def test_rep_multi_new_lines_all_get_fiscal_operation(self):
         order = self._build_three_line_order(self.user_u1, self.customer_c1)
         self.assertTrue(

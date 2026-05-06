@@ -1,6 +1,7 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import ast
 import json
 import logging
 
@@ -143,7 +144,6 @@ class SaleOrder(models.Model):
             "fiscal_operation_id",
             "fiscal_operation_line_id",
             "cfop_id",
-            "name",
             "product_uom",
         )
         for fname in readonly_line_fields:
@@ -155,6 +155,25 @@ class SaleOrder(models.Model):
                 node.set("modifiers", json.dumps(modifiers))
                 node.set("readonly", "1")
                 node.set("force_save", "1")
+        # ``name`` carries the description for product lines (backoffice-
+        # owned, must stay readonly for the rep) but is also the body of
+        # ``line_section`` / ``line_note`` rows that the rep is allowed
+        # to add. Make the readonly conditional on ``display_type`` so
+        # the section/note wizard remains editable. Encode the domain
+        # in ``attrs`` (Odoo's view postprocessor rebuilds ``modifiers``
+        # from ``attrs``; setting only the JSON does not stick) and
+        # merge with any pre-existing ``attrs`` so upstream invisible/
+        # required rules on ``name`` survive.
+        readonly_when_product_line = [("display_type", "=", False)]
+        for node in arch.xpath("//field[@name='order_line']//field[@name='name']"):
+            existing_attrs = node.get("attrs")
+            attrs_dict = ast.literal_eval(existing_attrs) if existing_attrs else {}
+            attrs_dict["readonly"] = readonly_when_product_line
+            node.set("attrs", str(attrs_dict))
+            modifiers = json.loads(node.get("modifiers") or "{}")
+            modifiers["readonly"] = readonly_when_product_line
+            node.set("modifiers", json.dumps(modifiers))
+            node.set("force_save", "1")
         # Header fields defined by the backoffice: rep can see but not edit.
         # ``force_save="1"`` for the same reason as the line readonly block
         # above — keep the value in the save vals despite the readonly modifier.
