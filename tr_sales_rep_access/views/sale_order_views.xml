@@ -77,6 +77,32 @@
     </record>
 
     <!--
+        tr_commercial_policy replaces ``group_recompute_commission`` with
+        its own policy-aware Recalculate button. That replacement happens
+        after the sale_commission-targeted hide above, stripping the
+        ``groups=``. Reapply it on the replaced node by inheriting from
+        the tr_commercial_policy view directly.
+    -->
+    <record id="view_sale_order_form_hide_policy_recalc_rep" model="ir.ui.view">
+        <field name="name">sale.order.form.hide.policy.recalc.rep</field>
+        <field name="model">sale.order</field>
+        <field
+      name="inherit_id"
+      ref="tr_commercial_policy.sale_order_form_commercial_policy"
+    />
+        <field name="arch" type="xml">
+            <xpath
+        expr="//group[@name='group_recompute_commission']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
         The unmanaged_commission_warning banner from tr_commercial_policy
         wraps its field in a <div class="alert alert-warning"> whose
         visibility depends on the field value. With the field hidden at
@@ -106,9 +132,12 @@
     <!--
         The inline order_line popup has a notebook with technical tabs
         (fiscal_taxes, amounts, others, fiscal_line_extra_info,
-        accounting, commissions) that expose data the rep does not need
-        to see. Hiding the whole notebook is cleaner than per-tab
-        groups= and avoids future regressions when new tabs are added.
+        accounting) that expose data the rep does not need to see.
+        Hide the whole notebook: the placeholder pages targeted by
+        l10n_br_sale's ``inject_fiscal_fields`` are replaced wholesale
+        by deepcopy from the source view, dropping any per-page
+        ``groups=`` we set via inheritance. Notebook-level hide is
+        applied at render time and survives the injection.
     -->
     <record id="view_sale_order_form_hide_line_notebook_rep" model="ir.ui.view">
         <field name="name">sale.order.form.hide.line.notebook.rep</field>
@@ -116,6 +145,55 @@
         <field name="inherit_id" ref="l10n_br_sale.l10n_br_sale_order_form" />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='order_line']//notebook" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <!--
+                ``tax_icms_or_issqn`` is injected inside the fiscal_taxes
+                page (l10n_br_fiscal mixin) and is referenced in attrs
+                of cfop_id / service_type_id / city_taxation_code_id /
+                national_taxation_code_id / cnae_id outside the notebook.
+                Hiding the whole notebook for reps removes the field
+                from arch and breaks attrs evaluation with KeyError.
+                Re-add it here as invisible so the modifiers resolve.
+            -->
+            <xpath
+        expr="//field[@name='order_line']/form/field[@name='product_template_id']"
+        position="after"
+      >
+                <field name="tax_icms_or_issqn" invisible="1" />
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+        Hide l10n_br_sale fiscal/copy-note fields from reps; keep the
+        ``note`` (Termos e condições) field visible. Inherits from
+        l10n_br_sale to target the fields it injects after ``note``.
+    -->
+    <record id="view_sale_order_form_hide_fiscal_notes_rep" model="ir.ui.view">
+        <field name="name">sale.order.form.hide.fiscal.notes.rep</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="l10n_br_sale.l10n_br_sale_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='copy_note']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='manual_customer_additional_data']"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath
+        expr="//field[@name='manual_fiscal_additional_data']"
+        position="attributes"
+      >
                 <attribute
           name="groups"
         >!tr_sales_rep_access.group_sales_rep_external</attribute>
