@@ -144,6 +144,7 @@ class SaleOrder(models.Model):
             "fiscal_operation_line_id",
             "cfop_id",
             "name",
+            "product_uom",
         )
         for fname in readonly_line_fields:
             for node in arch.xpath(
