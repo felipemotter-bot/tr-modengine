@@ -133,8 +133,8 @@
         />
             </xpath>
 
-            <!-- Save Condition and Request Approval buttons -->
-            <xpath expr="//button[@name='action_confirm']" position="before">
+            <!-- Save Condition button placed after Cancel in the statusbar -->
+            <xpath expr="//button[@name='action_cancel']" position="after">
                 <button
           name="action_open_save_condition_wizard"
           string="Save Conditions"
