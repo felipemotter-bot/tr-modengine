@@ -43,12 +43,9 @@
         # rep (the "show history" widget on the sale order line and
         # the "set price from history" widget inside the wizard).
         "sale_order_line_price_history",
-        # PR 7 commit 3 — server-side block on
-        # ``res.partner.action_print_pricelist`` /
-        # ``action_print_pricelist_from_menu`` from
-        # ``tr_pricelist_report`` so the rep cannot generate the
-        # partner price list. View hide of the button is defense in
-        # depth.
+        # ACL grants for the rep on tr_pricelist_report wizards
+        # (commercial-policy and basic) so the rep can run those
+        # reports from the partner form / Sales > Reports menu.
         "tr_pricelist_report",
         # PR 9 — redeclares qty_available/virtual_available_at_date etc.
         # with groups= to block RPC access for external reps.
@@ -75,7 +72,6 @@
         "views/sale_menus.xml",
         "views/sale_order_views.xml",
         "views/sale_order_line_price_history_views.xml",
-        "views/tr_pricelist_report_views.xml",
         "views/account_move_views.xml",
         "views/res_partner_views.xml",
         "views/res_config_settings_views.xml",

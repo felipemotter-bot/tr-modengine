@@ -20,6 +20,15 @@
     </record>
 
     <!--
+        Sales > Reports submenu — needed so the rep can reach
+        ``My Sales Profiles`` (tr_commercial_policy) and the
+        partner price list report wizard (tr_pricelist_report).
+    -->
+    <record id="sale.menu_sale_report" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_sales_rep_external'))]" />
+    </record>
+
+    <!--
         Grant access to the Contacts app. The ``contacts`` submenu
         was restricted by a project-specific custom group
         (``VISUALIZAR CONTATOS``, created at runtime without XML ID)

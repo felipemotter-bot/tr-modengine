@@ -606,26 +606,3 @@ class ResPartner(models.Model):
             return allowed
         excluded = Category.search([("id", "child_of", self.excluded_category_ids.ids)])
         return allowed - excluded
-
-    # -----------------------------------------------------------------
-    # PR 7 commit 3 — ``tr_pricelist_report`` server-side guard.
-    #
-    # Single chokepoint: ``action_print_pricelist_from_menu`` in
-    # upstream already delegates to this method, so guarding here
-    # covers both the header button on the partner form and the
-    # action-menu server binding (upstream exposes this method with
-    # ``binding_model_id = res.partner`` on list/form view types).
-    # The view hide of the button is defense in depth only; this
-    # server-side guard is what actually blocks the rep.
-    # -----------------------------------------------------------------
-
-    def action_print_pricelist(self):
-        if self.env.user.has_group(REP_GROUP_XMLID):
-            raise AccessError(
-                _(
-                    "Sales reps are not allowed to generate the partner "
-                    "price list report — the wizard would expose products "
-                    "outside the rep's allowed catalog."
-                )
-            )
-        return super().action_print_pricelist()
