@@ -1053,16 +1053,13 @@ class PartnerCommercialConditionLine(models.Model):
             return self.product_tmpl_id.display_name
         return _("(no product)")
 
-    def _post_chatter(self, header, changes=None, values=None):
+    def _post_chatter(self, header, body_extra=""):
         self.ensure_one()
         if _chatter_suppressed(self.env):
             return
-        body = "<p>%s</p>" % html_escape(header)
-        if changes:
-            body += _render_changes_html(self, changes)
-        elif values:
-            body += _render_values_html(self, values)
-        self.condition_id._message_log(body=body)
+        self.condition_id._message_log(
+            body="<p>%s</p>%s" % (html_escape(header), body_extra)
+        )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -1079,41 +1076,37 @@ class PartnerCommercialConditionLine(models.Model):
             ]
             line._post_chatter(
                 _("Product line added: %s") % line._line_chatter_label(),
-                values=values,
+                _render_values_html(line, values),
             )
         return records
 
     def write(self, vals):
         tracked = [f for f in _LINE_TRACKED_FIELDS if f in vals]
-        old_data = {}
-        if tracked:
-            for line in self:
-                old_data[line.id] = {f: line[f] for f in tracked}
+        old_data = {line.id: {f: line[f] for f in tracked} for line in self}
         self._validate_line_discount_limits(vals)
         res = super().write(vals)
-        if tracked:
-            for line in self:
-                changes = []
-                for f in tracked:
-                    old = old_data[line.id][f]
-                    new = line[f]
-                    if line._fields[f].type == "many2one":
-                        if old.id == new.id:
-                            continue
-                    elif old == new:
+        for line in self:
+            changes = []
+            for f in tracked:
+                old = old_data[line.id][f]
+                new = line[f]
+                if line._fields[f].type == "many2one":
+                    if old.id == new.id:
                         continue
-                    changes.append(
-                        (
-                            _field_label(line, f),
-                            _format_tracked_value(line, f, old),
-                            _format_tracked_value(line, f, new),
-                        )
+                elif old == new:
+                    continue
+                changes.append(
+                    (
+                        _field_label(line, f),
+                        _format_tracked_value(line, f, old),
+                        _format_tracked_value(line, f, new),
                     )
-                if changes:
-                    line._post_chatter(
-                        _("Product line updated: %s") % line._line_chatter_label(),
-                        changes,
-                    )
+                )
+            if changes:
+                line._post_chatter(
+                    _("Product line updated: %s") % line._line_chatter_label(),
+                    _render_changes_html(line, changes),
+                )
         return res
 
     def unlink(self):
@@ -1125,11 +1118,9 @@ class PartnerCommercialConditionLine(models.Model):
         )
         res = super().unlink()
         for condition, label in snapshots:
-            if condition.exists():
-                condition._message_log(
-                    body="<p>%s</p>"
-                    % html_escape(_("Product line removed: %s") % label)
-                )
+            condition._message_log(
+                body="<p>%s</p>" % html_escape(_("Product line removed: %s") % label)
+            )
         return res
 
     @api.constrains("applied_on", "product_id", "product_tmpl_id")
@@ -1325,16 +1316,13 @@ class PartnerCommercialConditionLineBand(models.Model):
             "line": self.line_id._line_chatter_label() if self.line_id else "",
         }
 
-    def _post_chatter(self, header, changes=None, values=None):
+    def _post_chatter(self, header, body_extra=""):
         self.ensure_one()
         if _chatter_suppressed(self.env):
             return
-        body = "<p>%s</p>" % html_escape(header)
-        if changes:
-            body += _render_changes_html(self, changes)
-        elif values:
-            body += _render_values_html(self, values)
-        self.line_id.condition_id._message_log(body=body)
+        self.line_id.condition_id._message_log(
+            body="<p>%s</p>%s" % (html_escape(header), body_extra)
+        )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -1348,16 +1336,13 @@ class PartnerCommercialConditionLineBand(models.Model):
             ]
             band._post_chatter(
                 _("Quantity band added: %s") % band._band_chatter_label(),
-                values=values,
+                _render_values_html(band, values),
             )
         return bands
 
     def write(self, vals):
         tracked = [f for f in _BAND_TRACKED_FIELDS if f in vals]
-        old_data = {}
-        if tracked:
-            for band in self:
-                old_data[band.id] = {f: band[f] for f in tracked}
+        old_data = {band.id: {f: band[f] for f in tracked} for band in self}
         res = super().write(vals)
         # ``line_id`` change moves the band to a different product /
         # template, which switches the applicable profile and the
@@ -1370,29 +1355,28 @@ class PartnerCommercialConditionLineBand(models.Model):
             "line_id",
         } & set(vals):
             self._validate_against_profile()
-        if tracked:
-            for band in self:
-                changes = []
-                for f in tracked:
-                    old = old_data[band.id][f]
-                    new = band[f]
-                    if band._fields[f].type == "many2one":
-                        if old.id == new.id:
-                            continue
-                    elif old == new:
+        for band in self:
+            changes = []
+            for f in tracked:
+                old = old_data[band.id][f]
+                new = band[f]
+                if band._fields[f].type == "many2one":
+                    if old.id == new.id:
                         continue
-                    changes.append(
-                        (
-                            _field_label(band, f),
-                            _format_tracked_value(band, f, old),
-                            _format_tracked_value(band, f, new),
-                        )
+                elif old == new:
+                    continue
+                changes.append(
+                    (
+                        _field_label(band, f),
+                        _format_tracked_value(band, f, old),
+                        _format_tracked_value(band, f, new),
                     )
-                if changes:
-                    band._post_chatter(
-                        _("Quantity band updated: %s") % band._band_chatter_label(),
-                        changes,
-                    )
+                )
+            if changes:
+                band._post_chatter(
+                    _("Quantity band updated: %s") % band._band_chatter_label(),
+                    _render_changes_html(band, changes),
+                )
         return res
 
     def unlink(self):
@@ -1406,11 +1390,9 @@ class PartnerCommercialConditionLineBand(models.Model):
         )
         res = super().unlink()
         for condition, label in snapshots:
-            if condition.exists():
-                condition._message_log(
-                    body="<p>%s</p>"
-                    % html_escape(_("Quantity band removed: %s") % label)
-                )
+            condition._message_log(
+                body="<p>%s</p>" % html_escape(_("Quantity band removed: %s") % label)
+            )
         return res
 
     def _validate_against_profile(self):
