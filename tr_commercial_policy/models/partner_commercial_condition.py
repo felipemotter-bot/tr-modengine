@@ -34,6 +34,17 @@ _BAND_TRACKED_FIELDS = (
 )
 
 
+def _field_label(record, fname):
+    """Translated field label for the user's language.
+
+    ``fields_get`` returns the ``string`` resolved through
+    ``ir.translation`` for ``env.lang`` (the request user's language).
+    Reading ``record._fields[fname].string`` returns the source label
+    (English in this codebase) regardless of language.
+    """
+    return record.fields_get([fname])[fname]["string"]
+
+
 def _format_tracked_value(record, fname, value):
     """Formatter for the chatter tracking helpers.
 
@@ -71,6 +82,14 @@ def _render_changes_html(record, changes):
         "<li><b>%s</b>: %s → %s</li>"
         % (html_escape(label), html_escape(old), html_escape(new))
         for (label, old, new) in changes
+    )
+    return "<ul>%s</ul>" % rows
+
+
+def _render_values_html(record, values):
+    rows = "".join(
+        "<li><b>%s</b>: %s</li>" % (html_escape(label), html_escape(value))
+        for (label, value) in values
     )
     return "<ul>%s</ul>" % rows
 
@@ -1035,13 +1054,15 @@ class PartnerCommercialConditionLine(models.Model):
             return self.product_tmpl_id.display_name
         return _("(no product)")
 
-    def _post_chatter(self, header, changes=None):
+    def _post_chatter(self, header, changes=None, values=None):
         self.ensure_one()
         if _chatter_suppressed(self.env):
             return
         body = "<p>%s</p>" % html_escape(header)
         if changes:
             body += _render_changes_html(self, changes)
+        elif values:
+            body += _render_values_html(self, values)
         self.condition_id._message_log(body=body)
 
     @api.model_create_multi
@@ -1052,18 +1073,14 @@ class PartnerCommercialConditionLine(models.Model):
             self._validate_line_discount_limits(vals, condition=condition)
         records = super().create(vals_list)
         for line in records:
-            changes = [
-                (
-                    line._fields[f].string,
-                    _format_tracked_value(line, f, False),
-                    _format_tracked_value(line, f, line[f]),
-                )
+            values = [
+                (_field_label(line, f), _format_tracked_value(line, f, line[f]))
                 for f in _LINE_TRACKED_FIELDS
-                if line[f] not in (False, None, "", 0, 0.0)
+                if line[f]
             ]
             line._post_chatter(
                 _("Product line added: %s") % line._line_chatter_label(),
-                changes,
+                values=values,
             )
         return records
 
@@ -1088,7 +1105,7 @@ class PartnerCommercialConditionLine(models.Model):
                         continue
                     changes.append(
                         (
-                            line._fields[f].string,
+                            _field_label(line, f),
                             _format_tracked_value(line, f, old),
                             _format_tracked_value(line, f, new),
                         )
@@ -1309,13 +1326,15 @@ class PartnerCommercialConditionLineBand(models.Model):
             "line": self.line_id._line_chatter_label() if self.line_id else "",
         }
 
-    def _post_chatter(self, header, changes=None):
+    def _post_chatter(self, header, changes=None, values=None):
         self.ensure_one()
         if _chatter_suppressed(self.env):
             return
         body = "<p>%s</p>" % html_escape(header)
         if changes:
             body += _render_changes_html(self, changes)
+        elif values:
+            body += _render_values_html(self, values)
         self.line_id.condition_id._message_log(body=body)
 
     @api.model_create_multi
@@ -1323,18 +1342,14 @@ class PartnerCommercialConditionLineBand(models.Model):
         bands = super().create(vals_list)
         bands._validate_against_profile()
         for band in bands:
-            changes = [
-                (
-                    band._fields[f].string,
-                    _format_tracked_value(band, f, False),
-                    _format_tracked_value(band, f, band[f]),
-                )
+            values = [
+                (_field_label(band, f), _format_tracked_value(band, f, band[f]))
                 for f in _BAND_TRACKED_FIELDS
-                if band[f] not in (False, None, "", 0, 0.0)
+                if band[f]
             ]
             band._post_chatter(
                 _("Quantity band added: %s") % band._band_chatter_label(),
-                changes,
+                values=values,
             )
         return bands
 
@@ -1369,7 +1384,7 @@ class PartnerCommercialConditionLineBand(models.Model):
                         continue
                     changes.append(
                         (
-                            band._fields[f].string,
+                            _field_label(band, f),
                             _format_tracked_value(band, f, old),
                             _format_tracked_value(band, f, new),
                         )
