@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-04 14:31+0000\n"
-"PO-Revision-Date: 2026-05-04 14:31+0000\n"
+"POT-Creation-Date: 2026-05-06 00:56+0000\n"
+"PO-Revision-Date: 2026-05-06 00:56+0000\n"
 "Last-Translator: Felipe Motter <felipe@trentoquimica.com.br>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "MIME-Version: 1.0\n"
@@ -3726,3 +3726,57 @@ msgstr "≥%(qty)s %(uom)s → %(sell)s%%"
 #, python-format
 msgid "≥%(qty)s %(uom)s → Sell %(sell)s%% / Extra %(ext)s%%"
 msgstr "≥%(qty)s %(uom)s → Vend. %(sell)s%% / Extra %(ext)s%%"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "(empty)"
+msgstr "(vazio)"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "(no product)"
+msgstr "(sem produto)"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Product line added: %s"
+msgstr "Linha de produto adicionada: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Product line removed: %s"
+msgstr "Linha de produto removida: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Product line updated: %s"
+msgstr "Linha de produto atualizada: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Quantity band added: %s"
+msgstr "Faixa de quantidade adicionada: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Quantity band removed: %s"
+msgstr "Faixa de quantidade removida: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "Quantity band updated: %s"
+msgstr "Faixa de quantidade atualizada: %s"
+
+#. module: tr_commercial_policy
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "≥%(qty)s %(uom)s on %(line)s"
+msgstr "≥%(qty)s %(uom)s em %(line)s"
