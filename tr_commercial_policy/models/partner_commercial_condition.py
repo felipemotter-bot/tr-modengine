@@ -59,9 +59,8 @@ def _format_tracked_value(record, fname, value):
         return formatLang(record.env, value or 0.0, digits=2)
     if field.type == "many2one":
         return value.display_name if value else _("(empty)")
-    # selection
-    if not value:
-        return _("(empty)")
+    # selection — current tracked selections are all required, so
+    # ``value`` is always set; no empty branch needed.
     return dict(field._description_selection(record.env)).get(value, str(value))
 
 
