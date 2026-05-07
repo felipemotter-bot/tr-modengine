@@ -217,16 +217,21 @@ class SaleOrder(models.Model):
         if view_type != "form" or not self.env.user.has_group(REP_GROUP_XMLID):
             return result
         arch = etree.fromstring(result["arch"])
+        # ``text-uppercase`` matches the casing of the other statusbar
+        # buttons (Confirm/Cancel/Send by email/Save Conditions). The
+        # tier_validation template does not declare any class, so the
+        # injected buttons render in mixed case by default.
         button_class_overrides = (
-            ("request_validation", "btn-success"),
-            ("restart_validation", "btn-warning"),
+            ("request_validation", "btn-success text-uppercase"),
+            ("restart_validation", "btn-warning text-uppercase"),
         )
         changed = False
-        for bname, css_class in button_class_overrides:
+        for bname, classes in button_class_overrides:
             for node in arch.xpath(f"//header//button[@name='{bname}']"):
-                existing = node.get("class") or ""
-                if css_class not in existing.split():
-                    node.set("class", (existing + " " + css_class).strip())
+                existing = (node.get("class") or "").split()
+                missing = [c for c in classes.split() if c not in existing]
+                if missing:
+                    node.set("class", " ".join(existing + missing).strip())
                     changed = True
         if changed:
             result["arch"] = etree.tostring(arch, encoding="unicode")
