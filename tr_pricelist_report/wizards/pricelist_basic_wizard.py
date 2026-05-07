@@ -59,6 +59,16 @@ class PricelistBasicWizard(models.TransientModel):
         default=fields.Date.context_today,
         help="Date used to resolve pricelist tiers. Defaults to today.",
     )
+    output_format = fields.Selection(
+        [("pdf", "PDF"), ("xlsx", "XLSX")],
+        required=True,
+        default="pdf",
+        help=(
+            "PDF prints the formatted catalog with section grouping. "
+            "XLSX exports a flat per-variant spreadsheet (code, barcode, "
+            "name, UoM, price) intended for filtering and search."
+        ),
+    )
 
     # ------------------------------------------------------------------
     # Actions
@@ -66,9 +76,52 @@ class PricelistBasicWizard(models.TransientModel):
 
     def action_generate(self):
         self.ensure_one()
-        return self.env.ref(
-            "tr_pricelist_report.action_report_pricelist_basic"
-        ).report_action(self, config=False)
+        report_xmlid = (
+            "tr_pricelist_report.action_report_pricelist_basic_xlsx"
+            if self.output_format == "xlsx"
+            else "tr_pricelist_report.action_report_pricelist_basic"
+        )
+        return self.env.ref(report_xmlid).report_action(self, config=False)
+
+    # ------------------------------------------------------------------
+    # XLSX flat row builder (always per-variant)
+    # ------------------------------------------------------------------
+
+    def _build_xlsx_rows_basic(self):
+        """Flat per-variant rows for the XLSX export of the basic catalog.
+
+        Reuses ``_resolve_products`` and ``_resolve_basic_pricing`` so
+        the pricing engine matches the PDF. Sort order: category
+        complete_name → name (with the ``[code]`` prefix stripped).
+        """
+        self.ensure_one()
+        products = self._resolve_products(
+            category_ids=self.category_ids,
+            company_id=self.company_id.id,
+        )
+        rows = []
+        for product in products:
+            pricing = self._resolve_basic_pricing(product)
+            if not self._is_valid_price(pricing["price_unit"]):
+                continue
+            name = self._strip_code_prefix(product)
+            rows.append(
+                {
+                    "default_code": product.default_code or "",
+                    "barcode": product.barcode or "",
+                    "name": name,
+                    "uom": self._format_uom_label(product.uom_id),
+                    "price_unit": pricing["price_unit"],
+                    "_sort_key": (
+                        product.categ_id.complete_name or "",
+                        name,
+                    ),
+                }
+            )
+        rows.sort(key=lambda row: row["_sort_key"])
+        for row in rows:
+            row.pop("_sort_key", None)
+        return rows
 
     # ------------------------------------------------------------------
     # Pricing resolver (callback passed to the section builder)

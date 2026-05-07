@@ -14,17 +14,24 @@
                     <group>
                         <group>
                             <field name="condition_id" readonly="1" />
-                            <field name="layout" />
+                            <field name="output_format" widget="radio" />
+                            <field
+                name="layout"
+                attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
+              />
                             <field
                 name="group_axis"
-                attrs="{'invisible': [('layout', '!=', 'geral')]}"
+                attrs="{'invisible': ['|', ('output_format', '=', 'xlsx'), ('layout', '!=', 'geral')]}"
               />
                             <field
                 name="history_grouping"
                 widget="radio"
-                attrs="{'invisible': [('layout', '!=', 'historico')]}"
+                attrs="{'invisible': ['|', ('output_format', '=', 'xlsx'), ('layout', '!=', 'historico')]}"
               />
-                            <field name="discount_display" />
+                            <field
+                name="discount_display"
+                attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
+              />
                             <field name="send_by_email" />
                         </group>
                         <group>
@@ -32,6 +39,7 @@
                 name="category_ids"
                 widget="many2many_tags"
                 options="{'no_create': True}"
+                attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
               />
                         </group>
                     </group>
@@ -39,7 +47,7 @@
                 <footer>
                     <button
             name="action_generate"
-            string="Generate PDF"
+            string="Generate"
             type="object"
             class="btn-primary"
           />

@@ -25,6 +25,10 @@
         # t-calls that layout so it renders with the same company
         # header box as the rest of the stack.
         "trento_report_utils",
+        # report_xlsx (OCA reporting-engine) registers report_type='xlsx'
+        # on ir.actions.report and provides the AbstractModel base used
+        # by the XLSX flavor of both layouts.
+        "report_xlsx",
     ],
     "data": [
         "security/ir.model.access.csv",
@@ -40,6 +44,8 @@
         "views/res_partner_server_action.xml",
         "report/pricelist_report.xml",
         "report/pricelist_basic_report.xml",
+        "report/pricelist_report_xlsx.xml",
+        "report/pricelist_basic_report_xlsx.xml",
         "report/pricelist_report_styles.xml",
         "report/pricelist_report_templates.xml",
         "report/pricelist_basic_report_templates.xml",
