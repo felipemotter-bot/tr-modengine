@@ -23,19 +23,6 @@ class TestDisableNative(TransactionCase):
                 "%s still has binding_view_types set" % xml_id,
             )
 
-    def test_config_parameters_created(self):
-        """Config params created on install with the documented defaults."""
-        icp = self.env["ir.config_parameter"].sudo()
-        self.assertEqual(icp.get_param("tr_pricelist_report.category_depth"), "-2")
-        self.assertEqual(
-            icp.get_param("tr_pricelist_report.group_attribute_name"), "MARCA"
-        )
-        self.assertEqual(icp.get_param("tr_pricelist_report.history_months_back"), "6")
-        self.assertEqual(
-            icp.get_param("tr_pricelist_report.invalid_price_threshold"),
-            "99999.0",
-        )
-
     def test_post_init_hook_noop_when_oca_absent(self):
         """``post_init_hook`` is a no-op when the OCA module is absent."""
         from .. import hooks

@@ -32,7 +32,6 @@
     ],
     "data": [
         "security/ir.model.access.csv",
-        "data/ir_config_parameter.xml",
         "data/disable_native_pricelist_reports.xml",
         "data/mail_template.xml",
         "wizards/pricelist_report_wizard_views.xml",
