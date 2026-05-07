@@ -190,6 +190,45 @@ class TestPricelistXlsx(PricelistReportTestCommon, MailCommon):
         self.assertIn(b_name, positions)
         self.assertLess(positions[a_name], positions[b_name])
 
+    def test_history_xlsx_respects_wizard_history_window_override(self):
+        """XLSX uses the wizard's ``history_months_back`` override.
+
+        Orders outside the override window are dropped from the rows
+        even when the Settings default would still include them.
+        """
+        from dateutil.relativedelta import relativedelta
+
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "12"
+        )
+        today = fields.Date.today()
+        # Recent order (inside both windows).
+        self._place_confirmed_order(self.product_a, 2)
+        # Older order — inside default 12 but outside override 3.
+        old_order = self.env["sale.order"].create(
+            {
+                "partner_id": self.customer.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "order_id": old_order.id,
+                "product_id": self.product_b.id,
+                "product_uom": self.product_b.uom_id.id,
+                "product_uom_qty": 5,
+            }
+        )
+        old_order.action_confirm()
+        old_order.date_order = fields.Datetime.to_datetime(
+            today - relativedelta(months=6)
+        )
+        wizard = self._open_history_wizard(history_months_back=3)
+        rows = wizard._build_xlsx_rows_history()
+        codes = {row["default_code"] for row in rows}
+        self.assertIn(self.product_a.default_code, codes)
+        self.assertNotIn(self.product_b.default_code, codes)
+
     def test_history_xlsx_rows_drop_invalid_prices(self):
         """Products above the invalid-price threshold are excluded."""
         self.env["ir.config_parameter"].sudo().set_param(

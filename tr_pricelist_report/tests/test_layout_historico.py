@@ -274,6 +274,92 @@ class TestLayoutHistorico(PricelistReportTestCommon):
         self.assertIn("CX", labels)
         self.assertNotIn("CAIXA", labels)
 
+    # ------------------------------------------------------------------
+    # ``history_months_back`` field — per-print override
+    # ------------------------------------------------------------------
+
+    def test_history_months_back_default_comes_from_settings(self):
+        """Wizard ``history_months_back`` defaults to the Settings value."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "9"
+        )
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {"condition_id": self.condition.id, "layout": "historico"}
+        )
+        self.assertEqual(wizard.history_months_back, 9)
+
+    def test_history_months_back_override_narrows_window(self):
+        """Wizard override < Settings drops orders that fell inside default."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "12"
+        )
+        today = fields.Date.today()
+        # 6 months ago is inside the default window (12) but outside an
+        # override of 3.
+        self._place_confirmed_order(self.product_a, 4, today - relativedelta(months=6))
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_months_back": 3,
+            }
+        )
+        self.assertEqual(wizard._resolve_history_quantities(), {})
+
+    def test_history_months_back_override_widens_window(self):
+        """Wizard override > Settings re-includes orders outside default."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "tr_pricelist_report.history_months_back", "3"
+        )
+        today = fields.Date.today()
+        # 6 months ago is outside default (3) but inside an override of 12.
+        self._place_confirmed_order(self.product_a, 4, today - relativedelta(months=6))
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_months_back": 12,
+            }
+        )
+        totals = wizard._resolve_history_quantities()
+        self.assertIn(self.product_a, totals)
+        self.assertAlmostEqual(totals[self.product_a], 4.0)
+
+    def test_history_months_back_override_in_payload(self):
+        """``_get_report_values`` payload reflects the wizard override.
+
+        Pinned via payload (not rendered HTML/text) so the assertion is
+        independent of template formatting and translations.
+        """
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_months_back": 4,
+            }
+        )
+        values = wizard._get_report_values(wizard.ids)
+        self.assertEqual(values["history_months_back"], 4)
+        self.assertEqual(
+            values["date_history_threshold"], today - relativedelta(months=4)
+        )
+
+    def test_history_months_back_zero_raises_user_error(self):
+        """Override of 0 disables the layout — surfaces as UserError."""
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "history_months_back": 0,
+            }
+        )
+        with self.assertRaises(UserError):
+            wizard.action_generate()
+
     def test_orders_variants_of_same_template_adjacent(self):
         """Variants of the same template sit next to each other in the row list.
 

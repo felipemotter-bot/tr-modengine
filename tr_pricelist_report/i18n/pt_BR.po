@@ -341,6 +341,11 @@ msgid "History Grouping"
 msgstr "Agrupamento do Histórico"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__history_months_back
+msgid "History Window (months)"
+msgstr "Janela do Histórico (meses)"
+
+#. module: tr_pricelist_report
 #: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_basic_wizard__id
 #: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__id
 msgid "ID"
@@ -705,6 +710,15 @@ msgstr "Data de Referência"
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_basic_document
 msgid "Ret. Sim. %"
 msgstr ""
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__history_months_back
+msgid ""
+"Sales from the last N months are considered for this print. The default "
+"comes from Settings."
+msgstr ""
+"Vendas dos últimos N meses são consideradas para esta impressão. O padrão "
+"vem das Configurações."
 
 #. module: tr_pricelist_report
 #. odoo-python

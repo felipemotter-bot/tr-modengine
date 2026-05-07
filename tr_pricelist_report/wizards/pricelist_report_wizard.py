@@ -55,6 +55,14 @@ class PricelistReportWizard(models.TransientModel):
         "with the same price into a single template row, with divergent "
         "variants listed below as exceptions.",
     )
+    history_months_back = fields.Integer(
+        string="History Window (months)",
+        default=lambda self: self._default_history_months_back(),
+        help=(
+            "Sales from the last N months are considered for this print. "
+            "The default comes from Settings."
+        ),
+    )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
@@ -117,6 +125,9 @@ class PricelistReportWizard(models.TransientModel):
             condition = self.env["partner.commercial.condition"].browse(condition_id)
             return condition.discount_display or "net_price"
         return "net_price"
+
+    def _default_history_months_back(self):
+        return self._get_history_months_back()
 
     # ------------------------------------------------------------------
     # Actions
@@ -536,10 +547,11 @@ class PricelistReportWizard(models.TransientModel):
         """Aggregate the partner's purchased quantity by product.
 
         Walks ``sale.order.line`` for the condition's partner in the
-        window ``today - history_months_back``. Filters to confirmed or
-        done orders, and to products that are still ``active=True`` and
-        ``sale_ok=True`` (so the report is a recompra tool, not a full
-        audit log).
+        window ``today - history_months_back``, where the window is the
+        wizard field (defaulted from Settings, but overridable per print).
+        Filters to confirmed or done orders, and to products that are
+        still ``active=True`` and ``sale_ok=True`` (so the report is a
+        recompra tool, not a full audit log).
 
         Crucially, this path **does not** apply the
         ``tr_exclude_from_general_pricelist`` filter — the customer
@@ -551,7 +563,7 @@ class PricelistReportWizard(models.TransientModel):
         Line UoMs that differ from the product's default are converted
         via ``product_uom._compute_quantity`` before aggregation.
         """
-        months = self._get_history_months_back()
+        months = self.history_months_back
         if months <= 0:
             return {}
         partner = self.condition_id.partner_id
@@ -768,10 +780,11 @@ class PricelistReportWizard(models.TransientModel):
             )
         condition = wizard.condition_id
         partner = condition.partner_id
-        # Starting point of the historico window. Computed once here so the
-        # template (which renders a footer note citing this date) can't
-        # drift from the resolver above.
-        history_months_back = wizard._get_history_months_back()
+        # Starting point of the historico window. Read from the wizard
+        # (defaulted from Settings, overridable per print). Computed once
+        # here so the template (which renders a footer note citing this
+        # date) can't drift from the resolver above.
+        history_months_back = wizard.history_months_back
         date_history_threshold = (
             fields.Date.today() - relativedelta(months=history_months_back)
             if history_months_back > 0

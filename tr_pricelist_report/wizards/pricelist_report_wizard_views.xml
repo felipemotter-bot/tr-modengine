@@ -29,6 +29,10 @@
                 attrs="{'invisible': ['|', ('output_format', '=', 'xlsx'), ('layout', '!=', 'historico')]}"
               />
                             <field
+                name="history_months_back"
+                attrs="{'invisible': ['&amp;', ('layout', '!=', 'historico'), ('output_format', '!=', 'xlsx')]}"
+              />
+                            <field
                 name="discount_display"
                 attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
               />
