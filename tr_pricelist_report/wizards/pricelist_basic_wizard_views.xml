@@ -15,7 +15,11 @@
                         <group>
                             <field name="company_id" />
                             <field name="pricelist_id" />
-                            <field name="group_axis" />
+                            <field name="output_format" widget="radio" />
+                            <field
+                name="group_axis"
+                attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
+              />
                             <field name="simulated_contractual_return" />
                             <field name="date" />
                         </group>
@@ -31,7 +35,7 @@
                 <footer>
                     <button
             name="action_generate"
-            string="Generate PDF"
+            string="Generate"
             type="object"
             class="btn-primary"
           />

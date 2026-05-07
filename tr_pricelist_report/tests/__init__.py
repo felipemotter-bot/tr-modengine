@@ -14,6 +14,7 @@ from . import test_layout_historico_template_grouping
 from . import test_marca_discovery
 from . import test_partner_action_binding
 from . import test_pdf_render
+from . import test_pricelist_xlsx
 from . import test_pricing_consistency
 from . import test_resolve_condition
 from . import test_wizard

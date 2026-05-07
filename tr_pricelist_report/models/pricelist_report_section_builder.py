@@ -149,6 +149,30 @@ class PricelistReportSectionBuilder(models.AbstractModel):
         code = product.default_code or ""
         return {"code": code, "label": label}
 
+    @staticmethod
+    def _format_uom_label(uom):
+        # "CAIXA" is the common pt_BR uom name; we prefer the shorter
+        # "CX" form used on product labels and physical stock. One-liner
+        # replace covers every variation ("CAIXA", "CAIXA COM 10
+        # UNIDADES", "CAIXA/1000UN", ...).
+        return (uom.name or "").replace("CAIXA", "CX")
+
+    @staticmethod
+    def _strip_code_prefix(product):
+        """Return ``product.display_name`` without the ``[default_code] `` prefix.
+
+        ``product.product._compute_display_name`` (Odoo core) prepends
+        ``[code] `` when ``default_code`` is set. Reports that have a
+        dedicated code column (XLSX) use this helper to drop the noise
+        while keeping the variant attribute suffix intact.
+        """
+        name = product.display_name or ""
+        if product.default_code:
+            prefix = "[%s] " % product.default_code
+            if name.startswith(prefix):
+                name = name[len(prefix) :]
+        return name
+
     def _consolidate_templates(self, products, pricing_resolver):
         """Group products by template and collapse same-priced variants.
 

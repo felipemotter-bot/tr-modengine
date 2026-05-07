@@ -55,6 +55,14 @@ class PricelistReportWizard(models.TransientModel):
         "with the same price into a single template row, with divergent "
         "variants listed below as exceptions.",
     )
+    history_months_back = fields.Integer(
+        string="History Window (months)",
+        default=lambda self: self._default_history_months_back(),
+        help=(
+            "Sales from the last N months are considered for this print. "
+            "The default comes from Settings."
+        ),
+    )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
@@ -78,9 +86,21 @@ class PricelistReportWizard(models.TransientModel):
         string="Send by email",
         default=False,
         help=(
-            "When checked, the generated PDF is attached to a mail composer "
+            "When checked, the generated file is attached to a mail composer "
             "pre-filled for the partner's email; you can review and edit "
-            "before sending. When unchecked, the PDF downloads directly."
+            "before sending. When unchecked, the file downloads directly."
+        ),
+    )
+    output_format = fields.Selection(
+        [("pdf", "PDF"), ("xlsx", "XLSX")],
+        required=True,
+        default="pdf",
+        help=(
+            "PDF prints the formatted pricelist with consolidation and "
+            "section grouping. XLSX exports a flat per-variant spreadsheet "
+            "(code, barcode, name, UoM, price) intended for filtering and "
+            "search; XLSX is only available with the customer-history "
+            "layout."
         ),
     )
 
@@ -106,12 +126,21 @@ class PricelistReportWizard(models.TransientModel):
             return condition.discount_display or "net_price"
         return "net_price"
 
+    def _default_history_months_back(self):
+        return self._get_history_months_back()
+
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
 
     def action_generate(self):
         self.ensure_one()
+        # XLSX is only meaningful in the customer-history layout: the
+        # General PDF consolidates by template and the spreadsheet must be
+        # 100% per-variant. Force it defensively even though the form view
+        # already hides the layout/grouping fields when XLSX is selected.
+        if self.output_format == "xlsx" and self.layout != "historico":
+            self.layout = "historico"
         if self.layout == "historico" and not self._resolve_history_quantities():
             raise UserError(
                 _(
@@ -125,16 +154,19 @@ class PricelistReportWizard(models.TransientModel):
         # Odoo prompts admins with on first use (returns ir.actions.act_window
         # instead of the report). Pricelist printing shouldn't derail on the
         # layout configurator — the user already asked for a report.
-        return self.env.ref(
-            "tr_pricelist_report.action_report_pricelist"
-        ).report_action(self, config=False)
+        report_xmlid = (
+            "tr_pricelist_report.action_report_pricelist_xlsx"
+            if self.output_format == "xlsx"
+            else "tr_pricelist_report.action_report_pricelist"
+        )
+        return self.env.ref(report_xmlid).report_action(self, config=False)
 
     def _open_mail_composer(self):
-        """Render the PDF, open mail composer with a transient attachment.
+        """Render the report, open mail composer with a transient attachment.
 
         The email "belongs" to the ``partner.commercial.condition`` so
         when actually sent it gets logged in the condition's chatter
-        (persistent history). The PDF itself is rendered by an
+        (persistent history). The report itself is rendered by an
         ``ir.actions.report`` whose ``model`` is the transient wizard —
         ``report_template_ids`` on the mail template doesn't fit that
         shape, so we render the bytes here and hand them off to the
@@ -148,19 +180,30 @@ class PricelistReportWizard(models.TransientModel):
         """
         self.ensure_one()
         condition = self.condition_id
-        report = self.env.ref("tr_pricelist_report.action_report_pricelist")
-        pdf_content, _content_type = report._render_qweb_pdf(
-            report.report_name, self.ids
-        )
         partner = condition.partner_id
+        if self.output_format == "xlsx":
+            report = self.env.ref("tr_pricelist_report.action_report_pricelist_xlsx")
+            content, _ext = report._render_xlsx(report.report_name, self.ids, data={})
+            attachment_name = "Price List - %s - %s.xlsx" % (
+                partner.name or "",
+                fields.Date.today().strftime("%Y-%m-%d"),
+            )
+            mimetype = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            report = self.env.ref("tr_pricelist_report.action_report_pricelist")
+            content, _ext = report._render_qweb_pdf(report.report_name, self.ids)
+            attachment_name = "Price List - %s.pdf" % (partner.name or "")
+            mimetype = "application/pdf"
         attachment = self.env["ir.attachment"].create(
             {
-                "name": "Price List - %s.pdf" % (partner.name or ""),
+                "name": attachment_name,
                 "type": "binary",
-                "datas": base64.b64encode(pdf_content),
+                "datas": base64.b64encode(content),
                 "res_model": "mail.compose.message",
                 "res_id": 0,
-                "mimetype": "application/pdf",
+                "mimetype": mimetype,
             }
         )
         template = self.env.ref(
@@ -295,14 +338,16 @@ class PricelistReportWizard(models.TransientModel):
     def _pricelist_blocks_discounts(self, pricelist):
         return getattr(pricelist, "block_discounts", False)
 
-    def _compute_pricing(self, product, rates, qty=1.0):
+    def _compute_pricing(self, product, rates, qty=1.0, include_inline_bands=True):
         """Return full pricing dict for a product.
 
         ``qty`` is forwarded to ``_compute_base_price`` AND to
         ``_resolve_discount_for_product`` so both the pricelist tier
         AND the condition.line band that match that qty are honored.
         For the main row, ``qty`` defaults to 1.0 (unit-level pricing).
-        ``inline_bands`` re-prices each band using its own qty.
+        ``inline_bands`` re-prices each band using its own qty;
+        ``include_inline_bands=False`` skips that lookup for callers
+        (XLSX) that only need the qty=1 row and don't render bands.
         """
         condition = self.condition_id
         base = self._compute_base_price(product, qty=qty)
@@ -323,9 +368,13 @@ class PricelistReportWizard(models.TransientModel):
             seller, extra, _level = condition._resolve_discount_for_product(
                 product, qty=qty, uom=product.uom_id
             )
-            # Each band re-resolves base (pricelist tier may shift at
-            # band qty) AND its own seller/extra (condition.line band).
-            inline_bands = self._resolve_inline_bands(product, condition, rates)
+            if include_inline_bands:
+                # Each band re-resolves base (pricelist tier may shift
+                # at band qty) AND its own seller/extra (condition.line
+                # band).
+                inline_bands = self._resolve_inline_bands(product, condition, rates)
+            else:
+                inline_bands = []
         price_unit = calc_price_unit(reference, seller, extra)
         return {
             "product": product,
@@ -498,10 +547,11 @@ class PricelistReportWizard(models.TransientModel):
         """Aggregate the partner's purchased quantity by product.
 
         Walks ``sale.order.line`` for the condition's partner in the
-        window ``today - history_months_back``. Filters to confirmed or
-        done orders, and to products that are still ``active=True`` and
-        ``sale_ok=True`` (so the report is a recompra tool, not a full
-        audit log).
+        window ``today - history_months_back``, where the window is the
+        wizard field (defaulted from Settings, but overridable per print).
+        Filters to confirmed or done orders, and to products that are
+        still ``active=True`` and ``sale_ok=True`` (so the report is a
+        recompra tool, not a full audit log).
 
         Crucially, this path **does not** apply the
         ``tr_exclude_from_general_pricelist`` filter — the customer
@@ -513,7 +563,7 @@ class PricelistReportWizard(models.TransientModel):
         Line UoMs that differ from the product's default are converted
         via ``product_uom._compute_quantity`` before aggregation.
         """
-        months = self._get_history_months_back()
+        months = self.history_months_back
         if months <= 0:
             return {}
         partner = self.condition_id.partner_id
@@ -655,13 +705,45 @@ class PricelistReportWizard(models.TransientModel):
             )
         return sections
 
-    @staticmethod
-    def _format_uom_label(uom):
-        # "CAIXA" is the common pt_BR uom name; Felipe prefers the
-        # shorter "CX" form used on the product labels and physical
-        # stock. One-liner replace covers every variation ("CAIXA",
-        # "CAIXA COM 10 UNIDADES", "CAIXA/1000UN", ...).
-        return (uom.name or "").replace("CAIXA", "CX")
+    # ------------------------------------------------------------------
+    # XLSX flat row builder (always per-variant; ignores history_grouping)
+    # ------------------------------------------------------------------
+
+    def _build_xlsx_rows_history(self):
+        """Flat per-variant rows for the XLSX export (history layout).
+
+        Bypasses ``_build_sections_from_history`` on purpose: the
+        spreadsheet must be 1 row per ``product.product``, no template
+        consolidation. Pricing reuses the same ``_compute_pricing``
+        engine (qty=1, ``include_inline_bands=False`` to skip the
+        band resolver). Sort order: category complete_name → name.
+        """
+        self.ensure_one()
+        rates = get_policy_rates(self.env)
+        quantities = self._resolve_history_quantities()
+        rows = []
+        for product in quantities:
+            pricing = self._compute_pricing(product, rates, include_inline_bands=False)
+            if not self._is_valid_price(pricing["price_unit"]):
+                continue
+            name = self._strip_code_prefix(product)
+            rows.append(
+                {
+                    "default_code": product.default_code or "",
+                    "barcode": product.barcode or "",
+                    "name": name,
+                    "uom": self._format_uom_label(product.uom_id),
+                    "price_unit": pricing["price_unit"],
+                    "_sort_key": (
+                        product.categ_id.complete_name or "",
+                        name,
+                    ),
+                }
+            )
+        rows.sort(key=lambda row: row["_sort_key"])
+        for row in rows:
+            row.pop("_sort_key", None)
+        return rows
 
     # ------------------------------------------------------------------
     # Entry point used by the report engine
@@ -698,10 +780,11 @@ class PricelistReportWizard(models.TransientModel):
             )
         condition = wizard.condition_id
         partner = condition.partner_id
-        # Starting point of the historico window. Computed once here so the
-        # template (which renders a footer note citing this date) can't
-        # drift from the resolver above.
-        history_months_back = wizard._get_history_months_back()
+        # Starting point of the historico window. Read from the wizard
+        # (defaulted from Settings, overridable per print). Computed once
+        # here so the template (which renders a footer note citing this
+        # date) can't drift from the resolver above.
+        history_months_back = wizard.history_months_back
         date_history_threshold = (
             fields.Date.today() - relativedelta(months=history_months_back)
             if history_months_back > 0
