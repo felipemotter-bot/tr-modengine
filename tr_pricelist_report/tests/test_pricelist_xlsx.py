@@ -25,11 +25,12 @@ def _xlsx_strings(content):
     XLSX is a zip of XML parts. Headers/title/cell strings live in
     ``xl/sharedStrings.xml``. We don't need a full Excel parser to
     assert the content, just to peek into that part — keeps the test
-    stack lean (no openpyxl/xlrd in the container image).
+    stack lean (no openpyxl/xlrd in the container image). The module
+    always writes at least the title + 5 column headers, so the part
+    is guaranteed to exist; if it's missing the KeyError below makes
+    that visible as a test failure.
     """
     archive = zipfile.ZipFile(BytesIO(content))
-    if "xl/sharedStrings.xml" not in archive.namelist():
-        return []
     payload = archive.read("xl/sharedStrings.xml").decode("utf-8")
     return _SHARED_STRING_RE.findall(payload)
 
@@ -41,6 +42,11 @@ class TestPricelistXlsx(PricelistReportTestCommon, MailCommon):
     def setUpClass(cls):
         super().setUpClass()
         cls.customer.email = "customer@example.com"
+        # Fixtures don't ship default_code; pin one on each product so the
+        # invalid-price-filter and simulated-return tests can assert by
+        # code and exercise the ``if product.default_code`` branches.
+        cls.product_a.default_code = "PROD-A"
+        cls.product_b.default_code = "PROD-B"
 
     def _place_confirmed_order(self, product, qty):
         order = self.env["sale.order"].create(
@@ -258,24 +264,17 @@ class TestPricelistXlsx(PricelistReportTestCommon, MailCommon):
         wizard = self._open_basic_wizard()
         rows = wizard._build_xlsx_rows_basic()
         # product_a base 100 → kept; product_b base 200 → dropped.
-        codes = {row["default_code"] for row in rows if row["default_code"]}
-        if self.product_a.default_code:
-            self.assertIn(self.product_a.default_code, codes)
-        if self.product_b.default_code:
-            self.assertNotIn(self.product_b.default_code, codes)
+        codes = {row["default_code"] for row in rows}
+        self.assertIn(self.product_a.default_code, codes)
+        self.assertNotIn(self.product_b.default_code, codes)
 
     def test_basic_xlsx_simulated_return_applies(self):
         """``simulated_contractual_return`` propagates to the price column."""
         wizard = self._open_basic_wizard(simulated_contractual_return=10.0)
         rows = wizard._build_xlsx_rows_basic()
-        prices_by_code = {
-            row["default_code"]: row["price_unit"]
-            for row in rows
-            if row["default_code"]
-        }
+        prices_by_code = {row["default_code"]: row["price_unit"] for row in rows}
         # product_a base is 100 in the fixture; with 10% simulated return → 90.
-        if self.product_a.default_code:
-            self.assertAlmostEqual(prices_by_code[self.product_a.default_code], 90.0)
+        self.assertAlmostEqual(prices_by_code[self.product_a.default_code], 90.0)
 
     # ------------------------------------------------------------------
     # action_generate ramification

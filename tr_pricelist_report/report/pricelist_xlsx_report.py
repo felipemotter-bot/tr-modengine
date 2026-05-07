@@ -45,7 +45,9 @@ def _write_sheet(workbook, sheet_name, title, rows):
             "valign": "vcenter",
         }
     )
-    price_format = workbook.add_format({"num_format": "#,##0.0000"})
+    # Two decimal places to match the formatted PDF output ("0,00" / "1.234,56")
+    # — the XLSX flavor has no business reason to expose extra precision.
+    price_format = workbook.add_format({"num_format": "#,##0.00"})
 
     sheet.merge_range(0, 0, 0, 4, title, title_format)
 
