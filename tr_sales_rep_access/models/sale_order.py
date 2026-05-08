@@ -222,19 +222,17 @@ class SaleOrder(models.Model):
         # tier_validation template does not declare any class, so the
         # injected buttons render in mixed case by default.
         button_class_overrides = (
-            ("request_validation", "btn-success text-uppercase"),
-            ("restart_validation", "btn-warning text-uppercase"),
+            ("request_validation", ("btn-success", "text-uppercase")),
+            ("restart_validation", ("btn-warning", "text-uppercase")),
         )
-        changed = False
-        for bname, classes in button_class_overrides:
+        for bname, extra_classes in button_class_overrides:
             for node in arch.xpath(f"//header//button[@name='{bname}']"):
-                existing = (node.get("class") or "").split()
-                missing = [c for c in classes.split() if c not in existing]
-                if missing:
-                    node.set("class", " ".join(existing + missing).strip())
-                    changed = True
-        if changed:
-            result["arch"] = etree.tostring(arch, encoding="unicode")
+                # Use a set union so repeated injection does not
+                # duplicate the classes — branch-free, no idempotency
+                # check needed.
+                merged = set((node.get("class") or "").split()) | set(extra_classes)
+                node.set("class", " ".join(sorted(merged)))
+        result["arch"] = etree.tostring(arch, encoding="unicode")
         return result
 
     @api.model_create_multi
