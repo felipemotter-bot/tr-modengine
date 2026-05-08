@@ -5,6 +5,8 @@ import ast
 import json
 import logging
 
+from lxml import etree
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
@@ -187,7 +189,51 @@ class SaleOrder(models.Model):
                 node.set("modifiers", json.dumps(modifiers))
                 node.set("readonly", "1")
                 node.set("force_save", "1")
+        # Statusbar buttons reps must not see: Cancel (core), Recalculate
+        # prices and Reset descriptions (sale_order_price_recalculation).
+        hidden_header_buttons = (
+            "action_confirm",
+            "action_cancel",
+            "action_update_prices",
+            "action_update_names",
+        )
+        for bname in hidden_header_buttons:
+            for node in arch.xpath(f"//header//button[@name='{bname}']"):
+                modifiers = json.loads(node.get("modifiers") or "{}")
+                modifiers["invisible"] = True
+                node.set("modifiers", json.dumps(modifiers))
+                node.set("invisible", "1")
         return arch, view
+
+    @api.model
+    def get_view(self, view_id=None, view_type="form", **options):
+        # Paint the tier_validation buttons for the rep — green for
+        # ``Request Validation`` (the actionable next step) and light
+        # yellow for ``Restart Validation``. base_tier_validation
+        # injects those buttons in its own ``get_view`` after super(),
+        # so the coloring has to happen here (post-injection) rather
+        # than in ``_get_view``.
+        result = super().get_view(view_id=view_id, view_type=view_type, **options)
+        if view_type != "form" or not self.env.user.has_group(REP_GROUP_XMLID):
+            return result
+        arch = etree.fromstring(result["arch"])
+        # ``text-uppercase`` matches the casing of the other statusbar
+        # buttons (Confirm/Cancel/Send by email/Save Conditions). The
+        # tier_validation template does not declare any class, so the
+        # injected buttons render in mixed case by default.
+        button_class_overrides = (
+            ("request_validation", ("btn-success", "text-uppercase")),
+            ("restart_validation", ("btn-warning", "text-uppercase")),
+        )
+        for bname, extra_classes in button_class_overrides:
+            for node in arch.xpath(f"//header//button[@name='{bname}']"):
+                # Use a set union so repeated injection does not
+                # duplicate the classes — branch-free, no idempotency
+                # check needed.
+                merged = set((node.get("class") or "").split()) | set(extra_classes)
+                node.set("class", " ".join(sorted(merged)))
+        result["arch"] = etree.tostring(arch, encoding="unicode")
+        return result
 
     @api.model_create_multi
     def create(self, vals_list):
