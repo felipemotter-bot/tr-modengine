@@ -69,12 +69,30 @@ class SaleOrder(models.Model):
     discount_rate = fields.Float(
         string="Order Discount (%)",
         digits="Discount Policy",
+        compute="_compute_discount_rate",
+        store=True,
+        readonly=False,
         help=(
             "Total discount applied to the order (cash discount + FOB discount)."
             " This discount is applied after the line unit price and is not"
             " related to seller or extra discounts on individual lines."
         ),
     )
+
+    @api.depends("cash_discount", "fob_discount")
+    def _compute_discount_rate(self):
+        """Mirror cash + fob into discount_rate.
+
+        Skips confirmed orders for the same reason as
+        :meth:`_compute_condition_discounts`: historical orders must not
+        have their persisted ``discount_rate`` overwritten by a module
+        upgrade or any later recompute trigger.
+        """
+        for order in self:
+            if order.state not in ("draft", "sent"):
+                continue
+            order.discount_rate = (order.cash_discount or 0) + (order.fob_discount or 0)
+
     amount_discount_value = fields.Monetary(
         string="Order Discount Value",
         help=(
@@ -270,7 +288,6 @@ class SaleOrder(models.Model):
             else:
                 order.cash_discount = 0.0
                 order.fob_discount = 0.0
-            order.discount_rate = (order.cash_discount or 0) + (order.fob_discount or 0)
 
     @api.depends("commercial_condition_id")
     def _compute_contractual_return(self):
@@ -335,8 +352,6 @@ class SaleOrder(models.Model):
     @api.onchange("cash_discount", "fob_discount")
     def _onchange_cash_fob_discount(self):
         """Recalculate discount on lines when cash/fob changes."""
-        if self.commercial_condition_id:
-            self.discount_rate = (self.cash_discount or 0) + (self.fob_discount or 0)
         if not self.sales_profile_id:
             return
         tax_rate, freight_rate, admin_rate = get_policy_rates(self.env)
@@ -529,7 +544,6 @@ class SaleOrder(models.Model):
         self.cash_discount = condition.cash_discount
         self.fob_discount = condition.fob_discount
         self.contractual_return = condition.contractual_return
-        self.discount_rate = (self.cash_discount or 0) + (self.fob_discount or 0)
         # 3. Recompute base_price for all lines (triggers reference_price cascade)
         product_lines = self.order_line.filtered(lambda line: line.product_id)
         product_lines.with_context(force_policy_recompute=True)._compute_base_price()

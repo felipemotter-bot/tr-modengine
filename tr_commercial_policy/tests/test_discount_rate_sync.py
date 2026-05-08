@@ -1,7 +1,7 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo.tests import tagged
+from odoo.tests import Form, tagged
 
 from .common import CommercialPolicyTestCommon
 
@@ -135,3 +135,39 @@ class TestDiscountRateSync(CommercialPolicyTestCommon):
         self.condition.fob_discount = 2.0
         order._apply_reload_conditions()
         self.assertAlmostEqual(line.discount, 6.0, places=2)
+
+    # -- View-level reproducer --
+
+    def test_discount_rate_persists_after_form_edit(self):
+        """Editing cash_discount via the form must persist discount_rate.
+
+        Bug: ``discount_rate`` is rendered ``readonly="1"`` in the form,
+        so the value the onchange computes (``cash + fob``) is dropped
+        by the web client on save and the database keeps the previous
+        value (zero on a fresh order). Reproduces by using ``Form``,
+        which mirrors the web client's readonly handling.
+        """
+        order = self._create_order()
+        # Sanity: condition seeds cash=2, fob=1 → discount_rate=3
+        self.assertAlmostEqual(order.discount_rate, 3.0, places=2)
+        with Form(order) as order_form:
+            order_form.cash_discount = 4.0
+            order_form.fob_discount = 2.0
+        self.assertAlmostEqual(order.cash_discount, 4.0, places=2)
+        self.assertAlmostEqual(order.fob_discount, 2.0, places=2)
+        self.assertAlmostEqual(order.discount_rate, 6.0, places=2)
+
+    def test_discount_rate_compute_skips_confirmed_orders(self):
+        """Recompute on confirmed/done orders must not overwrite history.
+
+        Mirrors the ``state not in ('draft', 'sent')`` guard used by
+        ``_compute_condition_discounts`` for cash/fob. A module upgrade
+        re-runs the compute for every record, so without the guard the
+        persisted ``discount_rate`` of confirmed orders would be
+        rewritten from the current cash/fob, mutating historical data.
+        """
+        order = self._create_order()
+        order.write({"state": "sale", "discount_rate": 9.99})
+        order.invalidate_recordset(["discount_rate"])
+        order._compute_discount_rate()
+        self.assertAlmostEqual(order.discount_rate, 9.99, places=2)
