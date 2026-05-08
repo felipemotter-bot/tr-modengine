@@ -81,7 +81,16 @@ class SaleOrder(models.Model):
 
     @api.depends("cash_discount", "fob_discount")
     def _compute_discount_rate(self):
+        """Mirror cash + fob into discount_rate.
+
+        Skips confirmed orders for the same reason as
+        :meth:`_compute_condition_discounts`: historical orders must not
+        have their persisted ``discount_rate`` overwritten by a module
+        upgrade or any later recompute trigger.
+        """
         for order in self:
+            if order.state not in ("draft", "sent"):
+                continue
             order.discount_rate = (order.cash_discount or 0) + (order.fob_discount or 0)
 
     amount_discount_value = fields.Monetary(

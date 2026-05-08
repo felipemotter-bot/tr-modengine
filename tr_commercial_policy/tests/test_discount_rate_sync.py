@@ -156,3 +156,18 @@ class TestDiscountRateSync(CommercialPolicyTestCommon):
         self.assertAlmostEqual(order.cash_discount, 4.0, places=2)
         self.assertAlmostEqual(order.fob_discount, 2.0, places=2)
         self.assertAlmostEqual(order.discount_rate, 6.0, places=2)
+
+    def test_discount_rate_compute_skips_confirmed_orders(self):
+        """Recompute on confirmed/done orders must not overwrite history.
+
+        Mirrors the ``state not in ('draft', 'sent')`` guard used by
+        ``_compute_condition_discounts`` for cash/fob. A module upgrade
+        re-runs the compute for every record, so without the guard the
+        persisted ``discount_rate`` of confirmed orders would be
+        rewritten from the current cash/fob, mutating historical data.
+        """
+        order = self._create_order()
+        order.write({"state": "sale", "discount_rate": 9.99})
+        order.invalidate_recordset(["discount_rate"])
+        order._compute_discount_rate()
+        self.assertAlmostEqual(order.discount_rate, 9.99, places=2)
