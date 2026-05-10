@@ -79,9 +79,13 @@ class CommercialPolicyTestCommon(TransactionCase):
         cls.product_b = cls.product_template_b.product_variant_ids[0]
 
         # Partners
-        cls.customer = cls.env["res.partner"].create({"name": "Test Customer"})
+        # ind_final="0" so sale.order Form().save() doesn't fail validation
+        # when fiscal_operation_id defaults from the company.
+        cls.customer = cls.env["res.partner"].create(
+            {"name": "Test Customer", "ind_final": "0"}
+        )
         cls.customer_group = cls.env["res.partner"].create(
-            {"name": "Test Group (Parent)"}
+            {"name": "Test Group (Parent)", "ind_final": "0"}
         )
 
         # Sales team
