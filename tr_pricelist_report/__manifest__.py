@@ -25,6 +25,14 @@
         # t-calls that layout so it renders with the same company
         # header box as the rest of the stack.
         "trento_report_utils",
+        # tr_report_style provides the shared visual kit
+        # (doc-header, section title, compact zebra table). Our
+        # template ``t-call``s ``tr_report_style.report_styles`` and
+        # uses ``.tr-*`` classes for elements common to all Trento
+        # reports; the report-specific stylesheet
+        # (``report_pricelist_styles``) only carries pricelist-only
+        # rules now.
+        "tr_report_style",
         # report_xlsx (OCA reporting-engine) registers report_type='xlsx'
         # on ir.actions.report and provides the AbstractModel base used
         # by the XLSX flavor of both layouts.

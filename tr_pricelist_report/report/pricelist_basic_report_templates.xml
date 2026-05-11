@@ -10,12 +10,13 @@
             <t t-call="trento_report_utils.external_layout_boxed_compact">
                 <div class="page">
 
+                    <t t-call="tr_report_style.report_styles" />
                     <t t-call="tr_pricelist_report.report_pricelist_styles" />
 
                     <!-- Header: title + pricelist + emission -->
-                    <div class="pricelist-header">
-                        <h2 class="pricelist-header-title">TABELA BÁSICA</h2>
-                        <div class="pricelist-header-meta">
+                    <div class="tr-doc-header">
+                        <h2 class="tr-doc-title">TABELA BÁSICA</h2>
+                        <div class="tr-doc-meta">
                             <div>
                                 <strong>Tabela:</strong>
                                 <span t-esc="pricelist.display_name" />
@@ -42,8 +43,8 @@
 
                     <!-- Main sections (marca / categoria) -->
                     <t t-foreach="sections" t-as="section">
-                        <div class="pricelist-section">
-                            <h3 class="pricelist-section-title">
+                        <div class="tr-section">
+                            <h3 class="tr-section-title">
                                 <t t-esc="section['title']" />
                             </h3>
                             <table class="pricelist-table">
@@ -100,9 +101,9 @@
                          that context that pushed it out of the dominant
                          bucket). -->
                     <t t-if="variant_exceptions">
-                        <div class="pricelist-section">
+                        <div class="tr-section">
                             <h3
-                class="pricelist-section-title"
+                class="tr-section-title"
               >Preços Especiais por Variante</h3>
                             <table class="pricelist-table">
                                 <thead>

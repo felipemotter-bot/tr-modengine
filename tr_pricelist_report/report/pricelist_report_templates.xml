@@ -10,12 +10,13 @@
             <t t-call="trento_report_utils.external_layout_boxed_compact">
                 <div class="page">
 
+                    <t t-call="tr_report_style.report_styles" />
                     <t t-call="tr_pricelist_report.report_pricelist_styles" />
 
                     <!-- Header: title + client + emission -->
-                    <div class="pricelist-header">
-                        <h2 class="pricelist-header-title">TABELA DE PREÇOS</h2>
-                        <div class="pricelist-header-meta">
+                    <div class="tr-doc-header">
+                        <h2 class="tr-doc-title">TABELA DE PREÇOS</h2>
+                        <div class="tr-doc-meta">
                             <div>
                                 <strong>Cliente:</strong>
                                 <span
@@ -34,8 +35,8 @@
 
                     <!-- Main sections (categoria/marca depending on layout) -->
                     <t t-foreach="sections" t-as="section">
-                        <div class="pricelist-section">
-                            <h3 class="pricelist-section-title">
+                        <div class="tr-section">
+                            <h3 class="tr-section-title">
                                 <t t-esc="section['title']" />
                             </h3>
                             <table class="pricelist-table">
@@ -253,9 +254,9 @@
 
                     <!-- Variant-level exceptions -->
                     <t t-if="variant_exceptions">
-                        <div class="pricelist-section">
+                        <div class="tr-section">
                             <h3
-                class="pricelist-section-title"
+                class="tr-section-title"
               >Preços Especiais por Variante</h3>
                             <table class="pricelist-table">
                                 <thead>
@@ -323,10 +324,8 @@
 
                     <!-- Quantity-tier exceptions -->
                     <t t-if="qty_exceptions">
-                        <div class="pricelist-section">
-                            <h3
-                class="pricelist-section-title"
-              >Preços por Quantidade</h3>
+                        <div class="tr-section">
+                            <h3 class="tr-section-title">Preços por Quantidade</h3>
                             <table class="pricelist-table">
                                 <thead>
                                     <tr>
@@ -362,8 +361,8 @@
                     </t>
 
                     <!-- Commercial conditions block -->
-                    <div class="pricelist-section">
-                        <h3 class="pricelist-section-title">Condições Comerciais</h3>
+                    <div class="tr-section">
+                        <h3 class="tr-section-title">Condições Comerciais</h3>
                         <ul style="margin: 6pt 0 0 16pt; font-size: 10pt; color: #333;">
                             <li t-if="condition.payment_term_id">
                                 <strong>Prazo de pagamento:</strong>

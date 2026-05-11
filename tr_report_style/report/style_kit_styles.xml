@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright 2026 Engenere - Felipe Motter Pereira
+    License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+-->
+<odoo>
+
+    <!--
+        Shared CSS for Trento PDF reports.
+
+        Consumers ``t-call`` this template at the top of their ``<div class="page">``
+        body. Rules are scoped to the ``.tr-*`` semantic classes the kit emits, so
+        the stylesheet doesn't leak beyond the report DOM and doesn't fight with
+        ``web.external_layout``.
+
+        The kit covers what's common to all Trento reports today (centered uppercase
+        document title, blue-bordered section headings, compact zebra tables). Each
+        report keeps its own stylesheet for the report-specific structure
+        (pricelist exception/band rows, profile band cards, sale-order meta card,
+        etc.).
+    -->
+    <template id="report_styles">
+        <!-- Marker for tests / debug to detect that the kit was loaded by the
+             consumer template. -->
+        <span class="tr-report-style-loaded" />
+        <style>
+            /* === Document header: centered uppercase title + meta row === */
+            .tr-doc-header {
+                margin-top: 4pt;
+                margin-bottom: 12pt;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 8pt;
+            }
+            .tr-doc-title {
+                font-size: 15pt;
+                font-weight: 600;
+                letter-spacing: 1px;
+                text-align: center;
+                text-transform: uppercase;
+                margin: 0 0 8pt 0;
+            }
+            .tr-doc-title-num { color: #002FA7; }
+            .tr-doc-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 10pt;
+                color: #444;
+                gap: 16pt;
+            }
+            .tr-doc-meta strong { color: #222; }
+
+            /* === Section: container + blue-bordered uppercase heading === */
+            .tr-section { margin-top: 14pt; }
+            .tr-section-title {
+                font-size: 11pt;
+                font-weight: 600;
+                letter-spacing: 0.8px;
+                padding: 4pt 0 3pt 8pt;
+                border-left: 3px solid #002FA7;
+                color: #333;
+                text-transform: uppercase;
+                margin: 0 0 6pt 0;
+            }
+
+            /* === Compact zebra table (no native borders, centered cells) ===
+               Same defensive reset used by ``engenere_custom.css`` in the invoice
+               report: zero every border + box-shadow with !important to outrun
+               Bootstrap defaults; specific bottom borders are re-applied below. */
+            .tr-table {
+                width: 100%;
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+            }
+            .tr-table,
+            .tr-table thead,
+            .tr-table tbody,
+            .tr-table tr,
+            .tr-table th,
+            .tr-table td {
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+            .tr-table thead th {
+                font-size: 8.5pt;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                color: #666;
+                border-bottom: 1px solid #cfcfcf !important;
+                padding: 6pt 8pt;
+                text-align: center;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+            .tr-table tbody td {
+                padding: 6pt 8pt;
+                border-bottom: 1px solid #eee !important;
+                text-align: center;
+                vertical-align: middle;
+                font-size: 10pt;
+            }
+            .tr-table tbody tr:nth-child(even) { background: #fafafa; }
+
+            /* === Total-line helper === */
+            .tr-total-label { text-align: left; color: #444; }
+            .tr-total-value { text-align: right; color: #222; font-weight: 600; }
+        </style>
+    </template>
+
+    <!-- ==================================================================== -->
+    <!-- QWeb macros: keep markup-level reuse minimal. Each macro is one        -->
+    <!-- semantic block; reports compose them. Consumers pass parameters via   -->
+    <!-- ``<t t-set="param" t-value="..." />`` blocks inside the t-call.       -->
+    <!-- ==================================================================== -->
+
+    <!-- doc_title: centered uppercase title with optional blue-colored number
+         after. Use ``num`` for an order/quotation/invoice number that should
+         be visually distinguished from the literal title text.
+
+         Example:
+             <t t-call="tr_report_style.doc_title">
+                 <t t-set="title" t-value="'Pedido de Venda'" />
+                 <t t-set="num" t-value="doc.name" />
+             </t>
+    -->
+    <template id="doc_title">
+        <h2 class="tr-doc-title">
+            <t t-esc="title" />
+            <t t-if="num">
+                <span class="tr-doc-title-num">
+                    <t t-esc="num" />
+                </span>
+            </t>
+        </h2>
+    </template>
+
+    <!-- section_title: blue-left-bordered uppercase section heading.
+         Example:
+             <t t-call="tr_report_style.section_title">
+                 <t t-set="title" t-value="'Itens do Pedido'" />
+             </t>
+    -->
+    <template id="section_title">
+        <h3 class="tr-section-title">
+            <t t-esc="title" />
+        </h3>
+    </template>
+
+</odoo>
