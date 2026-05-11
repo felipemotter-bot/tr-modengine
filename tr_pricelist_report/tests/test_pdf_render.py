@@ -21,14 +21,31 @@ class TestPdfRender(PricelistReportTestCommon):
         return html
 
     def test_report_renders_header_with_title_and_client(self):
-        """Header carries title + client/emission meta row."""
+        """Header carries title + client/emission meta row.
+
+        Document header now uses the shared ``.tr-doc-*`` classes from
+        ``tr_report_style`` instead of the report-specific
+        ``.pricelist-header*`` ones.
+        """
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         html = self._render_html(wizard)
-        self.assertIn(b'class="pricelist-header"', html)
-        self.assertIn(b'class="pricelist-header-title"', html)
+        self.assertIn(b'class="tr-doc-header"', html)
+        self.assertIn(b'class="tr-doc-title"', html)
         self.assertIn("TABELA DE PREÇOS".encode("utf-8"), html)
-        self.assertIn(b'class="pricelist-header-meta"', html)
+        self.assertIn(b'class="tr-doc-meta"', html)
         self.assertIn(self.customer.display_name.encode("utf-8"), html)
+
+    def test_report_loads_shared_style_kit(self):
+        """Style kit marker proves ``tr_report_style.report_styles`` was called.
+
+        If the consumer template forgets the ``t-call`` to the kit (or the kit
+        module isn't installed) the marker class is missing and this test
+        fails — even if the visual still looks right because of a leftover
+        cached stylesheet.
+        """
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        self.assertIn(b"tr-report-style-loaded", html)
 
     def test_report_does_not_render_codigo_column_header(self):
         """Column Código was absorbed by Descrição; header must not list it."""
@@ -39,10 +56,14 @@ class TestPdfRender(PricelistReportTestCommon):
         self.assertNotIn(b'<th style="width: 12%;">C\xc3\xb3digo</th>', html)
 
     def test_report_sections_use_semantic_titles(self):
-        """Category/marca titles use the pricelist-section-title class."""
+        """Section titles now use the shared ``tr-section-title`` class.
+
+        The pricelist-specific ``pricelist-table`` class still drives the
+        product-table layout (variant exceptions, qty bands).
+        """
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         html = self._render_html(wizard)
-        self.assertIn(b'class="pricelist-section-title"', html)
+        self.assertIn(b'class="tr-section-title"', html)
         self.assertIn(b'class="pricelist-table"', html)
 
     def test_report_renders_with_show_discounts(self):

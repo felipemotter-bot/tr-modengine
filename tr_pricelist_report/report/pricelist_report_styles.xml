@@ -6,54 +6,17 @@
 <odoo>
 
     <!--
-        Central stylesheet for the pricelist report.
+        Pricelist-specific stylesheet.
 
-        Kept as a QWeb sub-template instead of inline ``style=""`` on every
-        element: readability, single place to tweak, and ready to be reused
-        by the future nominal-pricelist template (PR-C) via ``t-call``.
-
-        All rules are scoped to the ``.pricelist-*`` semantic classes the
-        main template emits, so this stylesheet doesn't leak beyond the
-        report DOM and doesn't fight with ``web.external_layout``.
+        Common rules (centered uppercase document title, blue-bordered section
+        heading, compact zebra table base) live in
+        ``tr_report_style.report_styles`` and are applied via the ``.tr-*``
+        semantic classes the main template emits. This file carries only what's
+        unique to the pricelist: the product table layout, inline variant
+        exceptions, qty bands, and the history-mode note.
     -->
     <template id="report_pricelist_styles">
         <style>
-            /* ---------- Header (title + client + emission) ----------- */
-            .pricelist-header {
-                margin-top: 4pt;
-                margin-bottom: 12pt;
-                border-bottom: 1px solid #ddd;
-                padding-bottom: 8pt;
-            }
-            .pricelist-header-title {
-                font-size: 15pt;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-align: center;
-                margin: 0 0 8pt 0;
-            }
-            .pricelist-header-meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 10pt;
-                color: #444;
-            }
-            .pricelist-header-meta strong { color: #222; }
-
-            /* ---------- Section titles (categoria/marca + exceções) --- */
-            .pricelist-section { margin-top: 14pt; }
-            .pricelist-section-title {
-                font-size: 11pt;
-                font-weight: 600;
-                letter-spacing: 0.8px;
-                padding: 4pt 0 3pt 8pt;
-                border-left: 3px solid #002FA7;
-                color: #333;
-                text-transform: uppercase;
-                margin-bottom: 0;
-            }
-
             /* ---------- Product table ----------------------------------- */
             .pricelist-table {
                 width: 100%;
