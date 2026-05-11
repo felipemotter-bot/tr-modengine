@@ -6,51 +6,16 @@
 <odoo>
 
     <!--
-        Stylesheet for the sales profile report. Mirrors
-        ``tr_pricelist_report.report_pricelist_styles`` so both reports
-        share the same visual identity (centered header, blue
-        section-title border, zebra rows, compact paddings). Classes are
-        scoped to ``.profile-*`` to avoid leaking outside the report DOM.
+        Sales-profile-specific stylesheet.
+
+        Common rules (centered uppercase document title, blue-bordered section
+        heading) live in ``tr_report_style.report_styles`` and are applied via
+        the ``.tr-*`` classes the main template emits. This file carries only
+        the profile-specific structures: side-by-side limit cards, the
+        two-column band-grid, and the band sub-tables.
     -->
     <template id="report_sales_profile_styles">
         <style>
-            /* ---------- Header (title + meta) ----------------------- */
-            .profile-header {
-                margin-top: 4pt;
-                margin-bottom: 12pt;
-                border-bottom: 1px solid #ddd;
-                padding-bottom: 8pt;
-            }
-            .profile-header-title {
-                font-size: 15pt;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-align: center;
-                margin: 0 0 8pt 0;
-            }
-            .profile-header-meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 10pt;
-                color: #444;
-                gap: 16pt;
-            }
-            .profile-header-meta strong { color: #222; }
-
-            /* ---------- Section titles ------------------------------ */
-            .profile-section { margin-top: 14pt; }
-            .profile-section-title {
-                font-size: 11pt;
-                font-weight: 600;
-                letter-spacing: 0.8px;
-                padding: 4pt 0 3pt 8pt;
-                border-left: 3px solid #002FA7;
-                color: #333;
-                text-transform: uppercase;
-                margin-bottom: 6pt;
-            }
-
             /* ---------- Limits row (cash + fob side by side) --------
                wkhtmltopdf does not render CSS flex/grid reliably, so
                we use floats. Two columns at 48% with a 4% gutter. */

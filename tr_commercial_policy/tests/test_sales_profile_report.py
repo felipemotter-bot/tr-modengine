@@ -114,6 +114,20 @@ class TestSalesProfileReport(CommercialPolicyTestCommon):
         self.assertIn("Desconto máximo", html)
         self.assertNotIn("Comissão (%)", html)
 
+    def test_report_loads_shared_style_kit(self):
+        """Style kit marker proves ``tr_report_style.report_styles`` was called.
+
+        If the consumer template forgets the ``t-call`` to the kit (or the kit
+        module isn't installed) the marker class is missing and this test
+        fails — even if the visual still looks right because of a leftover
+        cached stylesheet.
+        """
+        html = self._render(self.agent_profile)
+        self.assertIn("tr-report-style-loaded", html)
+        # Document header now uses the shared ``.tr-doc-*`` classes
+        self.assertIn('class="tr-doc-header"', html)
+        self.assertIn('class="tr-doc-title"', html)
+
     def test_my_profiles_returns_user_profile(self):
         self.salesperson.partner_id.with_company(
             self.company

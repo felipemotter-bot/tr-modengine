@@ -31,6 +31,12 @@
         # Provides ``external_layout_boxed_compact`` reused by the
         # sales profile and pricelist reports.
         "trento_report_utils",
+        # tr_report_style provides the shared visual kit (doc-header,
+        # section title, compact zebra table). The sales profile
+        # report ``t-call``s ``tr_report_style.report_styles`` and uses
+        # ``.tr-*`` classes for elements common across Trento reports;
+        # ``sales_profile_report_styles`` only carries profile-only rules.
+        "tr_report_style",
         "sale_product_configurator",
         "sale_tier_validation",
         "account_move_tier_validation",

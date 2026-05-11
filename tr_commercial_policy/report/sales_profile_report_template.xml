@@ -4,12 +4,13 @@
         <t t-call="trento_report_utils.external_layout_boxed_compact">
             <div class="page">
 
+                    <t t-call="tr_report_style.report_styles" />
                     <t t-call="tr_commercial_policy.report_sales_profile_styles" />
 
                     <!-- Header: title + meta (perfil / empresa / emissão) -->
-                    <div class="profile-header">
-                        <h2 class="profile-header-title">PERFIL DE VENDAS</h2>
-                        <div class="profile-header-meta">
+                    <div class="tr-doc-header">
+                        <h2 class="tr-doc-title">PERFIL DE VENDAS</h2>
+                        <div class="tr-doc-meta">
                             <div>
                                 <strong>Perfil:</strong>
                                 <span t-field="doc.name" />
@@ -29,8 +30,8 @@
                     </div>
 
                     <!-- Limits: cash + fob side by side -->
-                    <div class="profile-section">
-                        <h3 class="profile-section-title">Limites de Desconto</h3>
+                    <div class="tr-section">
+                        <h3 class="tr-section-title">Limites de Desconto</h3>
                         <div class="profile-limits-row">
                             <div class="profile-limits-col">
                                 <div class="profile-limit-label">Desconto à Vista</div>
@@ -68,10 +69,8 @@
                     </div>
 
                     <!-- Bands by scope -->
-                    <div class="profile-section">
-                        <h3
-            class="profile-section-title"
-          >Faixas de Desconto do Vendedor</h3>
+                    <div class="tr-section">
+                        <h3 class="tr-section-title">Faixas de Desconto do Vendedor</h3>
                         <div class="profile-bands-grid">
                             <t t-foreach="doc.rule_ids" t-as="rule">
                             <!-- Scope label: textual description of the rule's applied_on. -->
