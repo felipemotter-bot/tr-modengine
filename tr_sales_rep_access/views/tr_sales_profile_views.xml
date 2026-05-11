@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!--
+        Hide internal-management fields from the rep on the sales
+        profile form. The rep should see what their discount limits
+        and payment terms are, but not the operational metadata
+        (profile type, allowed pricelists) nor the manager override
+        ceiling that belongs to the approval flow.
+    -->
+    <record id="tr_sales_profile_form_rep_hide" model="ir.ui.view">
+        <field name="name">tr.sales.profile.form.rep.hide</field>
+        <field name="model">tr.sales.profile</field>
+        <field name="inherit_id" ref="tr_commercial_policy.tr_sales_profile_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='profile_type']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath expr="//field[@name='pricelist_ids']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <!--
+                Odoo's view inheritance forbids ``string`` as an
+                xpath selector. Anchor on the field that immediately
+                follows the separator instead.
+            -->
+            <xpath
+        expr="//field[@name='manager_extra_limit']/preceding-sibling::separator[1]"
+        position="attributes"
+      >
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+            <xpath expr="//field[@name='manager_extra_limit']" position="attributes">
+                <attribute
+          name="groups"
+        >!tr_sales_rep_access.group_sales_rep_external</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
