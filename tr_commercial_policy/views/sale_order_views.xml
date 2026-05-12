@@ -124,12 +124,18 @@
                 <field name="amount_financial_total" invisible="1" />
                 <field
           name="cash_discount"
-          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+          attrs="{
+            'invisible': [('commercial_condition_id', '=', False)],
+            'readonly': [('state', 'not in', ['draft', 'sent'])],
+          }"
           widget="order_discount_calculator"
         />
                 <field
           name="fob_discount"
-          attrs="{'invisible': [('commercial_condition_id', '=', False)]}"
+          attrs="{
+            'invisible': [('commercial_condition_id', '=', False)],
+            'readonly': [('state', 'not in', ['draft', 'sent'])],
+          }"
         />
             </xpath>
 
