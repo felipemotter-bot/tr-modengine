@@ -31,6 +31,11 @@ class SaleOrderLine(models.Model):
     is_mto = fields.Boolean(groups=_GROUPS_NO_REP)
     qty_delivered = fields.Float(groups=_GROUPS_NO_REP)
     qty_delivered_method = fields.Selection(groups=_GROUPS_NO_REP)
+    # qty_invoiced paired with qty_delivered in core's line popup
+    # (Entregue / Faturado side-by-side). Hiding only one leaves the
+    # other's label orphan and breaks the form's 2-column grid layout
+    # for the rep on confirmed orders.
+    qty_invoiced = fields.Float(groups=_GROUPS_NO_REP)
 
     # Commission fields hidden for reps at model level. agent_ids itself
     # is blocked because the ORM read of a One2many checks the child model's
