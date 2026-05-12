@@ -54,15 +54,22 @@
     <!-- Field widget: editable value + calculator button -->
     <t t-name="tr_commercial_policy.OrderDiscountCalculator" owl="1">
         <span class="d-inline-flex align-items-center gap-1">
+            <!--
+                Render a plain span when readonly so the field matches
+                Odoo's standard look (no editable underline). The input
+                shows up only in draft/sent, mirroring the calculator
+                button visibility logic.
+            -->
             <input
+        t-if="!props.readonly"
         type="text"
         inputmode="decimal"
         class="o_input"
         style="width: 80px;"
         t-att-value="formattedValue"
-        t-att-readonly="props.readonly ? 'readonly' : undefined"
         t-on-change="onInputChange"
       />
+            <span t-else="" t-esc="formattedValue" />
             <button
         t-if="isVisible"
         class="btn btn-link btn-sm p-0 text-nowrap"
