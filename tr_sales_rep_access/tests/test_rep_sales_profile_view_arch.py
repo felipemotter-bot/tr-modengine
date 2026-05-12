@@ -1,6 +1,10 @@
 # Copyright 2026 Engenere - Felipe Motter Pereira
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import json
+
+from lxml import etree
+
 from odoo.tests import tagged
 
 from .common import SalesRepAccessTestCommon
@@ -18,14 +22,19 @@ class TestRepSalesProfileViewArch(SalesRepAccessTestCommon):
 
         Field 'profile_type' used in attrs ... is restricted to the
         group(s) !tr_sales_rep_access.group_sales_rep_external.
+
+    Tests parse the rendered arch from ``get_view`` (group filtering
+    applied) — ``_get_view`` returns the raw arch and would let the
+    visible nodes leak into the rep's result.
     """
 
     def _form_arch_as_rep(self):
-        return (
+        view = (
             self.env["tr.sales.profile"]
             .with_user(self.user_u1)
-            ._get_view(view_type="form")[0]
+            .get_view(view_type="form")
         )
+        return etree.fromstring(view["arch"])
 
     def test_form_arch_loads_for_external_rep(self):
         """Smoke: arch resolves without raising for the rep."""
@@ -33,7 +42,11 @@ class TestRepSalesProfileViewArch(SalesRepAccessTestCommon):
         self.assertIsNotNone(arch)
 
     def test_profile_type_mirror_available_to_rep(self):
-        """The invisible mirror feeds ``parent.profile_type`` attrs."""
+        """The invisible mirror feeds ``parent.profile_type`` attrs.
+
+        ``get_view`` postprocesses ``invisible="1"`` into the
+        ``modifiers`` JSON dict, so the assertion reads from there.
+        """
         arch = self._form_arch_as_rep()
         nodes = arch.xpath("//field[@name='profile_type']")
         self.assertTrue(
@@ -41,12 +54,14 @@ class TestRepSalesProfileViewArch(SalesRepAccessTestCommon):
             "External rep must see at least one ``profile_type`` node so"
             " ``parent.profile_type`` resolves in child attrs.",
         )
-        self.assertTrue(
-            all(node.attrib.get("invisible") == "1" for node in nodes),
-            "External rep must only receive the invisible profile_type"
-            " mirror; a visible copy would leak the field that PR #76"
-            " set out to hide.",
-        )
+        for node in nodes:
+            modifiers = json.loads(node.attrib.get("modifiers") or "{}")
+            self.assertTrue(
+                modifiers.get("invisible"),
+                "External rep must only receive the invisible"
+                " profile_type mirror; a visible copy would leak the"
+                " field that PR #76 set out to hide.",
+            )
 
     def test_rules_tab_visible_to_rep(self):
         """Rep keeps access to the Rules notebook (their bands live there)."""
