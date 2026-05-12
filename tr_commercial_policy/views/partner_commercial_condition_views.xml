@@ -116,6 +116,100 @@
                                 </form>
                             </field>
                         </page>
+                        <page string="Locked Lines" name="locked_lines">
+                            <p class="text-muted">
+                                Director-defined lines: the seller/extra discount and the
+                                commission rate are set by the sales director and not
+                                editable by the sales rep. Typical use: products where the
+                                rep has no commission incentive, so the director defines
+                                the discount directly. Archive a line to stop applying it
+                                on new orders/invoices while preserving the snapshot on
+                                existing records. Only Sales Director can create, edit or
+                                archive entries here.
+                            </p>
+                            <field
+                name="locked_line_ids"
+                context="{'active_test': False}"
+                attrs="{'readonly': [('id', '!=', False)]}"
+                groups="!tr_commercial_policy.group_sales_director"
+              >
+                                <tree decoration-muted="not active">
+                                    <field name="active" widget="boolean_toggle" />
+                                    <field name="applied_on" />
+                                    <field name="product_tmpl_id" />
+                                    <field name="product_id" />
+                                    <field name="seller_discount" />
+                                    <field name="extra_discount" />
+                                    <field name="fixed_commission_rate" />
+                                    <field name="bands_summary" />
+                                </tree>
+                            </field>
+                            <field
+                name="locked_line_ids"
+                context="{'active_test': False}"
+                groups="tr_commercial_policy.group_sales_director"
+              >
+                                <tree editable="bottom" decoration-muted="not active">
+                                    <field name="active" widget="boolean_toggle" />
+                                    <field name="applied_on" />
+                                    <field
+                    name="product_tmpl_id"
+                    attrs="{'readonly': [('applied_on', '!=', 'product_template')], 'required': [('applied_on', '=', 'product_template')]}"
+                  />
+                                    <field
+                    name="product_id"
+                    attrs="{'readonly': [('applied_on', '!=', 'product')], 'required': [('applied_on', '=', 'product')]}"
+                  />
+                                    <field name="seller_discount" />
+                                    <field name="extra_discount" />
+                                    <field name="fixed_commission_rate" />
+                                    <field name="bands_summary" readonly="1" />
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <widget
+                      name="web_ribbon"
+                      title="Archived"
+                      bg_color="bg-danger"
+                      attrs="{'invisible': [('active', '=', True)]}"
+                    />
+                                        <group>
+                                            <group>
+                                                <field name="active" />
+                                                <field name="applied_on" />
+                                                <field
+                          name="product_tmpl_id"
+                          attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+                        />
+                                                <field
+                          name="product_id"
+                          attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+                        />
+                                            </group>
+                                            <group>
+                                                <field name="seller_discount" />
+                                                <field name="extra_discount" />
+                                                <field name="fixed_commission_rate" />
+                                            </group>
+                                        </group>
+                                        <separator string="Quantity Bands" />
+                                        <p class="text-muted">
+                                            Same semantics as on regular condition lines.
+                                            The commission rate above applies to ALL bands —
+                                            bands only adjust the seller/extra discount.
+                                        </p>
+                                        <field name="band_ids">
+                                            <tree editable="bottom">
+                                                <field name="qty_min" />
+                                                <field name="qty_uom_id" />
+                                                <field name="seller_discount" />
+                                                <field name="extra_discount" />
+                                            </tree>
+                                        </field>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <div class="oe_chatter">

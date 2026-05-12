@@ -273,3 +273,90 @@ def resolve_applicable_rule(product, rules, empty_rule, line_qty, line_uom):
     if eligible:
         return _pick_best(eligible)
     return empty_rule
+
+
+def locked_covers_line(locked, regular):
+    """True when a locked line covers the scope of a regular condition line.
+
+    Coverage = the locked would apply to every product the regular line
+    applies to. With the current granularity limited to template/variant,
+    the pairs are:
+
+    - K.product (variant Y) ↔ L.product (variant Z): cover when Y == Z.
+    - K.product_template (template X) ↔ L.product_template (template W):
+      cover when X == W.
+    - K.product_template (template X) ↔ L.product (variant Y): cover when
+      Y belongs to X (Y.product_tmpl_id == X).
+    - K.product (variant Y) ↔ L.product_template (template W): never
+      covers (the locked is narrower than the regular; the regular still
+      applies to other variants of W).
+
+    Used by the coexistence constraints on both locked and regular
+    condition lines.
+    """
+    if not locked or not regular:
+        return False
+    k_scope = locked.applied_on
+    l_scope = regular.applied_on
+    if k_scope == "product":
+        if l_scope == "product":
+            return locked.product_id == regular.product_id
+        return False
+    if k_scope == "product_template":
+        if l_scope == "product_template":
+            return locked.product_tmpl_id == regular.product_tmpl_id
+        if l_scope == "product":
+            return regular.product_id.product_tmpl_id == locked.product_tmpl_id
+        return False
+    return False
+
+
+def resolve_applicable_condition_line(product, qty, condition, line_uom=None):
+    """Resolve the line that applies to ``product`` at ``qty`` within
+    ``condition``, considering locked lines first.
+
+    Returns ``(record, source)`` where ``source`` is ``'locked'``,
+    ``'line'`` or ``False``.
+
+    - Locked lines always win when applicable. Archived locked lines
+      (``active=False``) are ignored explicitly so the resolution does
+      not depend on ``active_test`` from the environment context.
+    - Fallback is the regular ``condition.line_ids`` resolution.
+    - Hierarchy within each set is variant → template (the only two
+      levels supported by the current schema).
+    - When ``line_uom`` is provided and a record has bands, the band
+      resolution is delegated to the record's ``_resolve_discount_for_qty``
+      by the caller — this helper only finds the applicable scope.
+    """
+    if not product or not condition:
+        return condition.env["partner.commercial.condition.locked.line"].browse(), False
+    active_locked = condition.locked_line_ids.filtered("active")
+    locked = _resolve_scope_match(active_locked, product)
+    if locked:
+        return locked, "locked"
+    line = _resolve_scope_match(condition.line_ids, product)
+    if line:
+        return line, "line"
+    return condition.env["partner.commercial.condition.line"].browse(), False
+
+
+def _resolve_scope_match(records, product):
+    """Pick the most specific record matching ``product``.
+
+    Variant match wins over template match. Returns an empty recordset
+    when no record matches.
+    """
+    if not records:
+        return records[:0]
+    variant_hits = records.filtered(
+        lambda r: r.applied_on == "product" and r.product_id == product
+    )
+    if variant_hits:
+        return variant_hits[:1]
+    tmpl_hits = records.filtered(
+        lambda r: r.applied_on == "product_template"
+        and r.product_tmpl_id == product.product_tmpl_id
+    )
+    if tmpl_hits:
+        return tmpl_hits[:1]
+    return records[:0]

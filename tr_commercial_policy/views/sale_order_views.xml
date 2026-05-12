@@ -176,8 +176,29 @@
         expr="//field[@name='order_line']/tree/field[@name='discount']"
         position="before"
       >
-                <field name="seller_discount" optional="hide" />
-                <field name="extra_discount" optional="hide" />
+                <field name="locked_line_id" invisible="1" />
+                <field
+          name="seller_discount"
+          optional="hide"
+          attrs="{'readonly': [('locked_line_id', '!=', False)]}"
+          groups="!tr_commercial_policy.group_sales_manager"
+        />
+                <field
+          name="seller_discount"
+          optional="hide"
+          groups="tr_commercial_policy.group_sales_manager"
+        />
+                <field
+          name="extra_discount"
+          optional="hide"
+          attrs="{'readonly': [('locked_line_id', '!=', False)]}"
+          groups="!tr_commercial_policy.group_sales_manager"
+        />
+                <field
+          name="extra_discount"
+          optional="hide"
+          groups="tr_commercial_policy.group_sales_manager"
+        />
                 <field name="seller_discount_max" invisible="True" />
                 <field name="seller_markup_max" invisible="True" />
                 <field name="commission_rate" optional="hide" />
@@ -195,7 +216,15 @@
           icon="fa-save"
           title="Save condition to customer"
           class="btn-link btn-sm p-0"
-          attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+          attrs="{'invisible': ['|', '|', ('discount_changed', '=', False), ('id', '=', False), ('locked_line_id', '!=', False)]}"
+        />
+                <button
+          name="action_open_locked_line"
+          type="object"
+          icon="fa-lock"
+          title="This line is under a locked condition — discount and commission set by sales director"
+          class="btn-link btn-sm p-0 text-warning"
+          attrs="{'invisible': [('locked_line_id', '=', False)]}"
         />
             </xpath>
 
@@ -268,7 +297,7 @@
               class="btn-link btn-sm p-0 text-nowrap"
               icon="fa-save"
               title="Save condition to customer"
-              attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+              attrs="{'invisible': ['|', '|', ('discount_changed', '=', False), ('id', '=', False), ('locked_line_id', '!=', False)]}"
             />
                     </span>
                 </div>
@@ -276,6 +305,16 @@
                 <!-- Seller discount + extra discount button -->
                 <field name="extra_discount_reason" invisible="1" />
                 <field name="discount_changed" invisible="1" />
+                <field name="locked_line_id" invisible="1" />
+                <div
+          class="alert alert-warning mb-2"
+          role="alert"
+          attrs="{'invisible': [('locked_line_id', '=', False)]}"
+        >
+                    <i
+            class="fa fa-lock me-1"
+          /> Locked line — discount and commission set by Sales Director.
+                </div>
                 <label for="seller_discount" string="Seller Discount" />
                 <div name="seller_discount" class="o_row">
                     <field name="seller_discount_max" invisible="1" />
@@ -284,6 +323,14 @@
             name="seller_discount"
             class="oe_inline"
             style="max-width: 60px;"
+            attrs="{'readonly': [('locked_line_id', '!=', False)]}"
+            groups="!tr_commercial_policy.group_sales_manager"
+          /> %
+                    <field
+            name="seller_discount"
+            class="oe_inline"
+            style="max-width: 60px;"
+            groups="tr_commercial_policy.group_sales_manager"
           /> %
                     <span
             class="text-muted"

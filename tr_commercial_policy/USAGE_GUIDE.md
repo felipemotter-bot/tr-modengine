@@ -19,6 +19,7 @@ comerciais, descontos estruturados, comissões dinâmicas e aprovações.
 10. [Parâmetros de Sistema](#10-parâmetros-de-sistema)
 11. [Grupos de Segurança](#11-grupos-de-segurança)
 12. [Validações e Restrições](#12-validações-e-restrições)
+13. [Linhas Travadas (Locked Lines)](#13-linhas-travadas-locked-lines)
 
 ---
 
@@ -422,6 +423,104 @@ armazenados em **percentual** (não decimal). As chaves antigas sem sufixo (`tax
 - `seller_discount` ≤ `seller_discount_max` da regra aplicável (por linha)
 - Desconto extra requer aprovação antes de confirmar
 - Motivo obrigatório ao solicitar aprovação
+
+---
+
+## 13. Linhas Travadas (Locked Lines)
+
+Mecanismo para o **diretor comercial** definir desconto e comissão fora da alçada do
+representante, sem precisar de contrato com o cliente. Tipicamente usado em itens em que
+o rep não tem incentivo (comissão zero ou fixa baixa), então quem decide o nível de
+desconto é a direção.
+
+### Modelo
+
+Cada `partner.commercial.condition` ganha um O2M paralelo `locked_line_ids`
+(`partner.commercial.condition.locked.line`), ao lado das `line_ids` regulares. Campos:
+
+- `applied_on` (`product_template` ou `product`) — mesma granularidade da line regular.
+- `seller_discount` / `extra_discount` — descontos travados.
+- `fixed_commission_rate` — comissão fixa em % (default 0). Substitui as bandas do
+  perfil do agente quando a linha do pedido cai sob essa locked.
+- `band_ids` — bandas de quantidade próprias (mesma estrutura da line regular).
+- `active` — diretor arquiva uma locked para parar a aplicação em novos pedidos sem
+  afetar pedidos antigos que já têm snapshot.
+
+### Quem edita
+
+- **Diretor** (`group_sales_director`) — CRUD completo via aba "Linhas Travadas" no
+  formulário da condição.
+- **Gerente** e **vendedor/rep** — somente leitura.
+
+### Resolução no pedido
+
+Para cada linha do pedido / fatura, a resolução em
+`policy_utils.resolve_applicable_condition_line` segue:
+
+1. Procura locked line **ativa** que cobre o produto (variante > template).
+2. Se encontrar, snapshotta na linha (`locked_line_id` M2O e
+   `locked_fixed_commission_rate` Float) e usa o desconto/comissão dela.
+3. Senão, cai na resolução normal das `line_ids`.
+
+O **snapshot Float** garante que mudanças posteriores em `fixed_commission_rate` na
+locked não afetam pedidos/faturas já criados.
+
+### Coexistência com lines regulares
+
+Linha regular **não pode** existir dentro do escopo de uma locked ativa, e vice-versa.
+Constraint dura (`@api.constrains`) — qualquer caminho (incluindo wizards) recebe
+`ValidationError` listando os registros conflitantes. Casos:
+
+| Locked     | Line regular                  | Decisão      |
+| ---------- | ----------------------------- | ------------ |
+| Variant Y  | Variant Y                     | Bloquear     |
+| Template X | Template X                    | Bloquear     |
+| Template X | Variant Y do template X       | Bloquear     |
+| Variant Y  | Template X (Y é variant de X) | **Permitir** |
+
+Quando há conflito, o diretor remove manualmente as lines em conflito antes de criar a
+locked.
+
+### Bloqueio na linha do pedido
+
+`seller_discount` e `extra_discount` de uma `sale.order.line` / `account.move.line` sob
+locked são **read-only para o representante** (via attrs na view + check server-side
+`_check_locked_line_edit` em write e create). Gerente e diretor podem aplicar overrides
+pontuais direto na linha — esses não retroagem no cadastro da locked e ficam restritos
+àquela linha. Não há trilha do override (decisão consciente).
+
+### Validações puladas em linha alinhada com locked
+
+Quando a linha está alinhada com a locked (snapshot setado e descontos == os da locked),
+as seguintes validações **não** se aplicam:
+
+- `_validate_seller_discount_limit` contra o `seller_discount_max` do perfil (o diretor
+  decidiu acima do teto do perfil conscientemente).
+- Issues de tier validation por `extra_discount` line-level.
+- Issues de tier validation por internal band.
+
+Override pontual de manager/diretor **desalinha** a linha, e o fluxo normal de aprovação
+volta a valer.
+
+Validações estruturais **sempre rodam** mesmo sob locked:
+
+- `validate_seller_markup` (markup global negativo).
+- `extra_discount` ≥ 0 e ≤ 99%.
+- Total `seller_discount + extra_discount` ≤ 99%.
+
+### Arquivar vs apagar
+
+- **Apagar (unlink)** uma locked já usada em pedido/fatura é bloqueado por
+  `ondelete='restrict'` no snapshot — o histórico precisa ser preservado.
+- **Arquivar** (`active = False`) para de aplicar em pedidos novos, mantendo os
+  snapshots dos pedidos antigos intactos.
+- Unlink só funciona em locked **nunca usada**.
+
+### Auditoria
+
+Toda criação/edição/exclusão de locked line e suas bands posta entrada no chatter da
+`partner.commercial.condition`, com `before` e `after` por campo (mesmo padrão das
+`line_ids` regulares).
 
 ---
 

@@ -3,6 +3,7 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 from .policy_utils import (
     calc_adjustment_factor,
@@ -75,6 +76,44 @@ class SaleOrderLine(models.Model):
     discount_changed = fields.Boolean(
         compute="_compute_discount_changed",
         help="True when seller/extra discount differs from the commercial condition.",
+    )
+    locked_line_id = fields.Many2one(
+        comodel_name="partner.commercial.condition.locked.line",
+        string="Locked Line",
+        readonly=True,
+        index=True,
+        ondelete="restrict",
+        help="Director-defined locked line that resolved for this product. "
+        "When set, the discount and commission were decided by the sales "
+        "director, not by the rep. Edits to seller/extra discount are "
+        "blocked for the rep; manager and director can apply pontual "
+        "overrides. The locked line itself is edited only on the "
+        "commercial condition record.",
+    )
+    locked_fixed_commission_rate = fields.Float(
+        string="Locked Fixed Commission (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the locked line's fixed_commission_rate at the "
+        "moment the condition was applied. Used as the single source of "
+        "truth for commission on locked lines so later edits to the "
+        "locked line do not affect existing orders/invoices.",
+    )
+    locked_baseline_seller_discount = fields.Float(
+        string="Locked Baseline Seller Discount (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the seller discount produced by the locked "
+        "line at apply time. Used by tier validation to detect manual "
+        "overrides — comparison stays stable across later edits of "
+        "the locked record itself.",
+    )
+    locked_baseline_extra_discount = fields.Float(
+        string="Locked Baseline Extra Discount (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the extra discount produced by the locked "
+        "line at apply time. Pair with locked_baseline_seller_discount.",
     )
 
     @api.depends(
@@ -260,7 +299,8 @@ class SaleOrderLine(models.Model):
     )
     def _compute_commission_rate(self):
         for line in self:
-            line.commission_rate = line._get_commission_rate_from_bands()
+            rate = line._get_policy_commission_rate()
+            line.commission_rate = rate if rate is not False else 0.0
 
     @api.constrains("seller_discount")
     def _check_seller_discount_limit(self):
@@ -269,13 +309,17 @@ class SaleOrderLine(models.Model):
     def _validate_seller_discount_limit(self):
         """Check seller discount against the absolute max for each line.
 
-        Uses ``_get_seller_discount_absolute_max`` (highest band limit)
-        so that band-contextual checks are handled separately by
-        ``_get_discount_validation_issues`` (tier validation).
-        Also enforces the global markup limit for negative discounts.
+        Global markup limit (``validate_seller_markup``) is always
+        enforced. The comparison against the profile's
+        ``seller_discount_max`` is skipped when the line resolved to a
+        locked line (the director defined the discount, bypassing the
+        rep's profile ceiling).
         """
         for line in self:
+            # Markup always runs — locked does not bypass structural checks.
             validate_seller_markup(self.env, line.seller_discount)
+            if line.locked_line_id:
+                continue
             max_disc = line._get_seller_discount_absolute_max()
             if line.seller_discount > max_disc:
                 raise ValidationError(  # noqa: UP031
@@ -339,11 +383,19 @@ class SaleOrderLine(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
+        # Snapshot locked line on every covered line (even when vals
+        # didn't bring seller/extra discount) so subsequent writes are
+        # caught by _check_locked_line_edit. Without this, a rep could
+        # create a line with no discount, leave locked_line_id empty,
+        # then write a discount later and bypass the guard.
+        lines._snapshot_locked_on_create()
+        lines._check_locked_line_create(vals_list)
         lines._resolve_agent_commissions()
         return lines
 
     def write(self, vals):
         self._check_direct_price_edit(vals)
+        self._check_locked_line_edit(vals)
         # Capture pre-write alignment for qty/uom/product changes so we
         # can re-apply the condition band without overwriting manual
         # override.
@@ -381,27 +433,28 @@ class SaleOrderLine(models.Model):
     def _resolve_agent_commissions(self):
         """Resolve managed commission on agent lines after line create/write.
 
-        For agent profiles with an applicable band, ensures each agent line
-        points to the managed commission matching the agent modality
-        (invoice_state) and the effective band rate. A rate of 0% creates
-        a managed commission that produces zero commission amount.
+        For agent profiles, ensures each agent line points to the managed
+        commission matching the agent modality (invoice_state) and the
+        effective rate from ``_get_policy_commission_rate``. A rate of 0%
+        creates a managed commission that produces zero commission amount.
 
-        Uses _get_commission_rate_from_bands() directly to distinguish
-        "band resolves 0%" (returns 0.0) from "no band matched" (returns
-        False).
+        ``_get_policy_commission_rate`` returns the snapshot Float
+        ``locked_fixed_commission_rate`` for locked lines, else the
+        band-resolved rate. Returns ``False`` only when no band matched
+        on a regular line; in that case we skip the agent.
         """
         Commission = self.env["commission"]
         for line in self:
             profile = line.order_id.sales_profile_id
             if not profile or profile.profile_type != "agent":
                 continue
-            band_rate = line._get_commission_rate_from_bands()
-            if band_rate is False:
+            rate = line._get_policy_commission_rate()
+            if rate is False:
                 continue
             for agent_line in line.agent_ids:
                 base_commission = agent_line.agent_id.commission_id
                 commission = Commission._ensure_managed_commission(
-                    base_commission.invoice_state, band_rate
+                    base_commission.invoice_state, rate
                 )
                 if commission != agent_line.commission_id:
                     agent_line.commission_id = commission
@@ -427,6 +480,148 @@ class SaleOrderLine(models.Model):
             )
         )
 
+    def _check_locked_line_edit(self, vals):
+        """Block writes to seller_discount/extra_discount on lines under
+        locked.
+
+        Rep: blocked. Manager and director: allowed (pontual override, no
+        audit trail per business decision). System (group_system):
+        allowed. Programmatic apply/reapply bypass via
+        ``tr_skip_locked_protection`` context flag.
+        """
+        protected = {"seller_discount", "extra_discount"}
+        if not protected.intersection(vals):
+            return
+        if self.env.context.get("tr_skip_locked_protection"):
+            return
+        if self.env.user.has_group("base.group_system"):
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_manager"):
+            return
+        locked_lines = self.filtered("locked_line_id")
+        if not locked_lines:
+            return
+        raise ValidationError(
+            _(
+                "Direct editing of seller/extra discount is not allowed "
+                "on lines under a locked condition. Affected lines: %s",
+                ", ".join(locked_lines.mapped("product_id.display_name")),
+            )
+        )
+
+    def _check_locked_line_create(self, vals_list):
+        """Block create of sale.order.line that brings seller/extra
+        discount values diverging from the locked line baseline.
+
+        Onchange/backfill flows legitimately pre-fill seller/extra
+        discount with the values the policy produces — those must be
+        accepted (they match the locked line). Only divergent values
+        (rep trying to override at create time) are blocked.
+        """
+        if self.env.context.get("tr_skip_locked_protection"):
+            return
+        if self.env.user.has_group("base.group_system"):
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_manager"):
+            return
+        protected = {"seller_discount", "extra_discount"}
+        blocked = self.browse()
+        for record, vals in zip(self, vals_list):
+            if not protected.intersection(vals.keys()):
+                continue
+            condition = record.order_id.commercial_condition_id
+            if not condition or not record.product_id:
+                continue
+            (
+                expected_seller,
+                expected_extra,
+                source,
+                _locked,
+                _rate,
+            ) = condition._resolve_with_locked(
+                record.product_id,
+                qty=record.product_uom_qty or 0.0,
+                uom=record.product_uom,
+            )
+            if source != "locked":
+                continue
+            given_seller = vals.get("seller_discount", record.seller_discount or 0.0)
+            given_extra = vals.get("extra_discount", record.extra_discount or 0.0)
+            precision = self.env["decimal.precision"].precision_get("Discount Policy")
+            seller_diff = float_compare(
+                given_seller or 0.0,
+                expected_seller or 0.0,
+                precision_digits=precision,
+            )
+            extra_diff = float_compare(
+                given_extra or 0.0,
+                expected_extra or 0.0,
+                precision_digits=precision,
+            )
+            if seller_diff != 0 or extra_diff != 0:
+                blocked |= record
+        if blocked:
+            raise ValidationError(
+                _(
+                    "Direct editing of seller/extra discount on lines "
+                    "covered by a locked condition is not allowed. "
+                    "Affected lines: %s",
+                    ", ".join(blocked.mapped("product_id.display_name")),
+                )
+            )
+
+    def _snapshot_locked_on_create(self):
+        """Populate locked_line_id, locked_fixed_commission_rate and
+        baseline discounts on any line whose product falls under an
+        active locked line.
+
+        Called right after super().create() so the snapshot exists
+        regardless of whether the create vals went through the
+        ``_apply_condition_to_line`` flow (which only runs in UI
+        onchange). Without this, RPC create with no seller/extra
+        discount would leave the snapshot empty and subsequent writes
+        would slip past ``_check_locked_line_edit``.
+        """
+        for line in self:
+            if line.locked_line_id:
+                continue
+            condition = line.order_id.commercial_condition_id
+            if not condition or not line.product_id:
+                continue
+            (
+                seller,
+                extra,
+                source,
+                locked_line,
+                fixed_rate,
+            ) = condition._resolve_with_locked(
+                line.product_id,
+                qty=line.product_uom_qty or 0.0,
+                uom=line.product_uom,
+            )
+            if source == "locked":
+                line.with_context(tr_skip_locked_protection=True).write(
+                    {
+                        "locked_line_id": locked_line.id,
+                        "locked_fixed_commission_rate": fixed_rate or 0.0,
+                        "locked_baseline_seller_discount": seller or 0.0,
+                        "locked_baseline_extra_discount": extra or 0.0,
+                    }
+                )
+
+    def _get_policy_commission_rate(self):
+        """Single source of truth for the line's commission under policy.
+
+        When the line is under a locked line, the snapshot Float
+        ``locked_fixed_commission_rate`` (stored at apply time) is the
+        commission. Otherwise, falls back to the existing band-based
+        resolution from the agent profile.
+        """
+        self.ensure_one()
+        if self.locked_line_id:
+            return self.locked_fixed_commission_rate or 0.0
+        return self._get_commission_rate_from_bands()
+
     def _recompute_price_unit_from_policy(self):
         """Recalculate price_unit based on policy values."""
         for line in self:
@@ -451,12 +646,12 @@ class SaleOrderLine(models.Model):
             return result
         profile = self.order_id.sales_profile_id
         if profile and profile.profile_type == "agent":
-            band_rate = self._get_commission_rate_from_bands()
-            if band_rate is not False:
+            rate = self._get_policy_commission_rate()
+            if rate is not False:
                 base_commission = agent.commission_id
                 if base_commission:
                     commission = self.env["commission"]._find_managed_commission(
-                        base_commission.invoice_state, band_rate
+                        base_commission.invoice_state, rate
                     )
                     if commission:
                         result["commission_id"] = commission.id
@@ -473,9 +668,32 @@ class SaleOrderLine(models.Model):
                 "base_price": self.base_price,
                 "reference_price": self.reference_price,
                 "commission_rate": self.commission_rate,
+                "locked_line_id": self.locked_line_id.id,
+                "locked_fixed_commission_rate": self.locked_fixed_commission_rate,
+                "locked_baseline_seller_discount": (
+                    self.locked_baseline_seller_discount
+                ),
+                "locked_baseline_extra_discount": (self.locked_baseline_extra_discount),
             }
         )
         return vals
+
+    def action_open_locked_line(self):
+        """Open the locked line linked to this sale line for inspection.
+
+        Director can edit; manager and rep land on readonly form (ACL).
+        """
+        self.ensure_one()
+        if not self.locked_line_id:
+            return False
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "partner.commercial.condition.locked.line",
+            "res_id": self.locked_line_id.id,
+            "view_mode": "form",
+            "target": "new",
+            "name": _("Locked Line"),
+        }
 
     def action_open_save_condition_line_wizard(self):
         """Open the wizard to save this line's discount to the customer condition."""
@@ -630,6 +848,25 @@ class SaleOrderLine(models.Model):
     # Qty-band re-application (condition.line.band)
     # ------------------------------------------------------------------
 
+    def _is_aligned_with_locked_snapshot(self):
+        """Check alignment against the BASELINE discounts snapshotted
+        on the record at apply time. Stable across edits of the
+        locked line itself: changes to the locked record after the
+        order is placed do not flip this flag — only the
+        manager/director overriding discounts on the line does.
+
+        Returns False when there is no locked snapshot — tier
+        validation for those cases runs through the normal path.
+        """
+        self.ensure_one()
+        if not self.locked_line_id:
+            return False
+        return (self.seller_discount or 0.0) == (
+            self.locked_baseline_seller_discount or 0.0
+        ) and (self.extra_discount or 0.0) == (
+            self.locked_baseline_extra_discount or 0.0
+        )
+
     def _is_aligned_with_condition_band(self):
         """Check if seller/extra match what the condition would produce
         for the line's CURRENT product/qty/uom.
@@ -654,19 +891,40 @@ class SaleOrderLine(models.Model):
         """Re-apply seller/extra from condition without override check.
 
         Caller is responsible for deciding whether re-application is
-        appropriate (e.g. user-was-aligned-pre-edit).
+        appropriate (e.g. user-was-aligned-pre-edit). Also refreshes the
+        locked snapshot (line may have moved into/out of locked scope
+        on qty/uom changes). Bypasses ``_check_locked_line_edit`` for the
+        legitimate programmatic write.
         """
         for line in self:
             condition = line.order_id.commercial_condition_id
             if not condition or not line.product_id:
                 continue
-            seller, extra, _src = condition._resolve_discount_for_product(
+            (
+                seller,
+                extra,
+                _src,
+                locked_line,
+                fixed_rate,
+            ) = condition._resolve_with_locked(
                 line.product_id,
                 qty=line.product_uom_qty,
                 uom=line.product_uom,
             )
-            line.seller_discount = seller
-            line.extra_discount = extra
+            line.with_context(tr_skip_locked_protection=True).write(
+                {
+                    "seller_discount": seller,
+                    "extra_discount": extra,
+                    "locked_line_id": locked_line.id if locked_line else False,
+                    "locked_fixed_commission_rate": fixed_rate or 0.0,
+                    "locked_baseline_seller_discount": (
+                        (seller or 0.0) if locked_line else 0.0
+                    ),
+                    "locked_baseline_extra_discount": (
+                        (extra or 0.0) if locked_line else 0.0
+                    ),
+                }
+            )
 
     @api.onchange("product_uom_qty", "product_uom")
     def _onchange_qty_uom_apply_band(self):

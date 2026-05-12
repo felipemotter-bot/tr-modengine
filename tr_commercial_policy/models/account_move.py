@@ -415,7 +415,10 @@ class AccountMove(models.Model):
         """Return the full pricing-chain values for one invoice line.
 
         Uses condition values directly (not self.tr_*) to avoid
-        stale header values when called before move.write().
+        stale header values when called before move.write(). Also
+        snapshots the locked line reference and fixed commission rate
+        so manual invoice lines respect locked decisions exactly like
+        sale-origin lines.
         """
         self.ensure_one()
         if not condition or not line.product_id:
@@ -424,7 +427,9 @@ class AccountMove(models.Model):
             seller_discount,
             extra_discount,
             _source,
-        ) = condition._resolve_discount_for_product(
+            locked_line,
+            fixed_rate,
+        ) = condition._resolve_with_locked(
             line.product_id,
             qty=line.quantity,
             uom=line.product_uom_id,
@@ -444,13 +449,16 @@ class AccountMove(models.Model):
             extra_discount,
         )
         discount = (condition.cash_discount or 0.0) + (condition.fob_discount or 0.0)
-        commission_rate = (
-            line._get_commission_rate_for_discount(
-                seller_discount,
-                profile=condition.applicable_profile_id,
+        if locked_line:
+            commission_rate = fixed_rate or 0.0
+        else:
+            commission_rate = (
+                line._get_commission_rate_for_discount(
+                    seller_discount,
+                    profile=condition.applicable_profile_id,
+                )
+                or 0.0
             )
-            or 0.0
-        )
         return {
             "seller_discount": seller_discount,
             "extra_discount": extra_discount,
@@ -460,10 +468,23 @@ class AccountMove(models.Model):
             "price_unit": price_unit,
             "discount": discount,
             "commission_rate": commission_rate,
+            "locked_line_id": locked_line.id if locked_line else False,
+            "locked_fixed_commission_rate": fixed_rate or 0.0,
+            "locked_baseline_seller_discount": (
+                (seller_discount or 0.0) if locked_line else 0.0
+            ),
+            "locked_baseline_extra_discount": (
+                (extra_discount or 0.0) if locked_line else 0.0
+            ),
         }
 
     def _prepare_clear_line_vals(self):
-        """Return values that clear manual policy state from a line."""
+        """Return values that clear manual policy state from a line.
+
+        Also clears the locked snapshot fields so a manual invoice
+        line that lost its condition does not keep behaving as if
+        it were under a (now stale) locked line.
+        """
         return {
             "seller_discount": 0.0,
             "extra_discount": 0.0,
@@ -473,6 +494,10 @@ class AccountMove(models.Model):
             "commission_rate": 0.0,
             "discount": 0.0,
             "price_unit": 0.0,
+            "locked_line_id": False,
+            "locked_fixed_commission_rate": 0.0,
+            "locked_baseline_seller_discount": 0.0,
+            "locked_baseline_extra_discount": 0.0,
         }
 
     def _clear_manual_invoice_policy_lines(self):  # pragma: no cover — NewId only
@@ -514,8 +539,8 @@ class AccountMove(models.Model):
             profile = self.sales_profile_id
             if not profile or profile.profile_type != "agent":
                 continue
-            band_rate = line._get_commission_rate_for_discount(line.seller_discount)
-            if band_rate is False:
+            rate = line._get_policy_commission_rate()
+            if rate is False:
                 continue
             for agent_line in line.agent_ids:
                 base_commission = agent_line.agent_id.commission_id
@@ -525,7 +550,7 @@ class AccountMove(models.Model):
                     continue  # pragma: no cover
                 commission = Commission._ensure_managed_commission(
                     base_commission.invoice_state,
-                    band_rate,
+                    rate,
                 )
                 if commission != agent_line.commission_id:
                     agent_line.commission_id = commission
@@ -1172,16 +1197,21 @@ class AccountMove(models.Model):
         return hard_block, own_rule
 
     def _is_commission_rate_coherent_with_line_seller(self, issue):
-        """Return True when the line's ``commission_rate`` matches the
-        band that ``_get_commission_rate_for_discount`` would compute
-        for the current ``seller_discount`` of that same line.
+        """Return True when the line's ``commission_rate`` matches what
+        the policy would produce for that line.
 
-        Used to distinguish "derived effect of seller edit" (route to
-        own_rule) from "tamper desconectado do flow" (keep hard block).
+        Uses ``_get_policy_commission_rate``: for lines under a locked
+        condition, the expected commission is the snapshot fixed rate
+        (``locked_fixed_commission_rate``); for regular lines, it
+        falls back to the band-based resolution from the agent
+        profile. Without going through the helper, an invoice line
+        with a manually edited commission would be incorrectly
+        classified as ``own_rule`` (derived) instead of hard-block
+        when divergent from the locked snapshot.
         """
         self.ensure_one()
         line = self.env["account.move.line"].browse(issue["line_id"])
-        expected = line._get_commission_rate_for_discount(line.seller_discount)
+        expected = line._get_policy_commission_rate()
         if expected is False:
             return False
         precision = self.env["decimal.precision"].precision_get("Discount Policy")
@@ -1365,6 +1395,12 @@ class AccountMove(models.Model):
         manager_limit = profile.manager_extra_limit or 0
         for inv_line in self._get_policy_invoice_lines():
             if not inv_line.extra_discount or inv_line.extra_discount <= 0:
+                continue
+            # Lines aligned with the snapshotted locked line skip tier
+            # validation — director decided. Override desaligns the
+            # line (snapshot-based check, stable across later edits of
+            # the locked line itself).
+            if inv_line._is_aligned_with_locked_snapshot():
                 continue
             level = get_extra_discount_approval_level(
                 inv_line.extra_discount, manager_limit
@@ -1654,7 +1690,11 @@ class AccountMove(models.Model):
                 }
             )
         AgentModel = self.env["account.invoice.line.agent"]
-        ctx = {"skip_invoice_sync": True, "check_move_validity": False}
+        ctx = {
+            "skip_invoice_sync": True,
+            "check_move_validity": False,
+            "tr_skip_locked_protection": True,
+        }
         for inv_line in self._get_sale_origin_lines():
             if len(inv_line.sale_line_ids) > 1:
                 raise UserError(
@@ -1693,6 +1733,16 @@ class AccountMove(models.Model):
                     "reference_price": sale_line.reference_price,
                     "commission_rate": sale_line.commission_rate,
                     "price_unit": resynced_price_unit,
+                    "locked_line_id": sale_line.locked_line_id.id or False,
+                    "locked_fixed_commission_rate": (
+                        sale_line.locked_fixed_commission_rate or 0.0
+                    ),
+                    "locked_baseline_seller_discount": (
+                        sale_line.locked_baseline_seller_discount or 0.0
+                    ),
+                    "locked_baseline_extra_discount": (
+                        sale_line.locked_baseline_extra_discount or 0.0
+                    ),
                 }
             )
 

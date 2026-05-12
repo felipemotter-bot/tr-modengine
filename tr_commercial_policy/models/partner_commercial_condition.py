@@ -32,6 +32,11 @@ _BAND_TRACKED_FIELDS = (
     "seller_discount",
     "extra_discount",
 )
+_LOCKED_LINE_TRACKED_FIELDS = _LINE_TRACKED_FIELDS + (
+    "fixed_commission_rate",
+    "active",
+)
+_LOCKED_BAND_TRACKED_FIELDS = _BAND_TRACKED_FIELDS
 
 
 def _field_label(record, fname):
@@ -214,17 +219,40 @@ class PartnerCommercialCondition(models.Model):
         inverse_name="condition_id",
         string="Product Lines",
     )
+    locked_line_ids = fields.One2many(
+        comodel_name="partner.commercial.condition.locked.line",
+        inverse_name="condition_id",
+        string="Locked Lines",
+        help="Lines where the discount and commission are decided by the "
+        "sales director — not editable by the sales rep. Used when a "
+        "product has no commission incentive for the rep (zero commission "
+        "or fixed rate), so the director sets the discount level "
+        "directly.",
+    )
     has_any_band = fields.Boolean(
         compute="_compute_has_any_band",
         help="True when at least one line has qty bands defined. Used "
         "by the lines tree to hide the Bands column when no line uses "
         "the feature.",
     )
+    has_locked_lines = fields.Boolean(
+        compute="_compute_has_locked_lines",
+        help="True when at least one active locked line exists on the "
+        "condition. Used by views to show the locked lines tab and by "
+        "callers that need to know whether locked rules are in play.",
+    )
 
     @api.depends("line_ids.band_ids")
     def _compute_has_any_band(self):
         for condition in self:
             condition.has_any_band = any(line.band_ids for line in condition.line_ids)
+
+    @api.depends("locked_line_ids", "locked_line_ids.active")
+    def _compute_has_locked_lines(self):
+        for condition in self:
+            condition.has_locked_lines = any(
+                line.active for line in condition.locked_line_ids
+            )
 
     company_id = fields.Many2one(
         comodel_name="res.company",
@@ -597,39 +625,87 @@ class PartnerCommercialCondition(models.Model):
         return result
 
     def _resolve_discount_for_product(self, product, qty=0.0, uom=None):
-        """Resolve discount for a product: variant > template > general.
+        """Resolve discount for a product: locked > variant > template > general.
 
         Pure resolution — no side effects on any record.
-        Returns (seller_discount, extra_discount, source_level).
+        Returns (seller_discount, extra_discount, source_level), where
+        source_level is one of ``'locked'``, ``'variant'``, ``'template'``
+        or ``'general'``.
 
-        ``qty`` is the quantity of the order/invoice line (NOT the
-        order total). ``uom`` is the line's UoM; defaults to
-        ``product.uom_id`` when omitted.
+        Active locked lines always win when they cover the product
+        (archived locked lines are ignored). Hierarchy within each set
+        is variant → template.
 
-        Each line's effective discount is selected from its
-        ``band_ids`` based on ``qty`` (highest ``qty_min`` ≤ qty
-        wins, after UoM normalization). When no band fits or
-        ``band_ids`` is empty, the line's direct
-        ``seller_discount``/``extra_discount`` fields are used as
-        the implicit qty_min=0 band.
+        ``qty`` is the line quantity. ``uom`` is the line's UoM; defaults
+        to ``product.uom_id`` when omitted. Bands inside the resolved
+        record pick discount by qty.
+        """
+        seller, extra, source, _locked, _rate = self._resolve_with_locked(
+            product, qty=qty, uom=uom
+        )
+        return (seller, extra, source)
+
+    def _resolve_with_locked(self, product, qty=0.0, uom=None):
+        """Resolve discount AND locked snapshot data for a product.
+
+        Extended variant of ``_resolve_discount_for_product`` that also
+        returns the locked line record (when source == 'locked') and
+        the fixed commission rate to snapshot on the order/invoice
+        line.
+
+        Returns ``(seller, extra, source, locked_line, fixed_commission_rate)``:
+          - ``locked_line`` is an empty recordset when source != 'locked'.
+          - ``fixed_commission_rate`` is 0.0 when source != 'locked'.
         """
         self.ensure_one()
+        Locked = self.env["partner.commercial.condition.locked.line"]
+        if not product:
+            return (self.seller_discount or 0.0, 0.0, "general", Locked.browse(), 0.0)
         line_uom = uom or product.uom_id
-        # 1. Variant-specific line
+        # 1. Active locked lines win when applicable.
+        active_locked = self.locked_line_ids.filtered("active")
+        variant_locked = active_locked.filtered(
+            lambda k: k.applied_on == "product" and k.product_id == product
+        )
+        if variant_locked:
+            chosen = variant_locked[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (
+                seller,
+                extra,
+                "locked",
+                chosen,
+                chosen.fixed_commission_rate or 0.0,
+            )
+        tmpl_locked = active_locked.filtered(
+            lambda k: k.applied_on == "product_template"
+            and k.product_tmpl_id == product.product_tmpl_id
+        )
+        if tmpl_locked:
+            chosen = tmpl_locked[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (
+                seller,
+                extra,
+                "locked",
+                chosen,
+                chosen.fixed_commission_rate or 0.0,
+            )
+        # 2. Variant-specific regular line
         variant_line = self.line_ids.filtered(lambda cline: cline.product_id == product)
         if variant_line:
             seller, extra = variant_line[0]._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "variant")
-        # 2. Template-specific line
+            return (seller, extra, "variant", Locked.browse(), 0.0)
+        # 3. Template-specific regular line
         tmpl_line = self.line_ids.filtered(
             lambda cline: cline.product_tmpl_id == product.product_tmpl_id
             and cline.applied_on == "product_template"
         )
         if tmpl_line:
             seller, extra = tmpl_line[0]._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "template")
-        # 3. General
-        return (self.seller_discount or 0.0, 0.0, "general")
+            return (seller, extra, "template", Locked.browse(), 0.0)
+        # 4. General
+        return (self.seller_discount or 0.0, 0.0, "general", Locked.browse(), 0.0)
 
     def _sync_to_partners(self):
         """Sync condition fields to all partners using this condition.
@@ -1172,6 +1248,36 @@ class PartnerCommercialConditionLine(models.Model):
                         % {"product": line.product_tmpl_id.display_name}
                     )
 
+    @api.constrains(
+        "condition_id",
+        "applied_on",
+        "product_id",
+        "product_tmpl_id",
+    )
+    def _check_no_covering_locked_line(self):
+        """No regular line can exist within the scope of an active locked
+        line on the same condition. Mirrors the locked-side constraint
+        in ``PartnerCommercialConditionLockedLine``.
+        """
+        from .policy_utils import locked_covers_line
+
+        for regular in self:
+            active_locked = regular.condition_id.locked_line_ids.filtered("active")
+            conflicting = active_locked.filtered(
+                lambda k, line=regular: locked_covers_line(k, line)
+            )
+            if conflicting:
+                labels = ", ".join(k._line_chatter_label() for k in conflicting)
+                raise ValidationError(
+                    _(
+                        "Cannot save this regular line — it falls within "
+                        "the scope of an active locked line (%(labels)s). "
+                        "Remove the locked line first, or contact the "
+                        "sales director.",
+                        labels=labels,
+                    )
+                )
+
 
 class PartnerCommercialConditionLineBand(models.Model):
     """Quantity tier on a commercial condition line.
@@ -1500,3 +1606,549 @@ class PartnerCommercialConditionLineBand(models.Model):
             categ = categ.parent_id
         general_rules = rules.filtered(lambda r: r.applied_on == "general")
         return _pick_best(general_rules)
+
+
+class PartnerCommercialConditionLockedLine(models.Model):
+    """Director-defined line on a commercial condition.
+
+    Mirrors ``partner.commercial.condition.line`` but with two
+    differences:
+
+    - Adds ``fixed_commission_rate`` — substitutes the agent profile
+      commission bands when an order/invoice line resolves to this
+      locked line. Typical value is 0% (rep has no incentive on the
+      item, so the director defines the discount).
+    - ACL restricts write/create/unlink to ``group_sales_director``;
+      manager and rep have read only.
+
+    Coexistence with ``partner.commercial.condition.line`` is mutually
+    exclusive within the locked line's scope — enforced by
+    ``@api.constrains`` using ``locked_covers_line`` from
+    ``policy_utils``.
+    """
+
+    _name = "partner.commercial.condition.locked.line"
+    _description = "Partner Commercial Condition Locked Line"
+
+    condition_id = fields.Many2one(
+        comodel_name="partner.commercial.condition",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    active = fields.Boolean(
+        default=True,
+        help="Archive (uncheck) to stop applying this locked line on "
+        "new orders/invoices while preserving the snapshot reference "
+        "on existing records. Unlink only works for locked lines that "
+        "have never been used (no order/invoice line points to them).",
+    )
+    applied_on = fields.Selection(
+        selection=[
+            ("product_template", "Product Template"),
+            ("product", "Product Variant"),
+        ],
+        required=True,
+        default="product_template",
+    )
+    product_tmpl_id = fields.Many2one(
+        comodel_name="product.template",
+        string="Product Template",
+        domain="[('sale_ok', '=', True)]",
+    )
+    product_id = fields.Many2one(
+        comodel_name="product.product",
+        string="Product Variant",
+        domain="[('sale_ok', '=', True)]",
+    )
+    seller_discount = fields.Float(string="Seller Discount (%)")
+    extra_discount = fields.Float(string="Extra Discount (%)")
+    fixed_commission_rate = fields.Float(
+        string="Fixed Commission Rate (%)",
+        required=True,
+        default=0.0,
+        help="Commission rate paid to the agent for order/invoice "
+        "lines that resolve to this locked line. Replaces the band "
+        "resolution from the agent profile. Typical value is 0% "
+        "(item has no commission incentive for the rep, so the "
+        "director defines the discount level).",
+    )
+    band_ids = fields.One2many(
+        comodel_name="partner.commercial.condition.locked.line.band",
+        inverse_name="line_id",
+        string="Quantity Bands",
+        help="Additional discount tiers that activate when the order/"
+        "invoice line quantity reaches a threshold. Same semantics as "
+        "regular condition line bands.",
+    )
+    bands_summary = fields.Text(
+        string="Bands",
+        compute="_compute_bands_summary",
+        help="Human-readable summary of the locked line's qty bands.",
+    )
+
+    @api.depends(
+        "band_ids",
+        "band_ids.qty_min",
+        "band_ids.qty_uom_id",
+        "band_ids.seller_discount",
+        "band_ids.extra_discount",
+    )
+    def _compute_bands_summary(self):
+        def fmt(val):
+            return formatLang(self.env, val, digits=2)
+
+        seller_extra_tpl = _("≥%(qty)s %(uom)s → Sell %(sell)s%% / Extra %(ext)s%%")
+        seller_only_tpl = _("≥%(qty)s %(uom)s → %(sell)s%%")
+        for line in self:
+            if not line.band_ids:
+                line.bands_summary = False
+                continue
+            parts = []
+            for band in line.band_ids.sorted("qty_min"):
+                seller = band.seller_discount or 0.0
+                extra = band.extra_discount or 0.0
+                uom_name = band.qty_uom_id.name or ""
+                if extra:
+                    parts.append(
+                        seller_extra_tpl
+                        % {
+                            "qty": fmt(band.qty_min),
+                            "uom": uom_name,
+                            "sell": fmt(seller),
+                            "ext": fmt(extra),
+                        }
+                    )
+                else:
+                    parts.append(
+                        seller_only_tpl
+                        % {
+                            "qty": fmt(band.qty_min),
+                            "uom": uom_name,
+                            "sell": fmt(seller),
+                        }
+                    )
+            line.bands_summary = "\n".join(parts)
+
+    @api.constrains("seller_discount", "extra_discount")
+    def _check_seller_discount_markup(self):
+        for line in self:
+            validate_seller_markup(self.env, line.seller_discount)
+            if (line.seller_discount or 0) < 0 and (line.extra_discount or 0) > 0:
+                raise ValidationError(
+                    _("Extra discount cannot be combined with a seller markup.")
+                )
+
+    @api.constrains("fixed_commission_rate")
+    def _check_fixed_commission_rate_non_negative(self):
+        for line in self:
+            if (line.fixed_commission_rate or 0.0) < 0:
+                raise ValidationError(
+                    _(
+                        "Fixed commission rate cannot be negative " "(got %.2f%%).",
+                        line.fixed_commission_rate,
+                    )
+                )
+
+    @api.constrains("applied_on", "product_id", "product_tmpl_id")
+    def _check_applied_on_product(self):
+        for line in self:
+            if line.applied_on == "product_template" and line.product_id:
+                raise ValidationError(
+                    _(
+                        "Locked line applied on 'Product Template' must "
+                        "not have a product variant set."
+                    )
+                )
+            if line.applied_on == "product" and line.product_tmpl_id:
+                raise ValidationError(
+                    _(
+                        "Locked line applied on 'Product Variant' must "
+                        "not have a product template set."
+                    )
+                )
+
+    @api.constrains(
+        "product_id", "product_tmpl_id", "condition_id", "applied_on", "active"
+    )
+    def _check_unique_scope_per_condition(self):
+        """Two ACTIVE locked lines with the same scope on the same
+        condition would be ambiguous — reject duplicates. Archived
+        locked lines are excluded so reactivating one with a conflict
+        triggers this check.
+        """
+        for line in self:
+            if not line.active:
+                continue
+            domain = [
+                ("condition_id", "=", line.condition_id.id),
+                ("id", "!=", line.id),
+                ("active", "=", True),
+            ]
+            if line.product_id:
+                domain.append(("product_id", "=", line.product_id.id))
+                if self.search_count(domain):
+                    raise ValidationError(
+                        _(
+                            "A locked line for product variant"
+                            " '%(product)s' already exists"
+                            " in this condition.",
+                            product=line.product_id.display_name,
+                        )
+                    )
+            elif line.product_tmpl_id:
+                domain.append(("product_tmpl_id", "=", line.product_tmpl_id.id))
+                domain.append(("product_id", "=", False))
+                if self.search_count(domain):
+                    raise ValidationError(
+                        _(
+                            "A locked line for product template"
+                            " '%(product)s' already exists"
+                            " in this condition.",
+                            product=line.product_tmpl_id.display_name,
+                        )
+                    )
+
+    @api.constrains(
+        "condition_id",
+        "applied_on",
+        "product_id",
+        "product_tmpl_id",
+        "active",
+    )
+    def _check_no_conflicting_regular_line(self):
+        """No regular line in the same condition can be within an
+        ACTIVE locked line's scope.
+
+        Helper ``locked_covers_line`` from policy_utils evaluates
+        whether the locked line K would apply to any product the
+        regular line L applies to. Archived locked lines are
+        excluded — they no longer apply, so coexistence is allowed.
+        Reactivating an archived locked re-triggers this check thanks
+        to ``active`` in the decorator.
+        """
+        from .policy_utils import locked_covers_line
+
+        for locked in self:
+            if not locked.active:
+                continue
+            conflicting = locked.condition_id.line_ids.filtered(
+                lambda regular, k=locked: locked_covers_line(k, regular)
+            )
+            if conflicting:
+                labels = ", ".join(
+                    regular._line_chatter_label() for regular in conflicting
+                )
+                raise ValidationError(
+                    _(
+                        "Cannot save this locked line — there are regular "
+                        "condition lines covered by its scope (%(labels)s). "
+                        "Remove the conflicting regular lines first.",
+                        labels=labels,
+                    )
+                )
+
+    def _get_band_reference_uom(self):
+        """UoM used to normalize bands for comparison. Same semantics as
+        the regular condition line."""
+        self.ensure_one()
+        if self.product_id:
+            return self.product_id.uom_id
+        if self.product_tmpl_id:
+            return self.product_tmpl_id.uom_id
+        return False
+
+    def _resolve_discount_for_qty(self, qty, line_uom):
+        """Return ``(seller, extra)`` for ``qty`` in ``line_uom``.
+
+        Same logic as ``partner.commercial.condition.line._resolve_discount_for_qty``.
+        Picks the highest qty_min band ≤ qty after UoM normalization; falls
+        back to the line's direct seller/extra discount when no band fits.
+        """
+        self.ensure_one()
+        if not self.band_ids:
+            return (self.seller_discount or 0.0, self.extra_discount or 0.0)
+        candidates = []
+        for band in self.band_ids:
+            normalized = band._normalize_qty_min(line_uom)
+            if normalized is None:
+                continue
+            if (qty or 0.0) + 1e-9 >= normalized:
+                candidates.append((normalized, band))
+        if not candidates:
+            return (self.seller_discount or 0.0, self.extra_discount or 0.0)
+        candidates.sort(key=lambda nb: nb[0])
+        winning = candidates[-1][1]
+        return (winning.seller_discount or 0.0, winning.extra_discount or 0.0)
+
+    @api.onchange("applied_on")
+    def _onchange_applied_on(self):
+        if self.applied_on == "product_template":
+            self.product_id = False
+        if self.applied_on == "product":
+            self.product_tmpl_id = False
+
+    def _line_chatter_label(self):
+        self.ensure_one()
+        if self.applied_on == "product" and self.product_id:
+            return self.product_id.display_name
+        if self.product_tmpl_id:
+            return self.product_tmpl_id.display_name
+        return _("(no product)")
+
+    def _post_chatter(self, header, body_extra=""):
+        self.ensure_one()
+        if _chatter_suppressed(self.env):
+            return
+        self.condition_id._message_log(
+            body="<p>%s</p>%s" % (html_escape(header), body_extra)
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for line in records:
+            values = [
+                (_field_label(line, f), _format_tracked_value(line, f, line[f]))
+                for f in _LOCKED_LINE_TRACKED_FIELDS
+                if line[f]
+            ]
+            line._post_chatter(
+                _("Locked line added: %s", line._line_chatter_label()),
+                _render_values_html(line, values),
+            )
+        return records
+
+    def write(self, vals):
+        tracked = [f for f in _LOCKED_LINE_TRACKED_FIELDS if f in vals]
+        old_data = {line.id: {f: line[f] for f in tracked} for line in self}
+        res = super().write(vals)
+        for line in self:
+            changes = []
+            for f in tracked:
+                old = old_data[line.id][f]
+                new = line[f]
+                if line._fields[f].type == "many2one":
+                    if old.id == new.id:
+                        continue
+                elif old == new:
+                    continue
+                changes.append(
+                    (
+                        _field_label(line, f),
+                        _format_tracked_value(line, f, old),
+                        _format_tracked_value(line, f, new),
+                    )
+                )
+            if changes:
+                line._post_chatter(
+                    _("Locked line updated: %s", line._line_chatter_label()),
+                    _render_changes_html(line, changes),
+                )
+        return res
+
+    def unlink(self):
+        suppressed = _chatter_suppressed(self.env)
+        snapshots = (
+            []
+            if suppressed
+            else [(line.condition_id, line._line_chatter_label()) for line in self]
+        )
+        res = super().unlink()
+        for condition, label in snapshots:
+            condition._message_log(
+                body="<p>%s</p>" % html_escape(_("Locked line removed: %s", label))
+            )
+        return res
+
+
+class PartnerCommercialConditionLockedLineBand(models.Model):
+    """Quantity tier on a director-defined locked line.
+
+    Mirrors ``partner.commercial.condition.line.band``. Bands extend the
+    locked line's direct ``seller_discount``/``extra_discount`` (which
+    act as the implicit qty_min=0 band). The locked line's
+    ``fixed_commission_rate`` is single per locked line — bands do not
+    vary commission.
+    """
+
+    _name = "partner.commercial.condition.locked.line.band"
+    _description = "Partner Commercial Condition Locked Line Band"
+    _order = "line_id, qty_min"
+
+    line_id = fields.Many2one(
+        comodel_name="partner.commercial.condition.locked.line",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+    qty_min = fields.Float(
+        string="Min Qty",
+        required=True,
+        help="Minimum line quantity (in ``Qty UoM``) to activate this "
+        "band. Must be greater than zero — qty_min=0 is the locked "
+        "line's direct discount fields.",
+    )
+    qty_uom_id = fields.Many2one(
+        comodel_name="uom.uom",
+        string="Qty UoM",
+        required=True,
+        default=lambda self: self._default_qty_uom_id(),
+        help="Unit of measure of ``Min Qty``. Same UoM category as " "the product.",
+    )
+    seller_discount = fields.Float(string="Seller Discount (%)")
+    extra_discount = fields.Float(string="Extra Discount (%)")
+
+    @api.model
+    def _default_qty_uom_id(self):
+        line = self.env["partner.commercial.condition.locked.line"].browse(
+            self.env.context.get("default_line_id")
+        )
+        ref = line._get_band_reference_uom() if line else False
+        return ref.id if ref else False
+
+    @api.onchange("qty_min", "line_id")
+    def _onchange_qty_min_default_uom(self):
+        for band in self:
+            if band.qty_uom_id:
+                continue
+            band.qty_uom_id = band.line_id._get_band_reference_uom()
+
+    @api.constrains("qty_min")
+    def _check_qty_min_positive(self):
+        for band in self:
+            if (band.qty_min or 0.0) <= 0:
+                raise ValidationError(
+                    _(
+                        "Locked band quantity threshold must be greater "
+                        "than zero. Use the locked line's Seller/Extra "
+                        "Discount fields for the qty_min=0 base discount."
+                    )
+                )
+
+    @api.constrains("qty_uom_id", "line_id")
+    def _check_qty_uom_category(self):
+        for band in self:
+            ref_uom = band.line_id._get_band_reference_uom()
+            if ref_uom.category_id != band.qty_uom_id.category_id:
+                raise ValidationError(
+                    _(
+                        "Locked band UoM (%(band_uom)s) must be in the "
+                        "same category as the product's UoM (%(prod_uom)s).",
+                        band_uom=band.qty_uom_id.name,
+                        prod_uom=ref_uom.name,
+                    )
+                )
+
+    @api.constrains("seller_discount", "extra_discount")
+    def _check_seller_discount_markup(self):
+        for band in self:
+            validate_seller_markup(self.env, band.seller_discount)
+            if (band.seller_discount or 0) < 0 and (band.extra_discount or 0) > 0:
+                raise ValidationError(
+                    _("Extra discount cannot be combined with a seller markup.")
+                )
+
+    @api.constrains("qty_min", "qty_uom_id", "line_id")
+    def _check_qty_min_unique_on_line(self):
+        dup_msg = _(
+            "Two locked bands resolve to the same threshold (%(qty).2f "
+            "%(uom)s). Bands must define distinct quantity thresholds."
+        )
+        for band in self:
+            ref_uom = band.line_id._get_band_reference_uom()
+            this_normalized = band._normalize_qty_min(ref_uom)
+            for other in band.line_id.band_ids - band:
+                other_normalized = other._normalize_qty_min(ref_uom)
+                if abs(other_normalized - this_normalized) < 1e-6:
+                    raise ValidationError(
+                        dup_msg % {"qty": this_normalized, "uom": ref_uom.name}
+                    )
+
+    def _normalize_qty_min(self, target_uom):
+        self.ensure_one()
+        if not self.qty_uom_id or not target_uom:
+            return None
+        if self.qty_uom_id == target_uom:
+            return self.qty_min or 0.0
+        if self.qty_uom_id.category_id != target_uom.category_id:
+            return None
+        return self.qty_uom_id._compute_quantity(
+            self.qty_min or 0.0, target_uom, round=False
+        )
+
+    def _band_chatter_label(self):
+        self.ensure_one()
+        return _(
+            "≥%(qty)s %(uom)s on locked %(line)s",
+            qty=formatLang(self.env, self.qty_min or 0.0, digits=2),
+            uom=self.qty_uom_id.name or "",
+            line=self.line_id._line_chatter_label() if self.line_id else "",
+        )
+
+    def _post_chatter(self, header, body_extra=""):
+        self.ensure_one()
+        if _chatter_suppressed(self.env):
+            return
+        self.line_id.condition_id._message_log(
+            body="<p>%s</p>%s" % (html_escape(header), body_extra)
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        bands = super().create(vals_list)
+        for band in bands:
+            values = [
+                (_field_label(band, f), _format_tracked_value(band, f, band[f]))
+                for f in _LOCKED_BAND_TRACKED_FIELDS
+                if band[f]
+            ]
+            band._post_chatter(
+                _("Locked band added: %s", band._band_chatter_label()),
+                _render_values_html(band, values),
+            )
+        return bands
+
+    def write(self, vals):
+        tracked = [f for f in _LOCKED_BAND_TRACKED_FIELDS if f in vals]
+        old_data = {band.id: {f: band[f] for f in tracked} for band in self}
+        res = super().write(vals)
+        for band in self:
+            changes = []
+            for f in tracked:
+                old = old_data[band.id][f]
+                new = band[f]
+                if band._fields[f].type == "many2one":
+                    if old.id == new.id:
+                        continue
+                elif old == new:
+                    continue
+                changes.append(
+                    (
+                        _field_label(band, f),
+                        _format_tracked_value(band, f, old),
+                        _format_tracked_value(band, f, new),
+                    )
+                )
+            if changes:
+                band._post_chatter(
+                    _("Locked band updated: %s", band._band_chatter_label()),
+                    _render_changes_html(band, changes),
+                )
+        return res
+
+    def unlink(self):
+        suppressed = _chatter_suppressed(self.env)
+        snapshots = (
+            []
+            if suppressed
+            else [
+                (band.line_id.condition_id, band._band_chatter_label()) for band in self
+            ]
+        )
+        res = super().unlink()
+        for condition, label in snapshots:
+            condition._message_log(
+                body="<p>%s</p>" % html_escape(_("Locked band removed: %s", label))
+            )
+        return res

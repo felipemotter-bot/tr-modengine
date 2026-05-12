@@ -167,17 +167,34 @@
         expr="//field[@name='invoice_line_ids']/tree//field[@name='price_unit']"
         position="before"
       >
+                <field name="locked_line_id" invisible="1" />
+                <field
+          name="seller_discount"
+          string="Seller Disc. (%)"
+          optional="hide"
+          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])], 'readonly': [('locked_line_id', '!=', False)]}"
+          groups="!tr_commercial_policy.group_sales_manager"
+        />
                 <field
           name="seller_discount"
           string="Seller Disc. (%)"
           optional="hide"
           attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])]}"
+          groups="tr_commercial_policy.group_sales_manager"
+        />
+                <field
+          name="extra_discount"
+          string="Extra Disc. (%)"
+          optional="hide"
+          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])], 'readonly': [('locked_line_id', '!=', False)]}"
+          groups="!tr_commercial_policy.group_sales_manager"
         />
                 <field
           name="extra_discount"
           string="Extra Disc. (%)"
           optional="hide"
           attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])]}"
+          groups="tr_commercial_policy.group_sales_manager"
         />
                 <field
           name="reference_price"
@@ -296,6 +313,7 @@
 
                 <!-- Seller discount + extra discount popover button -->
                 <field name="extra_discount_reason" invisible="1" />
+                <field name="locked_line_id" invisible="1" />
                 <label
           for="seller_discount"
           string="Seller Discount"
@@ -320,6 +338,14 @@
             name="seller_discount"
             class="oe_inline"
             style="max-width: 60px;"
+            attrs="{'readonly': [('locked_line_id', '!=', False)]}"
+            groups="!tr_commercial_policy.group_sales_manager"
+          /> %
+                    <field
+            name="seller_discount"
+            class="oe_inline"
+            style="max-width: 60px;"
+            groups="tr_commercial_policy.group_sales_manager"
           /> %
                     <span
             class="text-muted"
@@ -335,7 +361,14 @@
                         <field
               name="extra_discount"
               widget="extra_discount_popover"
+              attrs="{'invisible': ['|', '|', ('parent.state', '!=', 'draft'), ('seller_discount', '&lt;', 0), ('locked_line_id', '!=', False)]}"
+              groups="!tr_commercial_policy.group_sales_manager"
+            />
+                        <field
+              name="extra_discount"
+              widget="extra_discount_popover"
               attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('seller_discount', '&lt;', 0)]}"
+              groups="tr_commercial_policy.group_sales_manager"
             />
                     </span>
                 </div>

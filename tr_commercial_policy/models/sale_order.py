@@ -240,7 +240,7 @@ class SaleOrder(models.Model):
                 )
                 if not has_unmanaged:
                     continue
-                if line._get_commission_rate_from_bands() is False:
+                if line._get_policy_commission_rate() is False:
                     outside_bands.append(line.product_id.display_name)
                 else:
                     recalculable.append(line.product_id.display_name)
@@ -592,18 +592,31 @@ class SaleOrder(models.Model):
     def _apply_condition_to_line(self, line, condition):
         """Apply commercial condition discounts to a sale order line.
 
-        Passes line qty/uom so condition.line.band_ids are resolved
-        against the actual line quantity (qty_min thresholds honored).
+        Resolves through ``_resolve_with_locked`` so locked lines win
+        when applicable. Populates the snapshot fields
+        ``locked_line_id`` and ``locked_fixed_commission_rate`` on the
+        order line for later use by the commission helper and the
+        discount edit guard. The discount write is wrapped in
+        ``tr_skip_locked_protection`` so the guard does not block the
+        legitimate programmatic update.
         """
         if not condition or not line.product_id:
             return
-        seller, extra, _level = condition._resolve_discount_for_product(
+        seller, extra, _level, locked_line, fixed_rate = condition._resolve_with_locked(
             line.product_id,
             qty=line.product_uom_qty,
             uom=line.product_uom,
         )
-        line.seller_discount = seller
-        line.extra_discount = extra
+        line.with_context(tr_skip_locked_protection=True).write(
+            {
+                "seller_discount": seller,
+                "extra_discount": extra,
+                "locked_line_id": locked_line.id if locked_line else False,
+                "locked_fixed_commission_rate": fixed_rate or 0.0,
+                "locked_baseline_seller_discount": (seller if locked_line else 0.0),
+                "locked_baseline_extra_discount": (extra if locked_line else 0.0),
+            }
+        )
         line.discount_fixed = True
 
     @api.depends(
@@ -705,11 +718,19 @@ class SaleOrder(models.Model):
                     "line_id": False,
                 }
             )
-        # Extra discount on lines
+        # Extra discount on lines.
+        # Lines aligned with the snapshotted locked line skip tier
+        # validation — the director already decided the discount.
+        # Override desaligns the line (different from snapshot's
+        # current value) and tier check applies again. Snapshot-based
+        # comparison stays stable across later edits of the locked
+        # line itself.
         manager_limit = profile.manager_extra_limit or 0
         for line in self.order_line.filtered(
             lambda sol: (sol.extra_discount or 0) > 0 and sol.product_id
         ):
+            if line._is_aligned_with_locked_snapshot():
+                continue
             level = get_extra_discount_approval_level(
                 line.extra_discount, manager_limit
             )
@@ -745,12 +766,17 @@ class SaleOrder(models.Model):
                         "line_id": line.id,
                     }
                 )
-        # Internal band violation
+        # Internal band violation.
+        # Lines aligned with the snapshotted locked line also skip —
+        # director decided the discount level, the order-amount band
+        # check no longer applies.
         if profile.profile_type == "internal":
             order_amount = self.amount_untaxed or 0.0
             for line in self.order_line.filtered(
                 lambda sol: sol.seller_discount > 0 and sol.product_id
             ):
+                if line._is_aligned_with_locked_snapshot():
+                    continue
                 rule = line._get_applicable_rule()
                 if not rule or not rule.order_value_band_ids:
                     continue
@@ -968,8 +994,8 @@ class SaleOrder(models.Model):
         precision = self.env["decimal.precision"].precision_get("Discount Policy")
         stale_lines = []
         for line in self.order_line.filtered(lambda sol: sol.product_id):
-            band_rate = line._get_commission_rate_from_bands()
-            if band_rate is False:
+            expected_rate = line._get_policy_commission_rate()
+            if expected_rate is False:
                 continue
             for agent_line in line.agent_ids:
                 commission = agent_line.commission_id
@@ -994,7 +1020,7 @@ class SaleOrder(models.Model):
                 if (
                     float_compare(
                         commission.tr_rate,
-                        band_rate,
+                        expected_rate,
                         precision_digits=precision,
                     )
                     != 0

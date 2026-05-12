@@ -3,6 +3,7 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 from .policy_utils import (
     calc_price_unit,
@@ -64,6 +65,39 @@ class AccountMoveLine(models.Model):
     )
     commission_rate = fields.Float(
         string="Commission (%)",
+    )
+    locked_line_id = fields.Many2one(
+        comodel_name="partner.commercial.condition.locked.line",
+        string="Locked Line",
+        readonly=True,
+        index=True,
+        ondelete="restrict",
+        help="Director-defined locked line that resolved for this product. "
+        "Propagated from the sale order line (when from sale) or filled "
+        "at apply time (manual invoice). Same semantics as on the sale "
+        "order line: rep cannot edit discounts; manager/director can "
+        "override pontually.",
+    )
+    locked_fixed_commission_rate = fields.Float(
+        string="Locked Fixed Commission (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the locked line's fixed_commission_rate at the "
+        "moment the condition was applied / propagated from sale order.",
+    )
+    locked_baseline_seller_discount = fields.Float(
+        string="Locked Baseline Seller Discount (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the seller discount produced by the locked "
+        "line at apply / propagation time.",
+    )
+    locked_baseline_extra_discount = fields.Float(
+        string="Locked Baseline Extra Discount (%)",
+        readonly=True,
+        digits="Discount Policy",
+        help="Snapshot of the extra discount produced by the locked "
+        "line at apply / propagation time.",
     )
     # Line-level mirrors of the invoice header's contractual return fields
     # so the line form can show a "Retorno Contratual" block matching the
@@ -339,7 +373,7 @@ class AccountMoveLine(models.Model):
                 line.seller_discount,
                 line.extra_discount,
             )
-            rate = line._get_commission_rate_for_discount(line.seller_discount)
+            rate = line._get_policy_commission_rate()
             line.commission_rate = rate if rate is not False else 0.0
 
     # --- Constraints ---
@@ -351,12 +385,14 @@ class AccountMoveLine(models.Model):
     def _validate_seller_discount_limit(self):
         """Check seller discount against the absolute max for each line.
 
-        Uses _get_seller_discount_absolute_max (highest band limit).
-        Band-contextual checks are handled by tier validation.
-        Also enforces the global markup limit for negative discounts.
+        Global markup is always enforced. Comparison against the
+        profile's seller_discount_max is skipped when the line is under
+        a locked line (director's decision).
         """
         for line in self:
             validate_seller_markup(self.env, line.seller_discount)
+            if line.locked_line_id:
+                continue
             if not line.move_id.sales_profile_id:
                 continue
             max_disc = line._get_seller_discount_absolute_max()
@@ -512,8 +548,153 @@ class AccountMoveLine(models.Model):
             action["flags"] = {"mode": "readonly"}
         return action
 
+    def _check_locked_line_edit(self, vals):
+        """Block writes to seller/extra discount on lines under locked.
+
+        Same semantics as ``sale.order.line._check_locked_line_edit``:
+        rep blocked, manager/director allowed, system + bypass context
+        allowed.
+        """
+        protected = {"seller_discount", "extra_discount"}
+        if not protected.intersection(vals):
+            return
+        if self.env.context.get("tr_skip_locked_protection"):
+            return
+        if self.env.user.has_group("base.group_system"):
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_manager"):
+            return
+        locked_lines = self.filtered("locked_line_id")
+        if not locked_lines:
+            return
+        raise ValidationError(
+            _(
+                "Direct editing of seller/extra discount is not allowed "
+                "on invoice lines under a locked condition. Affected "
+                "lines: %s",
+                ", ".join(locked_lines.mapped("product_id.display_name")),
+            )
+        )
+
+    def _get_policy_commission_rate(self):
+        """Single source of truth for commission on the invoice line.
+
+        Mirrors ``sale.order.line._get_policy_commission_rate``: locked
+        snapshot Float when present; otherwise band-resolved rate from
+        the profile.
+        """
+        self.ensure_one()
+        if self.locked_line_id:
+            return self.locked_fixed_commission_rate or 0.0
+        return self._get_commission_rate_for_discount(self.seller_discount)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines._snapshot_locked_on_create()
+        lines._check_locked_line_create(vals_list)
+        return lines
+
+    def _snapshot_locked_on_create(self):
+        """Populate locked_line_id / locked_fixed_commission_rate on any
+        invoice line whose product falls under an active locked line.
+
+        Same purpose as the equivalent helper on sale.order.line: keep
+        the locked snapshot honest so subsequent writes are caught by
+        ``_check_locked_line_edit``.
+        """
+        for line in self:
+            if line.locked_line_id:
+                continue
+            if line.move_id.move_type not in ("out_invoice", "out_refund"):
+                continue
+            condition = line.move_id.commercial_condition_id
+            if not condition or not line.product_id:
+                continue
+            (
+                seller,
+                extra,
+                source,
+                locked_line,
+                fixed_rate,
+            ) = condition._resolve_with_locked(
+                line.product_id,
+                qty=line.quantity or 0.0,
+                uom=line.product_uom_id,
+            )
+            if source == "locked":
+                line.with_context(tr_skip_locked_protection=True).write(
+                    {
+                        "locked_line_id": locked_line.id,
+                        "locked_fixed_commission_rate": fixed_rate or 0.0,
+                        "locked_baseline_seller_discount": seller or 0.0,
+                        "locked_baseline_extra_discount": extra or 0.0,
+                    }
+                )
+
+    def _check_locked_line_create(self, vals_list):
+        """Block create of invoice line that brings seller/extra
+        discount values diverging from the locked line baseline.
+
+        Mirror of ``sale.order.line._check_locked_line_create``.
+        """
+        if self.env.context.get("tr_skip_locked_protection"):
+            return
+        if self.env.user.has_group("base.group_system"):
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_manager"):
+            return
+        protected = {"seller_discount", "extra_discount"}
+        blocked = self.browse()
+        for record, vals in zip(self, vals_list):
+            if not protected.intersection(vals.keys()):
+                continue
+            if record.move_id.move_type not in ("out_invoice", "out_refund"):
+                continue
+            condition = record.move_id.commercial_condition_id
+            if not condition or not record.product_id:
+                continue
+            (
+                expected_seller,
+                expected_extra,
+                source,
+                _locked,
+                _rate,
+            ) = condition._resolve_with_locked(
+                record.product_id,
+                qty=record.quantity or 0.0,
+                uom=record.product_uom_id,
+            )
+            if source != "locked":
+                continue
+            given_seller = vals.get("seller_discount", record.seller_discount or 0.0)
+            given_extra = vals.get("extra_discount", record.extra_discount or 0.0)
+            precision = self.env["decimal.precision"].precision_get("Discount Policy")
+            seller_diff = float_compare(
+                given_seller or 0.0,
+                expected_seller or 0.0,
+                precision_digits=precision,
+            )
+            extra_diff = float_compare(
+                given_extra or 0.0,
+                expected_extra or 0.0,
+                precision_digits=precision,
+            )
+            if seller_diff != 0 or extra_diff != 0:
+                blocked |= record
+        if blocked:
+            raise ValidationError(
+                _(
+                    "Direct editing of seller/extra discount on invoice "
+                    "lines covered by a locked condition is not allowed. "
+                    "Affected lines: %s",
+                    ", ".join(blocked.mapped("product_id.display_name")),
+                )
+            )
+
     def write(self, vals):
         self._check_direct_price_edit(vals)
+        self._check_locked_line_edit(vals)
         # Capture pre-write alignment for qty/uom/product changes so we
         # can re-apply the condition band without overwriting manual
         # override (mirror of sale.order.line write override).
@@ -558,6 +739,22 @@ class AccountMoveLine(models.Model):
             if origin._is_aligned_with_condition_band():
                 line._reapply_condition_band()
 
+    def _is_aligned_with_locked_snapshot(self):
+        """Same semantics as ``sale.order.line._is_aligned_with_locked_snapshot``.
+
+        Compares against baseline snapshots stored on the line at
+        apply / propagation time. Stable across later edits of the
+        locked line itself.
+        """
+        self.ensure_one()
+        if not self.locked_line_id:
+            return False
+        return (self.seller_discount or 0.0) == (
+            self.locked_baseline_seller_discount or 0.0
+        ) and (self.extra_discount or 0.0) == (
+            self.locked_baseline_extra_discount or 0.0
+        )
+
     def _is_aligned_with_condition_band(self):
         """Same semantics as sale.order.line's helper, for invoice lines."""
         self.ensure_one()
@@ -574,15 +771,39 @@ class AccountMoveLine(models.Model):
         ) == (extra or 0.0)
 
     def _reapply_condition_band(self):
-        """Re-apply seller/extra from condition for current qty/uom."""
+        """Re-apply seller/extra from condition for current qty/uom.
+
+        Also refreshes the locked snapshot (line may move into/out of
+        locked scope on qty/uom changes). Bypasses
+        ``_check_locked_line_edit`` for the legitimate programmatic
+        write.
+        """
         for line in self:
             condition = line.move_id.commercial_condition_id
             if not condition or not line.product_id:
                 continue
-            seller, extra, _src = condition._resolve_discount_for_product(
+            (
+                seller,
+                extra,
+                _src,
+                locked_line,
+                fixed_rate,
+            ) = condition._resolve_with_locked(
                 line.product_id,
                 qty=line.quantity,
                 uom=line.product_uom_id,
             )
-            line.seller_discount = seller
-            line.extra_discount = extra
+            line.with_context(tr_skip_locked_protection=True).write(
+                {
+                    "seller_discount": seller,
+                    "extra_discount": extra,
+                    "locked_line_id": locked_line.id if locked_line else False,
+                    "locked_fixed_commission_rate": fixed_rate or 0.0,
+                    "locked_baseline_seller_discount": (
+                        (seller or 0.0) if locked_line else 0.0
+                    ),
+                    "locked_baseline_extra_discount": (
+                        (extra or 0.0) if locked_line else 0.0
+                    ),
+                }
+            )
