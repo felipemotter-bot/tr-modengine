@@ -34,3 +34,4 @@ from . import test_rep_default_pricelist
 from . import test_rep_agent_flip_applies_defaults
 from . import test_rep_multi_line_fiscal
 from . import test_rep_statusbar_polish
+from . import test_rep_sales_profile_view_arch

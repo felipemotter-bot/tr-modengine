@@ -12,7 +12,21 @@
         <field name="model">tr.sales.profile</field>
         <field name="inherit_id" ref="tr_commercial_policy.tr_sales_profile_form" />
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='profile_type']" position="attributes">
+            <!--
+                Hide profile_type from the rep without breaking the
+                Rules tab. Inner notebook pages reference
+                ``parent.profile_type`` in attrs, and Odoo view
+                validation needs a copy of the field that is reachable
+                under the rep's groups. The invisible mirror below
+                satisfies that, while the visible one stays restricted.
+            -->
+            <xpath expr="//field[@name='profile_type']" position="before">
+                <field name="profile_type" invisible="1" />
+            </xpath>
+            <xpath
+        expr="//field[@name='profile_type'][not(@invisible)]"
+        position="attributes"
+      >
                 <attribute
           name="groups"
         >!tr_sales_rep_access.group_sales_rep_external</attribute>
