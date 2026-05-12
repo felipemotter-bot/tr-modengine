@@ -43,3 +43,4 @@ from . import test_volume_qty_resolution
 from . import test_profile_with_company
 from . import test_condition_line_band_tracking
 from . import test_sale_order_discount_view
+from . import test_discount_calculator_widget_template
