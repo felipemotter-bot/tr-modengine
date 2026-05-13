@@ -291,7 +291,7 @@
                         <field
               name="reference_price"
               widget="price_calculator_button"
-              attrs="{'invisible': [('parent.state', '!=', 'draft')]}"
+              attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                     </span>
                 </div>

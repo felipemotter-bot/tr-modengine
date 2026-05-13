@@ -2057,3 +2057,56 @@ class TestLockedReadonlyForUserFlag(CommercialPolicyTestCommon):
             )
         )
         self.assertFalse(line.with_user(self.salesperson).tr_locked_readonly_for_user)
+
+
+@tagged("post_install", "-at_install")
+class TestLockedReadonlyForUserFlagOnConditionLine(CommercialPolicyTestCommon):
+    """``tr_locked_readonly_for_user`` UI flag on the condition.line
+    itself: True for rep on locked lines, False for manager+, False
+    on regular lines."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._setup_commercial_policy()
+        cls.locked = (
+            cls.env["partner.commercial.condition.line"]
+            .with_user(cls.director_user)
+            .create(
+                {
+                    "condition_id": cls.condition.id,
+                    "applied_on": "product_template",
+                    "product_tmpl_id": cls.product_template_a.id,
+                    "seller_discount": 5.0,
+                    "is_locked": True,
+                }
+            )
+        )
+        cls.regular = cls.env["partner.commercial.condition.line"].create(
+            {
+                "condition_id": cls.condition.id,
+                "applied_on": "product_template",
+                "product_tmpl_id": cls.product_template_b.id,
+                "seller_discount": 3.0,
+            }
+        )
+
+    def test_flag_true_for_rep_on_locked(self):
+        self.assertTrue(
+            self.locked.with_user(self.salesperson).tr_locked_readonly_for_user
+        )
+
+    def test_flag_false_for_manager_on_locked(self):
+        self.assertFalse(
+            self.locked.with_user(self.manager_user).tr_locked_readonly_for_user
+        )
+
+    def test_flag_false_for_director_on_locked(self):
+        self.assertFalse(
+            self.locked.with_user(self.director_user).tr_locked_readonly_for_user
+        )
+
+    def test_flag_false_on_regular_line(self):
+        self.assertFalse(
+            self.regular.with_user(self.salesperson).tr_locked_readonly_for_user
+        )

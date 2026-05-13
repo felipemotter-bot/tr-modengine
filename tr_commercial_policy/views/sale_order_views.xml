@@ -278,7 +278,7 @@
                         <field
               name="reference_price"
               widget="price_calculator_button"
-              attrs="{'invisible': [('parent.state', 'not in', ['draft', 'sent'])]}"
+              attrs="{'invisible': ['|', ('parent.state', 'not in', ['draft', 'sent']), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                         <button
               name="action_open_save_condition_line_wizard"

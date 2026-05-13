@@ -1,16 +1,10 @@
-# Translation of Odoo Server.
-# This file contains the translation of the following modules:
-# 	* tr_commercial_policy
-#
-# Translators:
-# Felipe Motter <felipe@trentoquimica.com.br>, 2026
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-13 18:11+0000\n"
-"PO-Revision-Date: 2026-05-13 18:11+0000\n"
+"POT-Creation-Date: 2026-05-13 18:54+0000\n"
+"PO-Revision-Date: 2026-05-13 18:54+0000\n"
 "Last-Translator: Felipe Motter <felipe@trentoquimica.com.br>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -69,10 +63,9 @@ msgstr ""
 "%(base)s<br/><br/><strong>Aprovado com as seguintes exceções de "
 "política:</strong><br/>%(violations)s"
 
-#. modules: tr_commercial_policy, tr_sales_rep_access
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
-#: code:addons/tr_sales_rep_access/models/sale_order.py:0
 #, python-format
 msgid "(empty)"
 msgstr "(vazio)"
@@ -113,10 +106,8 @@ msgstr ""
 msgid "- '%(product)s': expected %(expected).2f%%, has %(actual).2f%%"
 msgstr "- '%(product)s': esperado %(expected).2f%%, possui %(actual).2f%%"
 
-#. modules: tr_commercial_policy, tr_pricelist_report, trento_report_sale
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_saleorder_document_inherit
-#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
-#: model_terms:ir.ui.view,arch_db:trento_report_sale.report_saleorder_compact_document
 msgid "0,00"
 msgstr "0,00"
 
@@ -214,10 +205,8 @@ msgstr "<strong>Condições para conceder:</strong>"
 msgid "<strong>Discount approval required:</strong>"
 msgstr "<strong>Aprovação de desconto necessária:</strong>"
 
-#. modules: tr_commercial_policy, tr_pricelist_report
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
-#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_basic_document
-#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid "<strong>Emissão:</strong>"
 msgstr "<strong>Emissão:</strong>"
 
@@ -315,6 +304,42 @@ msgstr ""
 "do parceiro."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__action
+msgid "Action"
+msgstr "Ação"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_needaction
+msgid "Action Needed"
+msgstr "Ação Necessária"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__active
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__active
+msgid "Active"
+msgstr "Ativo"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_ids
+msgid "Activities"
+msgstr "Atividades"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Decoração de Exceção de Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_state
+msgid "Activity State"
+msgstr "Estado da Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Ícone do Tipo de Atividade"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line__band_ids
 msgid ""
 "Additional discount tiers that activate when the order/invoice line quantity"
@@ -385,6 +410,12 @@ msgstr ""
 "                                do preço bruto no fator de correção."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile__profile_type__agent
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_search
+msgid "Agent"
+msgstr "Agente"
+
+#. module: tr_commercial_policy
 #: model:ir.model,name:tr_commercial_policy.model_account_invoice_line_agent
 msgid "Agent detail of commission line in invoice lines"
 msgstr "Detalhe do representante na linha de comissão das linhas da fatura"
@@ -418,10 +449,8 @@ msgstr "Permitir edição manual de preço em faturas"
 msgid "Allowed Payment Modes"
 msgstr "Modos de Pagamento Permitidos"
 
-#. modules: tr_commercial_policy, tr_sales_rep_access
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__pricelist_ids
-#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_partner__allowed_pricelist_ids
-#: model:ir.model.fields,field_description:tr_sales_rep_access.field_res_users__allowed_pricelist_ids
 msgid "Allowed Pricelists"
 msgstr "Listas de Preços Permitidas"
 
@@ -444,13 +473,22 @@ msgstr "O valor deve ser menor que o total financeiro atual."
 msgid "Applicable Profile"
 msgstr "Perfil Aplicável"
 
-#. modules: product, tr_commercial_policy
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__applied_on
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__applied_on
-#: model_terms:ir.ui.view,arch_db:product.product_pricelist_item_tree_view
-#: model_terms:ir.ui.view,arch_db:product.product_pricelist_item_tree_view_from_product
 msgid "Applied On"
 msgstr "Aplicado Em"
+
+#. module: tr_commercial_policy
+#. odoo-javascript
+#: code:addons/tr_commercial_policy/static/src/components/extra_discount_popover/extra_discount_popover.xml:0
+#: code:addons/tr_commercial_policy/static/src/components/order_discount_calculator/order_discount_calculator.xml:0
+#: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.xml:0
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.extra_discount_wizard_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
+#, python-format
+msgid "Apply"
+msgstr "Aplicar"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line__active
@@ -461,6 +499,18 @@ msgstr ""
 "Arquive (desmarque) para parar de aplicar esta linha em novos "
 "pedidos/faturas, preservando a referência do snapshot em registros "
 "existentes."
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_line_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_search
+msgid "Archived"
+msgstr "Arquivado"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_attachment_count
+msgid "Attachment Count"
+msgstr "Contagem de Anexos"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_tr_sales_profile_rule__seller_discount_max
@@ -540,10 +590,9 @@ msgstr ""
 msgid "Base Price"
 msgstr "Preço Base"
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
-#: code:addons/trento_commercial_policy_transition/models/sale_order.py:0
 #, python-format
 msgid "Base price %(old)s → %(new)s"
 msgstr "Preço base %(old)s → %(new)s"
@@ -566,6 +615,15 @@ msgstr "Calcular desconto à vista para um subtotal alvo"
 #, python-format
 msgid "Calculate discount for a target price"
 msgstr "Calcular desconto para um preço alvo"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.extra_discount_wizard_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.group_condition_wizard_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.save_condition_line_wizard_form
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.save_condition_wizard_form
+msgid "Cancel"
+msgstr "Cancelar"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -764,27 +822,9 @@ msgstr "Alterações"
 msgid "Cleanup Orphan Commercial Conditions"
 msgstr "Limpar Condições Comerciais Órfãs"
 
-#. modules: bi_view_editor, spreadsheet, stock, tr_commercial_policy, web
+#. module: tr_commercial_policy
 #. odoo-javascript
-#: code:addons/bi_view_editor/static/src/components/bi_view_editor/bi_view_editor.xml:0
-#: code:addons/spreadsheet/static/src/global_filters/components/filter_value/filter_value.xml:0
-#: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.xml:0
 #: code:addons/tr_commercial_policy/static/src/components/extra_discount_popover/extra_discount_popover.xml:0
-#: code:addons/web/static/src/core/signature/name_and_signature.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/views/fields/binary/binary_field.xml:0
-#: code:addons/web/static/src/views/fields/binary/binary_field.xml:0
-#: code:addons/web/static/src/views/fields/image/image_field.xml:0
-#: code:addons/web/static/src/views/fields/image/image_field.xml:0
-#: code:addons/web/static/src/views/fields/pdf_viewer/pdf_viewer_field.xml:0
-#: code:addons/web/static/src/views/fields/pdf_viewer/pdf_viewer_field.xml:0
-#: code:addons/web/static/src/views/view_dialogs/select_create_dialog.xml:0
-#: model_terms:ir.ui.view,arch_db:stock.view_stock_quant_tree_inventory_editable
 #, python-format
 msgid "Clear"
 msgstr "Limpar"
@@ -794,7 +834,7 @@ msgstr "Limpar"
 msgid "Comissão (%)"
 msgstr "Comissão (%)"
 
-#. modules: tr_commercial_policy, tr_pricelist_report
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
@@ -805,7 +845,6 @@ msgstr "Comissão (%)"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_users__commercial_condition_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__commercial_condition_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__condition_id
-#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__condition_id
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
 #, python-format
@@ -836,9 +875,8 @@ msgstr "Aviso de Condição Comercial"
 msgid "Commercial Conditions"
 msgstr "Condições Comerciais"
 
-#. modules: base, tr_commercial_policy
+#. module: tr_commercial_policy
 #: model:ir.module.category,name:tr_commercial_policy.module_category_commercial_policy
-#: model:ir.module.module,shortdesc:base.module_tr_commercial_policy
 #: model:ir.ui.menu,name:tr_commercial_policy.menu_commercial_policy_config
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.product_category_form_inherit
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.res_config_settings_view_form
@@ -861,6 +899,11 @@ msgstr ""
 msgid "Commercial revalidation requires at least one sale-order origin."
 msgstr ""
 "A revalidação comercial requer pelo menos um pedido de venda de origem."
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_commission
+msgid "Commission"
+msgstr "Comissão"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1007,6 +1050,22 @@ msgstr ""
 "quando is_locked é Falso."
 
 #. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_account_move_line
+msgid "Common stock-price computation"
+msgstr "Cálculo comum de preço base"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_res_company
+msgid "Companies"
+msgstr "Empresas"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__company_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__company_id
+msgid "Company"
+msgstr "Empresa"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition__profile_source__company
 msgid "Company Default"
 msgstr "Padrão da Empresa"
@@ -1032,10 +1091,8 @@ msgstr ""
 "que forem recalculados após a mudança — rascunhos existentes mantêm o fator "
 "atual até serem alterados."
 
-#. modules: base, delivery, tr_commercial_policy
-#: model:ir.model.fields,field_description:base.field_ir_default__condition
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__condition_id
-#: model_terms:ir.ui.view,arch_db:delivery.view_delivery_price_rule_form
 msgid "Condition"
 msgstr "Condição"
 
@@ -1070,11 +1127,26 @@ msgid "Condition of %s"
 msgstr "Condição de %s"
 
 #. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_res_config_settings
+msgid "Config Settings"
+msgstr "Configurações"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.group_condition_wizard_form
+msgid "Confirm"
+msgstr "Confirmar"
+
+#. module: tr_commercial_policy
 #. odoo-javascript
 #: code:addons/tr_commercial_policy/static/src/components/order_discount_calculator/order_discount_calculator.xml:0
 #, python-format
 msgid "Considering FOB discount of"
 msgstr "Considerando desconto FOB de"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_res_partner
+msgid "Contact"
+msgstr "Contato"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__contractual_return_change
@@ -1182,6 +1254,42 @@ msgid "Create a sales profile"
 msgstr "Criar um perfil de vendas"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__create_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__create_uid
+msgid "Created by"
+msgstr "Criado por"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__create_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__create_date
+msgid "Created on"
+msgstr "Criado em"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_commission__tr_managed
 msgid "Created/managed by the commercial policy."
 msgstr "Criado/gerenciado pela política comercial."
@@ -1203,6 +1311,12 @@ msgstr "Nível de Origem Atual"
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order__discount_approval_snapshot
 msgid "Current policy violations requiring approval."
 msgstr "Violações de política atuais que requerem aprovação."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__partner_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__partner_id
+msgid "Customer"
+msgstr "Cliente"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1251,11 +1365,7 @@ msgstr ""
 "Defina a UdM para Qtd Mínima. A unidade não pôde ser inferida "
 "automaticamente para o escopo desta regra."
 
-#. modules: delivery, l10n_br_delivery, tr_commercial_policy
-#: model:ir.model.fields,field_description:delivery.field_delivery_carrier__name
-#: model:ir.model.fields,field_description:delivery.field_res_partner__property_delivery_carrier_id
-#: model:ir.model.fields,field_description:delivery.field_res_users__property_delivery_carrier_id
-#: model:ir.model.fields,field_description:l10n_br_delivery.field_sale_order__carrier_id
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__delivery_carrier_id
 msgid "Delivery Method"
 msgstr "Método de Entrega"
@@ -1368,12 +1478,29 @@ msgstr "Aprovação de desconto - Diretor"
 msgid "Discount approval - Manager"
 msgstr "Aprovação de desconto - Gerente"
 
-#. modules: product, tr_commercial_policy
-#: model:ir.model.fields,field_description:product.field_res_config_settings__group_discount_per_so_line
-#: model_terms:ir.ui.view,arch_db:product.product_pricelist_view
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
 msgid "Discounts"
 msgstr "Descontos"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__product_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__display_name
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__display_name
+msgid "Display Name"
+msgstr "Nome de Exibição"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_line_wizard__save_as__none
@@ -1405,10 +1532,9 @@ msgstr "Editar Linha"
 msgid "Effective Commercial Condition"
 msgstr "Condição Comercial Efetiva"
 
-#. modules: base, tr_commercial_policy
+#. module: tr_commercial_policy
 #. odoo-javascript
 #: code:addons/tr_commercial_policy/static/src/components/extra_discount_popover/extra_discount_popover.xml:0
-#: model_terms:ir.ui.view,arch_db:base.view_module_filter
 #, python-format
 msgid "Extra"
 msgstr "Extra"
@@ -1466,10 +1592,9 @@ msgstr "Motivo do Desconto Extra"
 msgid "Extra Discount Wizard"
 msgstr "Assistente de Desconto Extra"
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
-#: code:addons/trento_commercial_policy_transition/models/sale_order.py:0
 #, python-format
 msgid "Extra disc. %(old)s%% → %(new)s%%"
 msgstr "Desc. extra %(old)s%% → %(new)s%%"
@@ -1633,6 +1758,21 @@ msgid "Fixed commission rate cannot be negative (got %.2f%%)."
 msgstr "A taxa de comissão fixa não pode ser negativa (recebido %.2f%%)."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_follower_ids
+msgid "Followers"
+msgstr "Seguidores"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Seguidores (Parceiros)"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Ícone do Font Awesome, ex.: fa-tasks"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_config_settings__tr_policy_freight_rate
 msgid "Freight Rate (%)"
 msgstr "Taxa de Frete (%)"
@@ -1658,12 +1798,8 @@ msgstr ""
 "recalculados após a mudança — rascunhos existentes mantêm o fator atual até "
 "serem alterados."
 
-#. modules: base, digest, l10n_br_fiscal, tr_commercial_policy
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile_rule__applied_on__general
-#: model_terms:ir.ui.view,arch_db:base.view_rule_form
-#: model_terms:ir.ui.view,arch_db:digest.digest_digest_view_form
-#: model_terms:ir.ui.view,arch_db:l10n_br_fiscal.document_line_form
-#: model_terms:ir.ui.view,arch_db:l10n_br_fiscal.operation_line_form
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_form
 msgid "General"
@@ -1673,6 +1809,16 @@ msgstr "Geral"
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.save_condition_wizard_form
 msgid "General Discounts"
 msgstr "Descontos Gerais"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__group_id
+msgid "Group"
+msgstr "Grupo"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_search
+msgid "Group By"
+msgstr "Agrupar Por"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__group_condition_id
@@ -1701,6 +1847,11 @@ msgid "Has Changes"
 msgstr "Possui Alterações"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__has_message
+msgid "Has Message"
+msgstr "Tem Mensagem"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__has_sale_origin
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__has_sale_origin
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_payment__has_sale_origin
@@ -1719,19 +1870,60 @@ msgstr ""
 "linha."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__id
+msgid "ID"
+msgstr "ID"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_exception_icon
+msgid "Icon"
+msgstr "Ícone"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Ícone para indicar uma atividade de exceção."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Se marcado, novas mensagens requerem sua atenção."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Se marcado, algumas mensagens tiveram erro de entrega."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__ignore
 msgid "Ignore"
 msgstr "Ignorar"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__incoterm_id
+msgid "Incoterm"
+msgstr "Incoterm"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__profile_source
 msgid "Indicates where the applicable sales profile was resolved from."
 msgstr "Indica de onde o perfil de vendas aplicável foi resolvido."
 
-#. modules: stock, tr_commercial_policy
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile__profile_type__internal
-#: model_terms:ir.ui.view,arch_db:stock.stock_move_line_view_search
-#: model_terms:ir.ui.view,arch_db:stock.view_location_search
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_search
 msgid "Internal"
 msgstr "Interno"
@@ -1798,6 +1990,11 @@ msgid "Invoice validity days cannot be negative."
 msgstr "Os dias de validade da fatura não podem ser negativos."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_is_follower
+msgid "Is Follower"
+msgstr "É Seguidor"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_partner__is_group_head
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_users__is_group_head
 msgid "Is Group Head"
@@ -1810,9 +2007,68 @@ msgid "Is Sales Director"
 msgstr "É Diretor de Vendas"
 
 #. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_account_move
+msgid "Journal Entry"
+msgstr "Lançamento Contábil"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_group_condition_wizard__action__keep
 msgid "Keep own condition (override group)"
 msgstr "Manter condição própria (sobrescrever grupo)"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard____last_update
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line____last_update
+msgid "Last Modified on"
+msgstr "Modificado em"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__write_uid
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__write_uid
+msgid "Last Updated by"
+msgstr "Atualizado pela Última Vez por"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__write_date
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__write_date
+msgid "Last Updated on"
+msgstr "Atualizado pela Última Vez em"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_tr_save_condition_line_wizard__source_level
@@ -1823,6 +2079,13 @@ msgstr "Nível da condição atual: geral, modelo ou variante."
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
 msgid "Limites de Desconto"
 msgstr "Limites de Desconto"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__line_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__line_description
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
+msgid "Line"
+msgstr "Linha"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -1990,15 +2253,10 @@ msgstr "Contagem de Linhas Alteradas"
 msgid "Lines with Changes"
 msgstr "Linhas com Alterações"
 
-#. modules: purchase, sale, tr_commercial_policy
-#. odoo-python
-#: code:addons/purchase/controllers/portal.py:0
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__is_locked
-#: model:ir.model.fields.selection,name:purchase.selection__purchase_order__state__done
-#: model:ir.model.fields.selection,name:sale.selection__sale_order__state__done
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_line_form
-#, python-format
 msgid "Locked"
 msgstr "Travada"
 
@@ -2079,9 +2337,20 @@ msgstr ""
 "aplicada à linha."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_main_attachment_id
+msgid "Main Attachment"
+msgstr "Anexo Principal"
+
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.commission_form_tr_managed
 msgid "Managed by Commercial Policy"
 msgstr "Gerenciado pela Política Comercial"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__account_move__discount_approval_level__manager
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__sale_order__discount_approval_level__manager
+msgid "Manager"
+msgstr "Gerente"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__manager_extra_limit
@@ -2196,6 +2465,16 @@ msgid "Maximum seller discount from the effective sales profile."
 msgstr "Desconto máximo do vendedor conforme o perfil de vendas vigente."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_has_error
+msgid "Message Delivery error"
+msgstr "Erro de Entrega de Mensagem"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_ids
+msgid "Messages"
+msgstr "Mensagens"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__qty_min
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__qty_min
 msgid "Min Qty"
@@ -2258,6 +2537,11 @@ msgid "Modos de pagamento permitidos:"
 msgstr "Modos de pagamento permitidos:"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Prazo da Minha Atividade"
+
+#. module: tr_commercial_policy
 #: model:ir.actions.act_window,name:tr_commercial_policy.tr_sales_profile_my_action
 #: model:ir.actions.server,name:tr_commercial_policy.tr_sales_profile_my_action_server
 #: model:ir.ui.menu,name:tr_commercial_policy.menu_my_sales_profiles
@@ -2265,9 +2549,41 @@ msgid "My Sales Profiles"
 msgstr "Meus Perfis de Vendas"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__name
+msgid "Name"
+msgstr "Nome"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition__discount_display__net_price
 msgid "Net Price Only"
 msgstr "Apenas Preço Líquido"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "Evento de Calendário da Próxima Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Prazo da Próxima Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_summary
+msgid "Next Activity Summary"
+msgstr "Resumo da Próxima Atividade"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_type_id
+msgid "Next Activity Type"
+msgstr "Tipo da Próxima Atividade"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
+#, python-format
+msgid "No"
+msgstr "Não"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2321,6 +2637,32 @@ msgstr ""
 "do bloqueio de ``_check_invoice_policy`` no momento de postar."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__account_move__discount_approval_level__none
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__sale_order__discount_approval_level__none
+msgid "None"
+msgstr "Nenhum"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Número de Ações"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__message_has_error_counter
+msgid "Number of errors"
+msgstr "Número de erros"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Número de mensagens que requerem ação"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Número de mensagens com erro de entrega"
+
+#. module: tr_commercial_policy
 #: model:ir.model.constraint,message:tr_commercial_policy.constraint_partner_commercial_condition_partner_unique
 msgid "Only one commercial condition per partner per company is allowed."
 msgstr "Apenas uma condição comercial por parceiro por empresa é permitida."
@@ -2357,14 +2699,10 @@ msgstr ""
 "Somente o Diretor de Vendas pode definir/alterar is_locked, "
 "fixed_commission_rate ou active em uma linha de condição."
 
-#. modules: account, analytic, tr_commercial_policy
+#. module: tr_commercial_policy
 #. odoo-javascript
-#: code:addons/analytic/static/src/components/analytic_distribution/analytic_distribution.js:0
 #: code:addons/tr_commercial_policy/static/src/components/extra_discount_popover/extra_discount_popover.xml:0
 #: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.xml:0
-#: model:ir.model.fields.selection,name:account.selection__account_report__filter_hierarchy__optional
-#: model:ir.model.fields.selection,name:analytic.selection__account_analytic_applicability__applicability__optional
-#: model:ir.model.fields.selection,name:analytic.selection__account_analytic_plan__default_applicability__optional
 #, python-format
 msgid "Optional"
 msgstr "Opcional"
@@ -2380,6 +2718,12 @@ msgstr ""
 "Opcional. Defina limites de quantidade onde o desconto muda (ex.: ≥50 CX → "
 "15%). Acima do limite, os descontos da faixa substituem o desconto base da "
 "linha acima. Abaixo, valem os descontos diretos da linha."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__order_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__order_id
+msgid "Order"
+msgstr "Pedido"
 
 #. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.reload_condition_wizard_form
@@ -2426,6 +2770,22 @@ msgid "PERFIL DE VENDAS"
 msgstr "PERFIL DE VENDAS"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__partner_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__partner_id
+msgid "Partner"
+msgstr "Parceiro"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_partner_commercial_condition
+msgid "Partner Commercial Condition"
+msgstr "Condição Comercial do Parceiro"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_partner_commercial_condition_line
+msgid "Partner Commercial Condition Line"
+msgstr "Linha de Condição Comercial do Parceiro"
+
+#. module: tr_commercial_policy
 #: model:ir.model,name:tr_commercial_policy.model_partner_commercial_condition_line_band
 msgid "Partner Commercial Condition Line Band"
 msgstr "Faixa de Linha da Condição Comercial"
@@ -2446,6 +2806,11 @@ msgid "Payment & Delivery"
 msgstr "Pagamento e Entrega"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__payment_mode_id
+msgid "Payment Mode"
+msgstr "Modo de Pagamento"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__payment_term_avg_days
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__payment_term_avg_days
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_payment__payment_term_avg_days
@@ -2453,25 +2818,8 @@ msgstr "Pagamento e Entrega"
 msgid "Payment Term Avg Days"
 msgstr "Dias Médios do Prazo de Pagamento"
 
-#. modules: account, account_due_list, purchase, sale, tr_commercial_policy,
-#. trento_invoice_change_payment_data
-#: model:ir.actions.act_window,name:account.action_payment_term_form
-#: model:ir.model,name:account.model_account_payment_term
-#: model:ir.model.fields,field_description:account.field_account_bank_statement_line__invoice_payment_term_id
-#: model:ir.model.fields,field_description:account.field_account_move__invoice_payment_term_id
-#: model:ir.model.fields,field_description:account.field_account_payment__invoice_payment_term_id
-#: model:ir.model.fields,field_description:account.field_account_payment_term__name
-#: model:ir.model.fields,field_description:account.field_account_payment_term_line__payment_id
-#: model:ir.model.fields,field_description:account_due_list.field_account_move_line__payment_term_id
-#: model:ir.model.fields,field_description:purchase.field_purchase_order__payment_term_id
-#: model:ir.model.fields,field_description:sale.field_sale_order__payment_term_id
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__payment_term_id
-#: model:ir.model.fields,field_description:trento_invoice_change_payment_data.field_account_move_payment_changes__invoice_payment_term_id
-#: model:ir.ui.menu,name:account.menu_action_payment_term_form
-#: model_terms:ir.ui.view,arch_db:account.view_partner_property_form
-#: model_terms:ir.ui.view,arch_db:account.view_payment_term_form
-#: model_terms:ir.ui.view,arch_db:account.view_payment_term_search
-#: model_terms:ir.ui.view,arch_db:account.view_payment_term_tree
 msgid "Payment Terms"
 msgstr "Condições de Pagamento"
 
@@ -2526,6 +2874,17 @@ msgid "Price must be greater than zero."
 msgstr "O preço deve ser maior que zero."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__effective_pricelist_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__effective_pricelist_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_payment__effective_pricelist_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__pricelist_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__pricelist_change
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_search
+msgid "Pricelist"
+msgstr "Lista de Preços"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__pricelist_warning
 msgid "Pricelist Warning"
 msgstr "Aviso de Lista de Preços"
@@ -2538,15 +2897,24 @@ msgstr ""
 "Listas de preços permitidas para este perfil. Se vazio, qualquer lista de "
 "preços é aceita."
 
-#. modules: delivery, product, purchase, sale, tr_commercial_policy
-#: model_terms:ir.ui.view,arch_db:delivery.view_delivery_carrier_form
-#: model_terms:ir.ui.view,arch_db:product.product_variant_easy_edit_view
-#: model_terms:ir.ui.view,arch_db:purchase.purchase_order_portal_content
-#: model_terms:ir.ui.view,arch_db:sale.res_config_settings_view_form
-#: model_terms:ir.ui.view,arch_db:sale.sale_order_portal_content
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.partner_commercial_condition_form
 msgid "Pricing"
 msgstr "Precificação"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__product_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__product_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__product_id
+msgid "Product"
+msgstr "Produto"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_product_category
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__categ_id
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile_rule__applied_on__category
+msgid "Product Category"
+msgstr "Categoria de Produto"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__line_ids
@@ -2560,13 +2928,27 @@ msgstr "Linhas de Produto"
 msgid "Product Lines with Differences"
 msgstr "Linhas de Produto com Diferenças"
 
-#. modules: product, stock, tr_commercial_policy
-#: model:ir.model.fields,field_description:product.field_product_label_layout__product_tmpl_ids
-#: model:ir.model.fields,field_description:stock.field_report_stock_quantity__product_tmpl_id
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__product_tmpl_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__product_tmpl_id
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition_line__applied_on__product_template
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile_rule__applied_on__product_template
+msgid "Product Template"
+msgstr "Modelo de Produto"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__product_tmpl_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__product_tmpl_id
 msgid "Product Tmpl"
 msgstr "Modelo Prod."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__product_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__product_id
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition_line__applied_on__product
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_sales_profile_rule__applied_on__product
+msgid "Product Variant"
+msgstr "Variante de Produto"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2647,12 +3029,7 @@ msgstr "Origem do Perfil"
 msgid "Profile Type"
 msgstr "Tipo de Perfil"
 
-#. modules: eng_punctuality_discount, tr_commercial_policy
-#: model:ir.model.fields,field_description:eng_punctuality_discount.field_account_bank_statement_line__invoice_punctuality_discount
-#: model:ir.model.fields,field_description:eng_punctuality_discount.field_account_move__invoice_punctuality_discount
-#: model:ir.model.fields,field_description:eng_punctuality_discount.field_account_payment__invoice_punctuality_discount
-#: model:ir.model.fields,field_description:eng_punctuality_discount.field_res_partner__punctuality_discount
-#: model:ir.model.fields,field_description:eng_punctuality_discount.field_res_users__punctuality_discount
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__punctuality_discount
 msgid "Punctuality Discount (%)"
 msgstr "Desconto de Pontualidade (%)"
@@ -2699,6 +3076,15 @@ msgid "Quantity band updated: %s"
 msgstr "Faixa de quantidade atualizada: %s"
 
 #. module: tr_commercial_policy
+#. odoo-javascript
+#: code:addons/tr_commercial_policy/static/src/components/extra_discount_popover/extra_discount_popover.xml:0
+#: code:addons/tr_commercial_policy/static/src/components/price_calculator/price_calculator.xml:0
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__extra_discount_reason
+#, python-format
+msgid "Reason"
+msgstr "Motivo"
+
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.extra_discount_wizard_form
 msgid "Reason for extra discount..."
 msgstr "Motivo para desconto extra..."
@@ -2713,10 +3099,9 @@ msgstr "Recalcular Comissões"
 msgid "Ref. Price"
 msgstr "Preço Ref."
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
-#: code:addons/trento_commercial_policy_transition/models/sale_order.py:0
 #, python-format
 msgid "Ref. price %(old)s → %(new)s"
 msgstr "Preço ref. %(old)s → %(new)s"
@@ -2761,6 +3146,11 @@ msgstr ""
 "Nível de aprovação necessário baseado nas violações da política de desconto."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__activity_user_id
+msgid "Responsible User"
+msgstr "Usuário Responsável"
+
+#. module: tr_commercial_policy
 #. odoo-javascript
 #: code:addons/tr_commercial_policy/static/src/components/order_discount_calculator/order_discount_calculator.xml:0
 #, python-format
@@ -2786,22 +3176,13 @@ msgstr "Ressincronizar do Pedido"
 msgid "Rule"
 msgstr "Regra"
 
-#. modules: barcodes, base, stock, tr_commercial_policy
-#: model:ir.actions.act_window,name:stock.action_rules_form
-#: model:ir.model.fields,field_description:barcodes.field_barcode_nomenclature__rule_ids
-#: model:ir.model.fields,field_description:base.field_res_groups__rule_groups
-#: model:ir.model.fields,field_description:stock.field_stock_route__rule_ids
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__rule_ids
-#: model:ir.ui.menu,name:stock.menu_action_rules_form
-#: model_terms:ir.ui.view,arch_db:stock.stock_location_route_form_view
-#: model_terms:ir.ui.view,arch_db:stock.view_stock_rule_form
-#: model_terms:ir.ui.view,arch_db:stock.view_stock_rule_tree
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_form
 msgid "Rules"
 msgstr "Regras"
 
-#. modules: sale_stock, tr_commercial_policy
-#: model:ir.model.fields,field_description:sale_stock.field_stock_move__sale_line_id
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__sale_line_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__sale_line_id
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__sale_line_id
@@ -2809,9 +3190,7 @@ msgstr "Regras"
 msgid "Sale Line"
 msgstr "Linha de Venda"
 
-#. modules: product_form_sale_link, tr_commercial_policy
-#: model:ir.actions.act_window,name:product_form_sale_link.action_product_product_sale_list
-#: model:ir.actions.act_window,name:product_form_sale_link.action_product_template_sale_list
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
 msgid "Sale Order Lines"
 msgstr "Linhas do Pedido"
@@ -2830,6 +3209,16 @@ msgstr "Diretor de Vendas"
 #: model:res.groups,name:tr_commercial_policy.group_sales_manager
 msgid "Sales Manager"
 msgstr "Gerente de Vendas"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_sale_order
+msgid "Sales Order"
+msgstr "Pedido de Venda"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Linha do Pedido de Venda"
 
 #. module: tr_commercial_policy
 #: model:ir.actions.report,name:tr_commercial_policy.action_report_sales_profile
@@ -2857,6 +3246,11 @@ msgstr "Regra do Perfil de Vendas"
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.tr_sales_profile_search
 msgid "Sales Profiles"
 msgstr "Perfis de Vendas"
+
+#. module: tr_commercial_policy
+#: model:ir.model,name:tr_commercial_policy.model_crm_team
+msgid "Sales Team"
+msgstr "Equipe de Vendas"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -2896,6 +3290,12 @@ msgstr ""
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition__profile_source__salesperson_team
 msgid "Salesperson's Team"
 msgstr "Equipe do Vendedor"
+
+#. module: tr_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.sale_order_form_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.save_condition_line_wizard_form
+msgid "Save"
+msgstr "Salvar"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__save_as
@@ -3038,10 +3438,9 @@ msgstr "Desconto do Vendedor (Novo)"
 msgid "Seller Discount (Order)"
 msgstr "Desconto do Vendedor (Pedido)"
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
-#: code:addons/trento_commercial_policy_transition/models/sale_order.py:0
 #, python-format
 msgid "Seller disc. %(old)s%% → %(new)s%%"
 msgstr "Desc. vendedor %(old)s%% → %(new)s%%"
@@ -3117,9 +3516,45 @@ msgid "Seller markup:"
 msgstr "Markup do vendedor:"
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__sequence
+msgid "Sequence"
+msgstr "Sequência"
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__partner_commercial_condition__discount_display__show_discounts
 msgid "Show Discounts"
 msgstr "Mostrar Descontos"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_invoice_line_agent__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move_line__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_commission__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_crm_team__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_ir_config_parameter__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition_line_band__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_product_category__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_res_company__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_res_config_settings__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_res_partner__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order_line__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order_line_agent__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_extra_discount_wizard__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_group_condition_wizard__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_commission_band__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_order_band__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_sales_profile_rule__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_line_wizard__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard__smart_search
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__smart_search
+msgid "Smart Search"
+msgstr "Busca Inteligente"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__locked_baseline_extra_discount
@@ -3244,6 +3679,19 @@ msgstr ""
 "Por favor, use 'Recarregar Condições Comerciais' para atualizar."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Status baseado nas atividades\n"
+"Atrasado: A data de vencimento já passou\n"
+"Hoje: A atividade é para hoje\n"
+"Planejado: Atividades futuras."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__total_seller_extra_discount
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__total_seller_extra_discount
 msgid "Sum of seller discount and extra discount."
@@ -3272,6 +3720,12 @@ msgstr "Preço Alvo"
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_config_settings__tr_policy_tax_rate
 msgid "Tax Rate (%)"
 msgstr "Taxa de Imposto (%)"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_line_wizard__save_as__template
+#: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_wizard_line__save_as__template
+msgid "Template"
+msgstr "Modelo"
 
 #. module: tr_commercial_policy
 #. odoo-python
@@ -3331,10 +3785,7 @@ msgstr ""
 " representante não possui perfil de vendas atribuído. Por favor, defina um "
 "perfil no representante."
 
-#. modules: eng_punctuality_discount, tr_commercial_policy
-#: model:ir.model.fields,help:eng_punctuality_discount.field_account_bank_statement_line__invoice_punctuality_discount
-#: model:ir.model.fields,help:eng_punctuality_discount.field_account_move__invoice_punctuality_discount
-#: model:ir.model.fields,help:eng_punctuality_discount.field_account_payment__invoice_punctuality_discount
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order__punctuality_discount
 msgid "The discount is granted if the invoice is paid by the due date."
 msgstr "O desconto é concedido se a fatura for paga até a data de vencimento."
@@ -3504,12 +3955,11 @@ msgstr "Este cliente não possui condição comercial configurada."
 msgid "This invoice groups orders with different commercial conditions."
 msgstr "Esta fatura agrupa pedidos com condições comerciais diferentes."
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/account_move.py:0
 #: code:addons/tr_commercial_policy/models/account_move.py:0
 #: code:addons/tr_commercial_policy/models/account_move.py:0
-#: code:addons/trento_commercial_policy_transition/models/account_move.py:0
 #, python-format
 msgid ""
 "This invoice groups orders with different commercial conditions. Please "
@@ -3710,6 +4160,11 @@ msgstr ""
 "devem definir limites de quantidade distintos."
 
 #. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Tipo da atividade de exceção no registro."
+
+#. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_account_move_line__tr_locked_readonly_for_user
 #: model:ir.model.fields,help:tr_commercial_policy.field_sale_order_line__tr_locked_readonly_for_user
 msgid ""
@@ -3723,6 +4178,13 @@ msgstr ""
 "atributo ``readonly`` dos campos de desconto e oculta os botões relacionados"
 " a desconto. As verificações no servidor permanecem como controle "
 "autoritativo."
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order_line__price_unit
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.account_move_form_commercial_policy
+#: model_terms:ir.ui.view,arch_db:tr_commercial_policy.sale_order_form_commercial_policy
+msgid "Unit Price"
+msgstr "Preço Unitário"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line_band__qty_uom_id
@@ -3748,19 +4210,18 @@ msgstr ""
 " UdM antes da comparação. Se a conversão não for possível (categorias de UdM"
 " diferentes), a regra é ignorada e a resolução volta para o próximo nível."
 
-#. modules: tr_commercial_policy, trento_commercial_policy_transition
+#. module: tr_commercial_policy
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
-#: code:addons/trento_commercial_policy_transition/models/sale_order.py:0
 #, python-format
 msgid "Unit price %(old)s → %(new)s"
 msgstr "Preço unit. %(old)s → %(new)s"
 
-#. modules: tr_commercial_policy, tr_sales_rep_access
+#. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_bank_statement_line__unmanaged_commission_warning
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_move__unmanaged_commission_warning
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_account_payment__unmanaged_commission_warning
-#: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order__unmanaged_commission_warning
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_sale_order__unmanaged_commission_warning
 msgid "Unmanaged Commission Warning"
 msgstr "Aviso de Comissão Não Gerenciada"
 
@@ -3795,12 +4256,28 @@ msgstr ""
 msgid "Valor mínimo do pedido"
 msgstr "Valor mínimo do pedido"
 
-#. modules: product, tr_commercial_policy
+#. module: tr_commercial_policy
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_line_wizard__save_as__variant
 #: model:ir.model.fields.selection,name:tr_commercial_policy.selection__tr_save_condition_wizard_line__save_as__variant
-#: model_terms:ir.ui.view,arch_db:product.product_pricelist_item_view_search
 msgid "Variant"
 msgstr "Variante"
+
+#. module: tr_commercial_policy
+#. odoo-python
+#: code:addons/tr_commercial_policy/models/res_partner.py:0
+#, python-format
+msgid "Warning"
+msgstr "Aviso"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_partner_commercial_condition__website_message_ids
+msgid "Website Messages"
+msgstr "Mensagens do Site"
+
+#. module: tr_commercial_policy
+#: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition__website_message_ids
+msgid "Website communication history"
+msgstr "Histórico de comunicação do site"
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,help:tr_commercial_policy.field_partner_commercial_condition_line__is_locked
@@ -3824,28 +4301,15 @@ msgstr ""
 "Quando habilitado, usuários podem editar diretamente price_unit e desconto "
 "em linhas de fatura para produtos desta categoria."
 
-#. modules: account_financial_report, crm, mail, tr_commercial_policy, web,
-#. web_editor
-#. odoo-javascript
+#. module: tr_commercial_policy
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_reload_condition_wizard_line__wizard_id
+#: model:ir.model.fields,field_description:tr_commercial_policy.field_tr_save_condition_wizard_line__wizard_id
+msgid "Wizard"
+msgstr "Assistente"
+
+#. module: tr_commercial_policy
 #. odoo-python
-#: code:addons/account_financial_report/report/general_ledger_xlsx.py:0
-#: code:addons/account_financial_report/report/general_ledger_xlsx.py:0
-#: code:addons/account_financial_report/report/open_items_xlsx.py:0
-#: code:addons/account_financial_report/report/trial_balance_xlsx.py:0
-#: code:addons/crm/models/crm_lead.py:0
-#: code:addons/mail/static/src/models/tracking_value_item.js:0
 #: code:addons/tr_commercial_policy/models/partner_commercial_condition.py:0
-#: code:addons/web/static/src/legacy/js/control_panel/search_bar.js:0
-#: code:addons/web/static/src/legacy/js/views/kanban/kanban_column.js:0
-#: code:addons/web/static/src/legacy/js/views/list/list_renderer.js:0
-#: code:addons/web/static/src/legacy/xml/base.xml:0
-#: code:addons/web/static/src/search/search_bar/search_bar.js:0
-#: code:addons/web/static/src/views/fields/field_tooltip.xml:0
-#: code:addons/web/static/src/views/kanban/kanban_renderer.js:0
-#: code:addons/web/static/src/views/list/list_renderer.js:0
-#: code:addons/web/static/src/views/pivot/pivot_model.js:0
-#: code:addons/web_editor/static/src/js/editor/snippets.editor.js:0
-#: model_terms:ir.ui.view,arch_db:account_financial_report.report_general_ledger_filters
 #, python-format
 msgid "Yes"
 msgstr "Sim"
@@ -3875,8 +4339,7 @@ msgstr "também possui uma. O que você gostaria de fazer?"
 msgid "company default"
 msgstr "padrão da empresa"
 
-#. modules: l10n_br_fiscal, tr_commercial_policy
-#: model_terms:ir.ui.view,arch_db:l10n_br_fiscal.l10n_br_fiscal_res_config_settings_form
+#. module: tr_commercial_policy
 #: model_terms:ir.ui.view,arch_db:tr_commercial_policy.report_sales_profile_document
 msgid "dias"
 msgstr "dias"
