@@ -557,7 +557,9 @@ class PricelistReportWizard(models.TransientModel):
         ``tr_exclude_from_general_pricelist`` filter — the customer
         already bought the product, and the price for a reorder must be
         visible even when the category sits under the "production on
-        demand" subtree.
+        demand" subtree. The user-driven ``filter_dim`` filter is a
+        different concern (an explicit narrowing the user asked for) and
+        IS applied here.
 
         Returns a dict ``{product.product: qty_in_product_default_uom}``.
         Line UoMs that differ from the product's default are converted
@@ -568,15 +570,18 @@ class PricelistReportWizard(models.TransientModel):
             return {}
         partner = self.condition_id.partner_id
         threshold = fields.Date.today() - relativedelta(months=months)
-        lines = self.env["sale.order.line"].search(
-            [
-                ("order_id.partner_id", "=", partner.id),
-                ("order_id.state", "in", ("sale", "done")),
-                ("order_id.date_order", ">=", threshold),
-                ("product_id.active", "=", True),
-                ("product_id.sale_ok", "=", True),
-            ]
-        )
+        domain = [
+            ("order_id.partner_id", "=", partner.id),
+            ("order_id.state", "in", ("sale", "done")),
+            ("order_id.date_order", ">=", threshold),
+            ("product_id.active", "=", True),
+            ("product_id.sale_ok", "=", True),
+        ]
+        if self.filter_dim == "category" and self.category_ids:
+            categories = self._expand_categories(self.category_ids)
+            domain.append(("product_id.categ_id", "in", categories.ids))
+        domain.extend(self._get_extra_history_line_domain())
+        lines = self.env["sale.order.line"].search(domain)
         totals = defaultdict(float)
         for line in lines:
             qty = line.product_uom._compute_quantity(
