@@ -1948,3 +1948,112 @@ class TestPolicyUtilsVariantVsTemplate(CommercialPolicyTestCommon):
             product_id=self.env["product.product"],
         )
         self.assertFalse(locked_covers_line(locked, regular))
+
+
+@tagged("post_install", "-at_install")
+class TestLockedReadonlyForUserFlag(CommercialPolicyTestCommon):
+    """``tr_locked_readonly_for_user`` UI flag: True for rep on lines
+    under locked, False for manager+, False for lines without snapshot.
+    Drives the readonly attr on discount fields and the visibility of
+    discount buttons in the views.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._setup_commercial_policy()
+        cls._setup_commission_bands()
+        cls.locked = (
+            cls.env["partner.commercial.condition.line"]
+            .with_user(cls.director_user)
+            .create(
+                {
+                    "condition_id": cls.condition.id,
+                    "applied_on": "product_template",
+                    "product_tmpl_id": cls.product_template_a.id,
+                    "seller_discount": 5.0,
+                    "is_locked": True,
+                    "fixed_commission_rate": 2.0,
+                }
+            )
+        )
+
+    def _sale_line_under_locked(self):
+        order = self._create_order()
+        line = self._create_order_line(order, product=self.product_a, qty=1)
+        order._apply_condition_to_line(line, self.condition)
+        return line
+
+    def _sale_line_regular(self):
+        order = self._create_order()
+        return self._create_order_line(order, product=self.product_b, qty=1)
+
+    def test_sale_flag_true_for_rep_under_locked(self):
+        line = self._sale_line_under_locked()
+        self.assertTrue(line.with_user(self.salesperson).tr_locked_readonly_for_user)
+
+    def test_sale_flag_false_for_manager_under_locked(self):
+        line = self._sale_line_under_locked()
+        self.assertFalse(line.with_user(self.manager_user).tr_locked_readonly_for_user)
+
+    def test_sale_flag_false_for_director_under_locked(self):
+        line = self._sale_line_under_locked()
+        self.assertFalse(line.with_user(self.director_user).tr_locked_readonly_for_user)
+
+    def test_sale_flag_false_for_rep_without_snapshot(self):
+        line = self._sale_line_regular()
+        self.assertFalse(line.with_user(self.salesperson).tr_locked_readonly_for_user)
+
+    def test_invoice_flag_true_for_rep_under_locked(self):
+        invoice = self._create_manual_invoice()
+        invoice.commercial_condition_id = self.condition
+        invoice.sales_profile_id = self.agent_profile
+        line = (
+            self.env["account.move.line"]
+            .sudo()
+            .create(
+                {
+                    "move_id": invoice.id,
+                    "product_id": self.product_a.id,
+                    "quantity": 1.0,
+                    "name": self.product_a.display_name,
+                }
+            )
+        )
+        self.assertTrue(line.with_user(self.salesperson).tr_locked_readonly_for_user)
+
+    def test_invoice_flag_false_for_manager_under_locked(self):
+        invoice = self._create_manual_invoice()
+        invoice.commercial_condition_id = self.condition
+        invoice.sales_profile_id = self.agent_profile
+        line = (
+            self.env["account.move.line"]
+            .sudo()
+            .create(
+                {
+                    "move_id": invoice.id,
+                    "product_id": self.product_a.id,
+                    "quantity": 1.0,
+                    "name": self.product_a.display_name,
+                }
+            )
+        )
+        self.assertFalse(line.with_user(self.manager_user).tr_locked_readonly_for_user)
+
+    def test_invoice_flag_false_for_rep_without_snapshot(self):
+        invoice = self._create_manual_invoice()
+        invoice.commercial_condition_id = self.condition
+        invoice.sales_profile_id = self.agent_profile
+        line = (
+            self.env["account.move.line"]
+            .sudo()
+            .create(
+                {
+                    "move_id": invoice.id,
+                    "product_id": self.product_b.id,
+                    "quantity": 1.0,
+                    "name": self.product_b.display_name,
+                }
+            )
+        )
+        self.assertFalse(line.with_user(self.salesperson).tr_locked_readonly_for_user)

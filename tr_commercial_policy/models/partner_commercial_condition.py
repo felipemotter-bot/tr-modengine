@@ -1069,13 +1069,14 @@ class PartnerCommercialConditionLine(models.Model):
             self.product_tmpl_id = False
 
     def action_open_band_form(self):
-        """Open the line's form view so the user can manage band_ids.
+        """Open the line's form view for full editing.
 
-        The tree is editable inline for the simple seller/extra fields;
-        bands live on a nested tree inside the line form, so this
-        button is the entry point. Forces the dedicated form view so
-        the dialog doesn't fall back to Odoo's auto-generated form
-        (which exposes ``condition_id`` and other context fields).
+        The tree is editable inline for the simple seller/extra fields,
+        but governance fields (is_locked, fixed_commission_rate, active)
+        and the bands nested tree live on the dedicated form. Forces
+        the dedicated view so the dialog doesn't fall back to Odoo's
+        auto-generated form (which exposes ``condition_id`` and other
+        context fields).
         """
         self.ensure_one()
         return {
@@ -1084,7 +1085,7 @@ class PartnerCommercialConditionLine(models.Model):
             "res_id": self.id,
             "view_mode": "form",
             "target": "new",
-            "name": _("Manage Bands"),
+            "name": _("Edit Condition Line"),
             "views": [
                 (
                     self.env.ref(

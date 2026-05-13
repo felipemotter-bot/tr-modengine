@@ -114,6 +114,22 @@ class SaleOrderLine(models.Model):
         help="Snapshot of the extra discount produced by the locked "
         "line at apply time. Paired with locked_baseline_seller_discount.",
     )
+    tr_locked_readonly_for_user = fields.Boolean(
+        compute="_compute_tr_locked_readonly_for_user",
+        help="UI helper: True when the line is under a locked condition "
+        "AND the current user is NOT a sales manager (or above). Drives "
+        "the ``readonly`` attribute on discount fields and hides the "
+        "discount-related buttons. Server-side guards remain the "
+        "authoritative check.",
+    )
+
+    @api.depends("locked_condition_line_id")
+    def _compute_tr_locked_readonly_for_user(self):
+        is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
+        for line in self:
+            line.tr_locked_readonly_for_user = (
+                bool(line.locked_condition_line_id) and not is_manager
+            )
 
     @api.depends(
         "product_id",

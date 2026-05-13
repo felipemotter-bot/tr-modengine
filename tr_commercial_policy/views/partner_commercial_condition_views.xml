@@ -88,8 +88,8 @@
                                     <button
                     name="action_open_band_form"
                     type="object"
-                    string="Manage Bands"
-                    icon="fa-bars"
+                    string="Edit Line"
+                    icon="fa-pencil"
                   />
                                 </tree>
                                 <form>
@@ -163,6 +163,18 @@
         <field name="arch" type="xml">
             <form string="Condition Line">
                 <sheet>
+                    <widget
+            name="web_ribbon"
+            title="Locked"
+            bg_color="bg-warning"
+            attrs="{'invisible': [('is_locked', '=', False)]}"
+          />
+                    <widget
+            name="web_ribbon"
+            title="Archived"
+            bg_color="bg-danger"
+            attrs="{'invisible': [('active', '=', True)]}"
+          />
                     <group>
                         <group>
                             <field name="applied_on" />
@@ -174,10 +186,16 @@
                 name="product_id"
                 attrs="{'invisible': [('applied_on', '!=', 'product')]}"
               />
+                            <field name="active" />
                         </group>
                         <group>
                             <field name="seller_discount" />
                             <field name="extra_discount" />
+                            <field name="is_locked" />
+                            <field
+                name="fixed_commission_rate"
+                attrs="{'invisible': [('is_locked', '=', False)]}"
+              />
                         </group>
                     </group>
                     <separator string="Quantity Bands" />
