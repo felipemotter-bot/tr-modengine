@@ -822,6 +822,17 @@ msgid "Main Attachment"
 msgstr "Anexo principal"
 
 #. module: tr_sales_rep_access
+#: model:ir.model.fields,help:tr_sales_rep_access.field_tr_pricelist_basic_wizard__simulate_as_agent_id
+msgid ""
+"Manager-only. Filter the basic pricelist to the categories visible to the "
+"chosen rep, to preview what they would see. Leave empty for the full "
+"catalog."
+msgstr ""
+"Apenas gerentes. Filtra a tabela básica pelas categorias visíveis ao "
+"representante escolhido, para simular o que ele veria. Deixe vazio para "
+"exibir o catálogo completo."
+
+#. module: tr_sales_rep_access
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_partner_change_request__message_has_error
 msgid "Message Delivery error"
 msgstr "Erro de entrega de mensagem"
@@ -1293,6 +1304,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:tr_sales_rep_access.field_sale_order_line__scheduled_date
 msgid "Scheduled Date"
 msgstr "Data Programada"
+
+#. module: tr_sales_rep_access
+#: model:ir.model.fields,field_description:tr_sales_rep_access.field_tr_pricelist_basic_wizard__simulate_as_agent_id
+msgid "Simulate as Rep"
+msgstr "Simular como Representante"
 
 #. module: tr_sales_rep_access
 #: model:ir.model.fields,help:tr_sales_rep_access.field_tr_partner_change_request__sales_rep_partner_id
