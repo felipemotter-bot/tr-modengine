@@ -1766,9 +1766,10 @@ class AccountMove(models.Model):
                 sale_line.seller_discount,
                 sale_line.extra_discount,
             )
-            # Single sudo write keeps balance check deferred via ctx and
-            # satisfies the snapshot guard for the locked_* fields.
-            inv_line.sudo().with_context(**ctx).write(
+            # Commercial fields go through the regular ACL path —
+            # `ctx` defers the balance check until after the dynamic
+            # line sync that happens at the end of the resync flow.
+            inv_line.with_context(**ctx).write(
                 {
                     "seller_discount": sale_line.seller_discount,
                     "extra_discount": sale_line.extra_discount,
@@ -1777,6 +1778,14 @@ class AccountMove(models.Model):
                     "reference_price": sale_line.reference_price,
                     "commission_rate": sale_line.commission_rate,
                     "price_unit": resynced_price_unit,
+                }
+            )
+            # Snapshot fields are internal metadata — sudo satisfies
+            # the snapshot guard. ``ctx`` keeps balance check deferred
+            # so this second write doesn't trip on intermediate state
+            # left by the commercial write above.
+            inv_line.sudo().with_context(**ctx).write(
+                {
                     "locked_condition_line_id": (
                         sale_line.locked_condition_line_id.id or False
                     ),

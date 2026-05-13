@@ -627,3 +627,66 @@ class TestLockedConditionAdversarial(CommercialPolicyTestCommon):
             original_baseline,
         )
         self.assertAlmostEqual(invoice_vals.get("locked_fixed_commission_rate"), 2.0)
+
+    def test_invoice_create_cross_product_spoof_blocked(self):
+        """Rep cannot create an invoice line for product B pointing
+        ``sale_line_ids`` to a sale.order.line of product A (which is
+        under locked) to inherit its snapshot. Defends the
+        ``_snapshots_match_sale_origin`` propagation exception against
+        cross-product spoofing.
+        """
+        order = self._create_order()
+        sale_line = self._create_order_line(order, product=self.product_a, qty=1)
+        order._apply_condition_to_line(sale_line, self.condition)
+        self.assertEqual(sale_line.locked_condition_line_id, self.locked)
+        # Build an invoice for the same partner so the move is valid.
+        invoice = self.env["account.move"].create(
+            {
+                "move_type": "out_invoice",
+                "partner_id": self.customer.id,
+            }
+        )
+        # Spoof attempt A: product mismatch — invoice line of product B
+        # claiming snapshot from sale line of product A.
+        with self.assertRaises(AccessError):
+            self.env["account.move.line"].with_user(self.salesperson).create(
+                {
+                    "move_id": invoice.id,
+                    "product_id": self.product_b.id,
+                    "quantity": 1,
+                    "name": self.product_b.display_name,
+                    "sale_line_ids": [(4, sale_line.id)],
+                    "locked_condition_line_id": (sale_line.locked_condition_line_id.id),
+                    "locked_fixed_commission_rate": (
+                        sale_line.locked_fixed_commission_rate
+                    ),
+                    "locked_baseline_seller_discount": (
+                        sale_line.locked_baseline_seller_discount
+                    ),
+                    "locked_baseline_extra_discount": (
+                        sale_line.locked_baseline_extra_discount
+                    ),
+                }
+            )
+        # Spoof attempt B: product_id ausente — payload sem product_id
+        # também deve bloquear (sem isso, write subsequente pode definir
+        # product_id de outro e o snapshot fica vinculado errado).
+        with self.assertRaises(AccessError):
+            self.env["account.move.line"].with_user(self.salesperson).create(
+                {
+                    "move_id": invoice.id,
+                    "quantity": 1,
+                    "name": self.product_b.display_name,
+                    "sale_line_ids": [(4, sale_line.id)],
+                    "locked_condition_line_id": (sale_line.locked_condition_line_id.id),
+                    "locked_fixed_commission_rate": (
+                        sale_line.locked_fixed_commission_rate
+                    ),
+                    "locked_baseline_seller_discount": (
+                        sale_line.locked_baseline_seller_discount
+                    ),
+                    "locked_baseline_extra_discount": (
+                        sale_line.locked_baseline_extra_discount
+                    ),
+                }
+            )

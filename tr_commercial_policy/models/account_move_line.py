@@ -727,13 +727,15 @@ class AccountMoveLine(models.Model):
         Product check defends against spoofing: rep cannot point
         ``sale_line_ids`` to a sale line of product X and use it to
         justify locked snapshots on an invoice line of product Y.
+        Requires explicit ``product_id`` in vals matching the sale line
+        — ausente conta como mismatch (defesa contra payload sem
+        product_id seguido por write que define product_id de outro).
         """
         if not sale_line:
             return False
         # Product must match the sale line origin (defense against
-        # cross-product snapshot spoof).
-        given_product = vals.get("product_id")
-        if given_product and given_product != sale_line.product_id.id:
+        # cross-product snapshot spoof). Ausência conta como mismatch.
+        if vals.get("product_id") != sale_line.product_id.id:
             return False
         # locked_condition_line_id
         given_id = vals.get(
