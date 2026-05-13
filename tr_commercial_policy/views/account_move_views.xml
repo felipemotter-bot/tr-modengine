@@ -167,6 +167,7 @@
         expr="//field[@name='invoice_line_ids']/tree//field[@name='price_unit']"
         position="before"
       >
+                <field name="locked_condition_line_id" invisible="True" />
                 <field
           name="seller_discount"
           string="Seller Disc. (%)"

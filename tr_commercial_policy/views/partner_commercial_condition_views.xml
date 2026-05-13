@@ -56,8 +56,14 @@
                     <notebook>
                         <page string="Product Lines" name="lines">
                             <field name="has_any_band" invisible="1" />
-                            <field name="line_ids">
-                                <tree editable="bottom">
+                            <field name="line_ids" context="{'active_test': False}">
+                                <tree
+                  editable="bottom"
+                  decoration-warning="is_locked"
+                  decoration-muted="not active"
+                >
+                                    <field name="active" optional="hide" />
+                                    <field name="is_locked" optional="show" />
                                     <field name="applied_on" />
                                     <field
                     name="product_tmpl_id"
@@ -69,6 +75,11 @@
                   />
                                     <field name="seller_discount" />
                                     <field name="extra_discount" />
+                                    <field
+                    name="fixed_commission_rate"
+                    optional="show"
+                    attrs="{'column_invisible': [('parent.has_any_band', '=', False)]}"
+                  />
                                     <field
                     name="bands_summary"
                     readonly="1"
@@ -83,6 +94,18 @@
                                 </tree>
                                 <form>
                                     <sheet>
+                                        <widget
+                      name="web_ribbon"
+                      title="Locked"
+                      bg_color="bg-warning"
+                      attrs="{'invisible': [('is_locked', '=', False)]}"
+                    />
+                                        <widget
+                      name="web_ribbon"
+                      title="Archived"
+                      bg_color="bg-danger"
+                      attrs="{'invisible': [('active', '=', True)]}"
+                    />
                                         <group>
                                             <group>
                                                 <field name="applied_on" />
@@ -94,10 +117,16 @@
                           name="product_id"
                           attrs="{'invisible': [('applied_on', '!=', 'product')]}"
                         />
+                                                <field name="active" />
                                             </group>
                                             <group>
                                                 <field name="seller_discount" />
                                                 <field name="extra_discount" />
+                                                <field name="is_locked" />
+                                                <field
+                          name="fixed_commission_rate"
+                          attrs="{'invisible': [('is_locked', '=', False)]}"
+                        />
                                             </group>
                                         </group>
                                         <separator string="Quantity Bands" />

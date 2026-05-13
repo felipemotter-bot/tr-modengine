@@ -176,6 +176,7 @@
         expr="//field[@name='order_line']/tree/field[@name='discount']"
         position="before"
       >
+                <field name="locked_condition_line_id" invisible="True" />
                 <field name="seller_discount" optional="hide" />
                 <field name="extra_discount" optional="hide" />
                 <field name="seller_discount_max" invisible="True" />
@@ -183,7 +184,7 @@
                 <field name="commission_rate" optional="hide" />
             </xpath>
 
-            <!-- Save condition button in tree (after price_unit) -->
+            <!-- Save condition button in tree + lock icon for locked lines -->
             <xpath
         expr="//field[@name='order_line']/tree/field[@name='price_unit']"
         position="after"
@@ -195,7 +196,15 @@
           icon="fa-save"
           title="Save condition to customer"
           class="btn-link btn-sm p-0"
-          attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+          attrs="{'invisible': ['|', '|', ('discount_changed', '=', False), ('id', '=', False), ('locked_condition_line_id', '!=', False)]}"
+        />
+                <button
+          name="action_open_locked_condition_line"
+          type="object"
+          icon="fa-lock"
+          title="This line is under a locked condition — discount and commission set by the Sales Director"
+          class="btn-link btn-sm p-0 text-warning"
+          attrs="{'invisible': [('locked_condition_line_id', '=', False)]}"
         />
             </xpath>
 

@@ -25,6 +25,9 @@ _LINE_TRACKED_FIELDS = (
     "product_id",
     "seller_discount",
     "extra_discount",
+    "is_locked",
+    "fixed_commission_rate",
+    "active",
 )
 _BAND_TRACKED_FIELDS = (
     "qty_min",
@@ -597,39 +600,104 @@ class PartnerCommercialCondition(models.Model):
         return result
 
     def _resolve_discount_for_product(self, product, qty=0.0, uom=None):
-        """Resolve discount for a product: variant > template > general.
+        """Resolve discount for a product: locked > variant > template > general.
 
-        Pure resolution — no side effects on any record.
-        Returns (seller_discount, extra_discount, source_level).
+        Returns ``(seller_discount, extra_discount, source_level)``.
+        Wraps ``_resolve_with_locked`` keeping the 3-tuple shape that
+        existing callers (wizards) consume; for callers that need
+        the locked line / fixed_commission_rate, use
+        ``_resolve_with_locked`` directly.
+        """
+        seller, extra, source, _locked, _rate = self._resolve_with_locked(
+            product, qty=qty, uom=uom
+        )
+        return (seller, extra, source)
 
-        ``qty`` is the quantity of the order/invoice line (NOT the
-        order total). ``uom`` is the line's UoM; defaults to
-        ``product.uom_id`` when omitted.
+    def _resolve_with_locked(self, product, qty=0.0, uom=None):
+        """Resolve discount + locked snapshot data for a product.
 
-        Each line's effective discount is selected from its
-        ``band_ids`` based on ``qty`` (highest ``qty_min`` ≤ qty
-        wins, after UoM normalization). When no band fits or
-        ``band_ids`` is empty, the line's direct
-        ``seller_discount``/``extra_discount`` fields are used as
-        the implicit qty_min=0 band.
+        Returns ``(seller, extra, source, locked_line, fixed_commission_rate)``.
+
+        Resolution order:
+
+        1. Active locked variant — most specific match wins.
+        2. Active locked template — variant of a template under locked.
+        3. Active regular variant — only when no locked covers.
+        4. Active regular template — only when no locked covers.
+        5. General — falls back to ``condition.seller_discount`` on
+           the header; no concrete line.
+
+        ``source`` keeps the same values as ``_resolve_discount_for_product``
+        for compatibility with wizards (``"variant"``, ``"template"``,
+        ``"general"``) plus the new ``"locked"`` value when a locked
+        line resolves.
+
+        Archived lines (``active=False``) are excluded explicitly so
+        resolution does not depend on ``active_test`` from the
+        environment context.
         """
         self.ensure_one()
+        Empty = self.env["partner.commercial.condition.line"]
+        if not product:
+            return (
+                self.seller_discount or 0.0,
+                0.0,
+                "general",
+                Empty,
+                0.0,
+            )
         line_uom = uom or product.uom_id
-        # 1. Variant-specific line
-        variant_line = self.line_ids.filtered(lambda cline: cline.product_id == product)
-        if variant_line:
-            seller, extra = variant_line[0]._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "variant")
-        # 2. Template-specific line
-        tmpl_line = self.line_ids.filtered(
-            lambda cline: cline.product_tmpl_id == product.product_tmpl_id
-            and cline.applied_on == "product_template"
+        active_lines = self.line_ids.filtered("active")
+        locked_lines = active_lines.filtered("is_locked")
+        regular_lines = active_lines.filtered(lambda line: not line.is_locked)
+        # 1. Locked variant
+        variant_locked = locked_lines.filtered(
+            lambda line: line.applied_on == "product" and line.product_id == product
         )
-        if tmpl_line:
-            seller, extra = tmpl_line[0]._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "template")
-        # 3. General
-        return (self.seller_discount or 0.0, 0.0, "general")
+        if variant_locked:
+            chosen = variant_locked[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (
+                seller,
+                extra,
+                "locked",
+                chosen,
+                chosen.fixed_commission_rate or 0.0,
+            )
+        # 2. Locked template
+        tmpl_locked = locked_lines.filtered(
+            lambda line: line.applied_on == "product_template"
+            and line.product_tmpl_id == product.product_tmpl_id
+        )
+        if tmpl_locked:
+            chosen = tmpl_locked[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (
+                seller,
+                extra,
+                "locked",
+                chosen,
+                chosen.fixed_commission_rate or 0.0,
+            )
+        # 3. Regular variant
+        variant_reg = regular_lines.filtered(
+            lambda line: line.applied_on == "product" and line.product_id == product
+        )
+        if variant_reg:
+            chosen = variant_reg[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (seller, extra, "variant", chosen, 0.0)
+        # 4. Regular template
+        tmpl_reg = regular_lines.filtered(
+            lambda line: line.applied_on == "product_template"
+            and line.product_tmpl_id == product.product_tmpl_id
+        )
+        if tmpl_reg:
+            chosen = tmpl_reg[0]
+            seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
+            return (seller, extra, "template", chosen, 0.0)
+        # 5. General
+        return (self.seller_discount or 0.0, 0.0, "general", Empty, 0.0)
 
     def _sync_to_partners(self):
         """Sync condition fields to all partners using this condition.
@@ -790,6 +858,28 @@ class PartnerCommercialConditionLine(models.Model):
     )
     seller_discount = fields.Float(string="Seller Discount (%)")
     extra_discount = fields.Float(string="Extra Discount (%)")
+    is_locked = fields.Boolean(
+        string="Locked",
+        default=False,
+        help="When True, the discount and commission on this line are "
+        "decided by the Sales Director. Sales rep cannot edit any field "
+        "of a locked line. Manager and director may still apply pontual "
+        "overrides on the order/invoice line itself.",
+    )
+    fixed_commission_rate = fields.Float(
+        string="Fixed Commission Rate (%)",
+        default=0.0,
+        help="Commission rate paid to the agent for order/invoice lines "
+        "that resolve to this line when ``is_locked`` is True. Replaces "
+        "the band resolution from the agent profile. Typical value: 0%. "
+        "Ignored when is_locked is False.",
+    )
+    active = fields.Boolean(
+        default=True,
+        help="Archive (uncheck) to stop applying this line on new "
+        "orders/invoices while preserving the snapshot reference on "
+        "existing records.",
+    )
     band_ids = fields.One2many(
         comodel_name="partner.commercial.condition.line.band",
         inverse_name="line_id",
@@ -858,6 +948,76 @@ class PartnerCommercialConditionLine(models.Model):
                 raise ValidationError(
                     _("Extra discount cannot be combined with a seller markup.")
                 )
+
+    @api.constrains("fixed_commission_rate")
+    def _check_fixed_commission_rate_non_negative(self):
+        for line in self:
+            if (line.fixed_commission_rate or 0.0) < 0:
+                raise ValidationError(
+                    _(
+                        "Fixed commission rate cannot be negative " "(got %.2f%%).",
+                        line.fixed_commission_rate,
+                    )
+                )
+
+    @api.constrains(
+        "condition_id",
+        "applied_on",
+        "product_id",
+        "product_tmpl_id",
+        "is_locked",
+        "active",
+    )
+    def _check_no_locked_regular_overlap(self):
+        """Block coexistence between locked and regular lines that
+        would shadow each other within the same condition.
+
+        Since locked always wins in resolution, allowing both a locked
+        and a regular line in overlapping scopes would create a 'dead'
+        regular line. Enforce explicit cleanup at save time.
+
+        Matrix:
+          locked variant Y + regular variant Y → block
+          locked template X + regular template X → block
+          locked template X + regular variant Y of X → block
+          locked variant Y + regular template X (Y is variant of X)
+            → ALLOW (locked is narrower; template covers other variants)
+        """
+        from .policy_utils import locked_covers_line
+
+        for line in self:
+            if not line.active:
+                continue
+            siblings = (line.condition_id.line_ids - line).filtered("active")
+            if line.is_locked:
+                covered = siblings.filtered(
+                    lambda r, k=line: not r.is_locked and locked_covers_line(k, r)
+                )
+                if covered:
+                    labels = ", ".join(r._line_chatter_label() for r in covered)
+                    raise ValidationError(
+                        _(
+                            "This locked line would cover existing "
+                            "regular lines in the same condition (%s). "
+                            "Remove or demote them first.",
+                            labels,
+                        )
+                    )
+            else:
+                covering = siblings.filtered(
+                    lambda k, ln=line: k.is_locked and locked_covers_line(k, ln)
+                )
+                if covering:
+                    labels = ", ".join(k._line_chatter_label() for k in covering)
+                    raise ValidationError(
+                        _(
+                            "This regular line is covered by an active "
+                            "locked line in the same condition (%s). "
+                            "Ask the Sales Director to remove the lock "
+                            "first.",
+                            labels,
+                        )
+                    )
 
     def _get_band_reference_uom(self):
         """UoM used to normalize bands for comparison.
@@ -1061,10 +1221,49 @@ class PartnerCommercialConditionLine(models.Model):
             body="<p>%s</p>%s" % (html_escape(header), body_extra)
         )
 
+    def _check_locked_state_edit(self, vals):
+        """Server-side enforcement of director governance.
+
+        Director: full access.
+
+        Non-director (rep / manager):
+          - NEVER allowed to set/alter governance fields on ANY line:
+            is_locked, fixed_commission_rate, active.
+          - On a CURRENTLY locked line: entire record is read-only —
+            cannot change discount, scope (applied_on, product_id,
+            product_tmpl_id), or condition_id. Without that, a rep
+            could move a locked line to a different product/template
+            and redefine the locked policy.
+        """
+        if self.env.su:
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_director"):
+            return
+        governance_fields = {"is_locked", "fixed_commission_rate", "active"}
+        if governance_fields.intersection(vals):
+            raise AccessError(
+                _(
+                    "Only the Sales Director can set/change "
+                    "is_locked, fixed_commission_rate, or active on "
+                    "a condition line."
+                )
+            )
+        # Block any further write on a currently locked line.
+        locked = self.filtered("is_locked")
+        if locked:
+            raise AccessError(
+                _(
+                    "This condition line is locked. Only the Sales "
+                    "Director can change it. Affected: %s",
+                    ", ".join(line._line_chatter_label() for line in locked),
+                )
+            )
+
     @api.model_create_multi
     def create(self, vals_list):
         Condition = self.env["partner.commercial.condition"]
         for vals in vals_list:
+            self.browse()._check_locked_state_edit(vals)
             condition = Condition.browse(vals.get("condition_id")).exists()
             self._validate_line_discount_limits(vals, condition=condition)
         records = super().create(vals_list)
@@ -1081,6 +1280,7 @@ class PartnerCommercialConditionLine(models.Model):
         return records
 
     def write(self, vals):
+        self._check_locked_state_edit(vals)
         tracked = [f for f in _LINE_TRACKED_FIELDS if f in vals]
         old_data = {line.id: {f: line[f] for f in tracked} for line in self}
         self._validate_line_discount_limits(vals)
@@ -1110,6 +1310,20 @@ class PartnerCommercialConditionLine(models.Model):
         return res
 
     def unlink(self):
+        # Director governance applies on unlink too: rep/manager cannot
+        # delete a locked line.
+        if not self.env.su and not self.env.user.has_group(
+            "tr_commercial_policy.group_sales_director"
+        ):
+            locked = self.filtered("is_locked")
+            if locked:
+                raise AccessError(
+                    _(
+                        "This condition line is locked. Only the Sales "
+                        "Director can delete it. Affected: %s",
+                        ", ".join(line._line_chatter_label() for line in locked),
+                    )
+                )
         suppressed = _chatter_suppressed(self.env)
         snapshots = (
             []
@@ -1141,12 +1355,15 @@ class PartnerCommercialConditionLine(models.Model):
                     )
                 )
 
-    @api.constrains("product_id", "product_tmpl_id", "condition_id")
+    @api.constrains("product_id", "product_tmpl_id", "condition_id", "active")
     def _check_unique_product(self):
         for line in self:
+            if not line.active:
+                continue
             domain = [
                 ("condition_id", "=", line.condition_id.id),
                 ("id", "!=", line.id),
+                ("active", "=", True),
             ]
             if line.product_id:
                 domain.append(("product_id", "=", line.product_id.id))
@@ -1324,8 +1541,49 @@ class PartnerCommercialConditionLineBand(models.Model):
             body="<p>%s</p>%s" % (html_escape(header), body_extra)
         )
 
+    def _check_locked_parent_band_edit(self, vals_list=None, new_line_id=None):
+        """Block band CRUD when the parent condition.line is locked.
+
+        Two call paths:
+          - ``vals_list`` set → create path: read line_id from vals
+            BEFORE super().create() exists.
+          - ``vals_list`` not set → write/unlink path: inspect the
+            current parents of ``self`` (and the new parent if write
+            moves the band via ``new_line_id``).
+        """
+        if self.env.su:
+            return
+        if self.env.user.has_group("tr_commercial_policy.group_sales_director"):
+            return
+        Line = self.env["partner.commercial.condition.line"]
+        if vals_list is not None:
+            line_ids = {v.get("line_id") for v in vals_list if v.get("line_id")}
+            if line_ids:
+                parents = Line.browse(list(line_ids)).filtered("is_locked")
+                if parents:
+                    raise AccessError(
+                        _(
+                            "Bands of a locked condition line can only "
+                            "be added by the Sales Director."
+                        )
+                    )
+            return
+        locked_bands = self.filtered(lambda b: b.line_id.is_locked)
+        if locked_bands:
+            raise AccessError(
+                _(
+                    "Bands of a locked condition line can only be "
+                    "edited or removed by the Sales Director."
+                )
+            )
+        if new_line_id:
+            new_parent = Line.browse(new_line_id)
+            if new_parent.is_locked:
+                raise AccessError(_("Cannot move band to a locked condition line."))
+
     @api.model_create_multi
     def create(self, vals_list):
+        self.browse()._check_locked_parent_band_edit(vals_list=vals_list)
         bands = super().create(vals_list)
         bands._validate_against_profile()
         for band in bands:
@@ -1341,6 +1599,7 @@ class PartnerCommercialConditionLineBand(models.Model):
         return bands
 
     def write(self, vals):
+        self._check_locked_parent_band_edit(new_line_id=vals.get("line_id"))
         tracked = [f for f in _BAND_TRACKED_FIELDS if f in vals]
         old_data = {band.id: {f: band[f] for f in tracked} for band in self}
         res = super().write(vals)
@@ -1380,6 +1639,7 @@ class PartnerCommercialConditionLineBand(models.Model):
         return res
 
     def unlink(self):
+        self._check_locked_parent_band_edit()
         suppressed = _chatter_suppressed(self.env)
         snapshots = (
             []

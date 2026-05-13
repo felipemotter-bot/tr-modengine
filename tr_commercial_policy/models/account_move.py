@@ -412,10 +412,14 @@ class AccountMove(models.Model):
         }
 
     def _prepare_condition_line_vals(self, line, condition):
-        """Return the full pricing-chain values for one invoice line.
+        """Return commercial pricing-chain values for one invoice line.
 
-        Uses condition values directly (not self.tr_*) to avoid
-        stale header values when called before move.write().
+        Returns ONLY commercial fields (seller/extra discount, prices,
+        commission rate). Snapshot fields (``locked_condition_line_id``,
+        ``locked_fixed_commission_rate``, ``locked_baseline_*``) are
+        returned by ``_prepare_locked_snapshot_vals`` and must be
+        written separately via ``sudo()`` because they are internal
+        metadata.
         """
         self.ensure_one()
         if not condition or not line.product_id:
@@ -424,7 +428,9 @@ class AccountMove(models.Model):
             seller_discount,
             extra_discount,
             _source,
-        ) = condition._resolve_discount_for_product(
+            locked_line,
+            fixed_rate,
+        ) = condition._resolve_with_locked(
             line.product_id,
             qty=line.quantity,
             uom=line.product_uom_id,
@@ -444,13 +450,16 @@ class AccountMove(models.Model):
             extra_discount,
         )
         discount = (condition.cash_discount or 0.0) + (condition.fob_discount or 0.0)
-        commission_rate = (
-            line._get_commission_rate_for_discount(
-                seller_discount,
-                profile=condition.applicable_profile_id,
+        if locked_line:
+            commission_rate = fixed_rate or 0.0
+        else:
+            commission_rate = (
+                line._get_commission_rate_for_discount(
+                    seller_discount,
+                    profile=condition.applicable_profile_id,
+                )
+                or 0.0
             )
-            or 0.0
-        )
         return {
             "seller_discount": seller_discount,
             "extra_discount": extra_discount,
@@ -462,8 +471,45 @@ class AccountMove(models.Model):
             "commission_rate": commission_rate,
         }
 
+    def _prepare_locked_snapshot_vals(self, line, condition):
+        """Return locked snapshot fields for a manual invoice line.
+
+        Always paired with ``_prepare_condition_line_vals`` and applied
+        via ``sudo()`` (snapshot fields are internal — the snapshot
+        guard rejects direct write by non-system users).
+        """
+        self.ensure_one()
+        if not condition or not line.product_id:
+            return {}
+        (
+            seller_discount,
+            extra_discount,
+            _source,
+            locked_line,
+            fixed_rate,
+        ) = condition._resolve_with_locked(
+            line.product_id,
+            qty=line.quantity,
+            uom=line.product_uom_id,
+        )
+        return {
+            "locked_condition_line_id": locked_line.id if locked_line else False,
+            "locked_fixed_commission_rate": fixed_rate or 0.0,
+            "locked_baseline_seller_discount": (
+                (seller_discount or 0.0) if locked_line else 0.0
+            ),
+            "locked_baseline_extra_discount": (
+                (extra_discount or 0.0) if locked_line else 0.0
+            ),
+        }
+
     def _prepare_clear_line_vals(self):
-        """Return values that clear manual policy state from a line."""
+        """Return values that clear manual policy state from a line.
+
+        Includes the 4 locked snapshot fields so a line that lost its
+        condition does not keep behaving as locked. Snapshot fields
+        are applied via ``sudo()`` by the caller (internal metadata).
+        """
         return {
             "seller_discount": 0.0,
             "extra_discount": 0.0,
@@ -473,26 +519,56 @@ class AccountMove(models.Model):
             "commission_rate": 0.0,
             "discount": 0.0,
             "price_unit": 0.0,
+            "locked_condition_line_id": False,
+            "locked_fixed_commission_rate": 0.0,
+            "locked_baseline_seller_discount": 0.0,
+            "locked_baseline_extra_discount": 0.0,
         }
 
     def _clear_manual_invoice_policy_lines(self):  # pragma: no cover — NewId only
-        """Clear policy fields on manual lines (NewId/onchange only)."""
+        """Clear policy fields on manual lines (NewId/onchange only).
+
+        Snapshot fields cleared via ``sudo()`` because they are
+        internal metadata (snapshot guard rejects direct write).
+        """
         manual_lines = self._get_policy_invoice_lines().filtered(  # pragma: no cover
             lambda line: not line.sale_line_ids
         )
         clear_vals = self._prepare_clear_line_vals()  # pragma: no cover
+        snapshot_fields = {  # pragma: no cover
+            "locked_condition_line_id",
+            "locked_fixed_commission_rate",
+            "locked_baseline_seller_discount",
+            "locked_baseline_extra_discount",
+        }
+        snapshot_clear = {  # pragma: no cover
+            k: v for k, v in clear_vals.items() if k in snapshot_fields
+        }
+        commercial_clear = {  # pragma: no cover
+            k: v for k, v in clear_vals.items() if k not in snapshot_fields
+        }
         for line in manual_lines:  # pragma: no cover
-            line.update(clear_vals)  # pragma: no cover
+            line.update(commercial_clear)  # pragma: no cover
+            if snapshot_clear:  # pragma: no cover
+                line.sudo().update(snapshot_clear)  # pragma: no cover
             line.agent_ids = [(5, 0, 0)]  # pragma: no cover
 
     def _apply_condition_to_invoice_line(self, line, condition):
-        """Apply pricing chain to one line (NewId/onchange only)."""
+        """Apply pricing chain to one line (NewId/onchange only).
+
+        Commercial fields applied via normal ``update``; snapshot
+        fields via ``sudo().update`` because they are internal
+        metadata.
+        """
         line_vals = self._prepare_condition_line_vals(line, condition)
+        snapshot_vals = self._prepare_locked_snapshot_vals(line, condition)
         if (
             not line_vals
         ):  # pragma: no cover — condition+product always present at call site
             return  # pragma: no cover
         line.update(line_vals)
+        if snapshot_vals:
+            line.sudo().update(snapshot_vals)
 
     # --- Manual invoice: agent commissions ---
 
@@ -514,8 +590,8 @@ class AccountMove(models.Model):
             profile = self.sales_profile_id
             if not profile or profile.profile_type != "agent":
                 continue
-            band_rate = line._get_commission_rate_for_discount(line.seller_discount)
-            if band_rate is False:
+            rate = line._get_policy_commission_rate()
+            if rate is False:
                 continue
             for agent_line in line.agent_ids:
                 base_commission = agent_line.agent_id.commission_id
@@ -525,7 +601,7 @@ class AccountMove(models.Model):
                     continue  # pragma: no cover
                 commission = Commission._ensure_managed_commission(
                     base_commission.invoice_state,
-                    band_rate,
+                    rate,
                 )
                 if commission != agent_line.commission_id:
                     agent_line.commission_id = commission
@@ -1181,7 +1257,7 @@ class AccountMove(models.Model):
         """
         self.ensure_one()
         line = self.env["account.move.line"].browse(issue["line_id"])
-        expected = line._get_commission_rate_for_discount(line.seller_discount)
+        expected = line._get_policy_commission_rate()
         if expected is False:
             return False
         precision = self.env["decimal.precision"].precision_get("Discount Policy")
@@ -1365,6 +1441,12 @@ class AccountMove(models.Model):
         manager_limit = profile.manager_extra_limit or 0
         for inv_line in self._get_policy_invoice_lines():
             if not inv_line.extra_discount or inv_line.extra_discount <= 0:
+                continue
+            # Lines aligned with the snapshotted locked line skip tier
+            # validation — director decided. Override desaligns the
+            # baseline; snapshot-based, stable across later edits of
+            # the locked condition.line.
+            if inv_line._is_aligned_with_locked_snapshot():
                 continue
             level = get_extra_discount_approval_level(
                 inv_line.extra_discount, manager_limit
@@ -1693,6 +1775,24 @@ class AccountMove(models.Model):
                     "reference_price": sale_line.reference_price,
                     "commission_rate": sale_line.commission_rate,
                     "price_unit": resynced_price_unit,
+                }
+            )
+            # Snapshot fields are internal metadata — must go through
+            # sudo() to satisfy the snapshot guard.
+            inv_line.sudo().write(
+                {
+                    "locked_condition_line_id": (
+                        sale_line.locked_condition_line_id.id or False
+                    ),
+                    "locked_fixed_commission_rate": (
+                        sale_line.locked_fixed_commission_rate or 0.0
+                    ),
+                    "locked_baseline_seller_discount": (
+                        sale_line.locked_baseline_seller_discount or 0.0
+                    ),
+                    "locked_baseline_extra_discount": (
+                        sale_line.locked_baseline_extra_discount or 0.0
+                    ),
                 }
             )
 
