@@ -7,6 +7,7 @@ from . import test_config_settings
 from . import test_disable_native
 from . import test_email_send
 from . import test_exceptions_section
+from . import test_filter_dim
 from . import test_invalid_price_filter
 from . import test_layout_geral
 from . import test_layout_historico
