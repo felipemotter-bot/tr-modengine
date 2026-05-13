@@ -425,6 +425,104 @@ armazenados em **percentual** (não decimal). As chaves antigas sem sufixo (`tax
 
 ---
 
+## 13. Linhas Travadas (Locked Lines)
+
+Mecanismo para o **diretor comercial** definir desconto e comissão fora da alçada do
+representante, sem precisar de contrato com o cliente. Tipicamente usado em itens em que
+o rep não tem incentivo (comissão zero ou fixa baixa decidida pelo diretor).
+
+### Modelo
+
+A `partner.commercial.condition.line` existente ganha 3 campos:
+
+- `is_locked` (Boolean) — marca a linha como travada.
+- `fixed_commission_rate` (Float %, default 0) — comissão fixa que substitui as bandas
+  do profile do agente quando `is_locked=True`.
+- `active` (Boolean, default True) — diretor arquiva pra parar de aplicar em pedidos
+  novos sem afetar pedidos antigos com snapshot.
+
+### Quem governa
+
+- **Diretor** (`group_sales_director`) — CRUD completo. Único autorizado a:
+  - Setar/alterar `is_locked`, `fixed_commission_rate`, `active` em qualquer linha.
+  - Editar QUALQUER campo de uma linha já `is_locked=True` (scope, produto, desconto).
+    Linha travada é totalmente read-only fora de diretor.
+  - Apagar linha travada.
+- **Manager** — pode aplicar override pontual de desconto direto na linha do
+  pedido/fatura (sem afetar o cadastro da condição). Não governa.
+- **Rep** — só edita linha regular (não-locked). Não pode alterar nada de uma linha
+  travada, nem promover/demover.
+
+### Resolução no pedido
+
+Pra cada linha do pedido / fatura, `_resolve_with_locked` no
+`partner.commercial.condition` resolve:
+
+1. Linha ativa **locked** que cobre o produto (variant > template).
+2. Senão, linha **regular** que cobre o produto (variant > template).
+3. Senão, desconto **general** do header da condição.
+
+Linha sob locked tem 4 snapshots stored na sale.order.line / account.move.line:
+
+- `locked_condition_line_id` (M2O, ondelete=restrict) — referência da linha.
+- `locked_fixed_commission_rate` (Float) — comissão na hora do apply.
+- `locked_baseline_seller_discount` (Float) — baseline pro guard detectar override.
+- `locked_baseline_extra_discount` (Float) — idem.
+
+### Coexistência
+
+Linha regular não pode existir dentro do escopo de uma locked ativa, e vice-versa
+(constraint dura). Casos:
+
+| Locked     | Regular                  | Decisão                                 |
+| ---------- | ------------------------ | --------------------------------------- |
+| Template X | Template X               | Bloquear                                |
+| Template X | Variant Y do template X  | Bloquear                                |
+| Variant Y  | Variant Y                | Bloquear                                |
+| Variant Y  | Template X (Y é variant) | **Permitir** (locked é mais específica) |
+
+Linhas arquivadas (`active=False`) não contam. Reativar uma arquivada que cria overlap
+dispara a constraint.
+
+### Bloqueios na linha do pedido / fatura
+
+- `seller_discount` / `extra_discount` em linha sob locked: rep só consegue escrever
+  valor igual ao baseline stored. Override divergente: bloqueia. Manager/diretor: passam
+  (override pontual, sem trilha — risco silencioso aceito conscientemente).
+- Snapshots (`locked_*`): bloqueados pra escrita direta de qualquer usuário não- system.
+  Helpers internos do sistema (apply, reapply, snapshot_on_create, resync) escrevem via
+  `sudo()`.
+- `_validate_seller_discount_limit`: pula a comparação contra o teto do profile quando a
+  linha está sob locked (diretor decidiu acima do teto conscientemente).
+- Tier validation (`extra_discount`, internal band) pula linhas alinhadas com baseline.
+  Override do manager/diretor desalinha e o fluxo de aprovação volta.
+
+### Promoção / Demissão
+
+Diretor promove uma linha regular pra locked (`is_locked=True`) ou vice-versa. **Pedidos
+em rascunho NÃO recomputam automaticamente** — só pegam a mudança via fluxo explícito
+(`tr.reload.condition.wizard`). Pedidos confirmados mantêm snapshot histórico.
+
+### Arquivar
+
+Diretor arquiva (`active=False`) uma locked usada por pedidos antigos. Resultado:
+
+- Pedidos antigos com snapshot mantêm a referência (preservada por
+  `ondelete='restrict'`).
+- Pedidos novos / reapply ignoram a arquivada.
+- Apagar (unlink) é bloqueado se há snapshot apontando — arquivar é o caminho.
+
+### Auditoria
+
+Toda mudança em `is_locked`, `fixed_commission_rate`, `active`, `seller_discount`,
+`extra_discount`, `applied_on`, `product_id`, `product_tmpl_id` na `condition.line`
+posta entrada no chatter da condição (mesmo padrão das linhas regulares).
+
+Override de manager/diretor na linha do pedido/fatura **não** tem trilha — decisão
+consciente.
+
+---
+
 ## Dependências do Módulo
 
 - `sale_management` — Vendas (Odoo padrão)

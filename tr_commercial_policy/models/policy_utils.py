@@ -273,3 +273,38 @@ def resolve_applicable_rule(product, rules, empty_rule, line_qty, line_uom):
     if eligible:
         return _pick_best(eligible)
     return empty_rule
+
+
+def locked_covers_line(locked, regular):
+    """True when a locked condition.line covers the scope of a regular
+    condition.line in the same condition.
+
+    Pairs (locked.applied_on ↔ regular.applied_on):
+      - product       ↔ product       : same product_id
+      - product_tmpl  ↔ product_tmpl  : same product_tmpl_id
+      - product_tmpl  ↔ product       : regular.product_id.product_tmpl_id
+                                        == locked.product_tmpl_id
+      - product       ↔ product_tmpl  : never (locked variant is narrower
+                                        than regular template — line
+                                        template still covers OTHER
+                                        variants of the same template).
+
+    Both records must be active; locked must be is_locked; regular must
+    not be is_locked. Caller is responsible for the role pairing.
+    """
+    if not locked or not regular:
+        return False
+    if not locked.active or not regular.active:
+        return False
+    if not locked.is_locked or regular.is_locked:
+        return False
+    k_scope = locked.applied_on
+    l_scope = regular.applied_on
+    if k_scope == "product":
+        return l_scope == "product" and locked.product_id == regular.product_id
+    if k_scope == "product_template":
+        if l_scope == "product_template":
+            return locked.product_tmpl_id == regular.product_tmpl_id
+        if l_scope == "product":
+            return regular.product_id.product_tmpl_id == locked.product_tmpl_id
+    return False

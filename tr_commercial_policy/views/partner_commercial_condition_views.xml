@@ -56,19 +56,55 @@
                     <notebook>
                         <page string="Product Lines" name="lines">
                             <field name="has_any_band" invisible="1" />
-                            <field name="line_ids">
-                                <tree editable="bottom">
-                                    <field name="applied_on" />
+                            <field name="line_ids" context="{'active_test': False}">
+                                <tree
+                  editable="bottom"
+                  decoration-warning="is_locked"
+                  decoration-muted="not active"
+                >
+                                    <field
+                    name="active"
+                    optional="hide"
+                    attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                  />
+                                    <field
+                    name="is_locked"
+                    optional="show"
+                    attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                  />
+                                    <field
+                    name="tr_locked_readonly_for_user"
+                    invisible="1"
+                  />
+                                    <field
+                    name="tr_director_only_for_user"
+                    invisible="1"
+                  />
+                                    <field
+                    name="applied_on"
+                    attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                  />
                                     <field
                     name="product_tmpl_id"
-                    attrs="{'readonly': [('applied_on', '!=', 'product_template')], 'required': [('applied_on', '=', 'product_template')]}"
+                    attrs="{'readonly': ['|', ('applied_on', '!=', 'product_template'), ('tr_locked_readonly_for_user', '=', True)], 'required': [('applied_on', '=', 'product_template')]}"
                   />
                                     <field
                     name="product_id"
-                    attrs="{'readonly': [('applied_on', '!=', 'product')], 'required': [('applied_on', '=', 'product')]}"
+                    attrs="{'readonly': ['|', ('applied_on', '!=', 'product'), ('tr_locked_readonly_for_user', '=', True)], 'required': [('applied_on', '=', 'product')]}"
                   />
-                                    <field name="seller_discount" />
-                                    <field name="extra_discount" />
+                                    <field
+                    name="seller_discount"
+                    attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                  />
+                                    <field
+                    name="extra_discount"
+                    attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                  />
+                                    <field
+                    name="fixed_commission_rate"
+                    optional="show"
+                    attrs="{'column_invisible': [('parent.has_any_band', '=', False)], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                  />
                                     <field
                     name="bands_summary"
                     readonly="1"
@@ -77,34 +113,78 @@
                                     <button
                     name="action_open_band_form"
                     type="object"
-                    string="Manage Bands"
-                    icon="fa-bars"
+                    string="Edit Line"
+                    icon="fa-pencil"
                   />
                                 </tree>
                                 <form>
                                     <sheet>
+                                        <widget
+                      name="web_ribbon"
+                      title="Locked"
+                      bg_color="bg-warning"
+                      attrs="{'invisible': [('is_locked', '=', False)]}"
+                    />
+                                        <widget
+                      name="web_ribbon"
+                      title="Archived"
+                      bg_color="bg-danger"
+                      attrs="{'invisible': [('active', '=', True)]}"
+                    />
+                                        <field
+                      name="tr_locked_readonly_for_user"
+                      invisible="1"
+                    />
+                                        <field
+                      name="tr_director_only_for_user"
+                      invisible="1"
+                    />
                                         <group>
                                             <group>
-                                                <field name="applied_on" />
+                                                <field
+                          name="applied_on"
+                          attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                        />
                                                 <field
                           name="product_tmpl_id"
-                          attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+                          attrs="{'invisible': [('applied_on', '!=', 'product_template')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
                         />
                                                 <field
                           name="product_id"
-                          attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+                          attrs="{'invisible': [('applied_on', '!=', 'product')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                        />
+                                                <field
+                          name="active"
+                          attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
                         />
                                             </group>
                                             <group>
-                                                <field name="seller_discount" />
-                                                <field name="extra_discount" />
+                                                <field
+                          name="seller_discount"
+                          attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                        />
+                                                <field
+                          name="extra_discount"
+                          attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                        />
+                                                <field
+                          name="is_locked"
+                          attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                        />
+                                                <field
+                          name="fixed_commission_rate"
+                          attrs="{'invisible': [('is_locked', '=', False)], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                        />
                                             </group>
                                         </group>
                                         <separator string="Quantity Bands" />
                                         <p
                       class="text-muted"
                     >Optional. Define qty thresholds where the discount changes (e.g. ≥50 CX → 15%). Above the threshold, the band's discounts replace the line's base discount above. Below, the line's direct discounts apply.</p>
-                                        <field name="band_ids">
+                                        <field
+                      name="band_ids"
+                      attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+                    >
                                             <tree editable="bottom">
                                                 <field name="qty_min" />
                                                 <field name="qty_uom_id" />
@@ -134,28 +214,66 @@
         <field name="arch" type="xml">
             <form string="Condition Line">
                 <sheet>
+                    <widget
+            name="web_ribbon"
+            title="Locked"
+            bg_color="bg-warning"
+            attrs="{'invisible': [('is_locked', '=', False)]}"
+          />
+                    <widget
+            name="web_ribbon"
+            title="Archived"
+            bg_color="bg-danger"
+            attrs="{'invisible': [('active', '=', True)]}"
+          />
+                    <field name="tr_locked_readonly_for_user" invisible="1" />
+                    <field name="tr_director_only_for_user" invisible="1" />
                     <group>
                         <group>
-                            <field name="applied_on" />
+                            <field
+                name="applied_on"
+                attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+              />
                             <field
                 name="product_tmpl_id"
-                attrs="{'invisible': [('applied_on', '!=', 'product_template')]}"
+                attrs="{'invisible': [('applied_on', '!=', 'product_template')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
               />
                             <field
                 name="product_id"
-                attrs="{'invisible': [('applied_on', '!=', 'product')]}"
+                attrs="{'invisible': [('applied_on', '!=', 'product')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+              />
+                            <field
+                name="active"
+                attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
               />
                         </group>
                         <group>
-                            <field name="seller_discount" />
-                            <field name="extra_discount" />
+                            <field
+                name="seller_discount"
+                attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+              />
+                            <field
+                name="extra_discount"
+                attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+              />
+                            <field
+                name="is_locked"
+                attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+              />
+                            <field
+                name="fixed_commission_rate"
+                attrs="{'invisible': [('is_locked', '=', False)], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+              />
                         </group>
                     </group>
                     <separator string="Quantity Bands" />
                     <p
             class="text-muted"
           >Optional. Define qty thresholds where the discount changes (e.g. ≥50 CX → 15%). Above the threshold, the band's discounts replace the line's base discount above. Below, the line's direct discounts apply.</p>
-                    <field name="band_ids">
+                    <field
+            name="band_ids"
+            attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+          >
                         <tree editable="bottom">
                             <field name="qty_min" />
                             <field name="qty_uom_id" />

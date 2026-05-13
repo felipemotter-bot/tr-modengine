@@ -176,14 +176,24 @@
         expr="//field[@name='order_line']/tree/field[@name='discount']"
         position="before"
       >
-                <field name="seller_discount" optional="hide" />
-                <field name="extra_discount" optional="hide" />
+                <field name="locked_condition_line_id" invisible="True" />
+                <field name="tr_locked_readonly_for_user" invisible="True" />
+                <field
+          name="seller_discount"
+          optional="hide"
+          attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+        />
+                <field
+          name="extra_discount"
+          optional="hide"
+          attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
+        />
                 <field name="seller_discount_max" invisible="True" />
                 <field name="seller_markup_max" invisible="True" />
                 <field name="commission_rate" optional="hide" />
             </xpath>
 
-            <!-- Save condition button in tree (after price_unit) -->
+            <!-- Save condition button in tree + lock icon for locked lines -->
             <xpath
         expr="//field[@name='order_line']/tree/field[@name='price_unit']"
         position="after"
@@ -195,7 +205,15 @@
           icon="fa-save"
           title="Save condition to customer"
           class="btn-link btn-sm p-0"
-          attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+          attrs="{'invisible': ['|', '|', ('discount_changed', '=', False), ('id', '=', False), ('locked_condition_line_id', '!=', False)]}"
+        />
+                <button
+          name="action_open_locked_condition_line"
+          type="object"
+          icon="fa-lock"
+          title="This line is under a locked condition — discount and commission set by the Sales Director"
+          class="btn-link btn-sm p-0 text-warning"
+          attrs="{'invisible': [('locked_condition_line_id', '=', False)]}"
         />
             </xpath>
 
@@ -214,6 +232,7 @@
       >
                 <!-- Hidden field for attrs access (no group restriction) -->
                 <field name="contractual_return" invisible="1" />
+                <field name="locked_condition_line_id" invisible="1" />
 
                 <!-- Base price (managers/directors only, when contractual return exists) -->
                 <field
@@ -259,7 +278,7 @@
                         <field
               name="reference_price"
               widget="price_calculator_button"
-              attrs="{'invisible': [('parent.state', 'not in', ['draft', 'sent'])]}"
+              attrs="{'invisible': ['|', ('parent.state', 'not in', ['draft', 'sent']), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                         <button
               name="action_open_save_condition_line_wizard"
@@ -268,7 +287,7 @@
               class="btn-link btn-sm p-0 text-nowrap"
               icon="fa-save"
               title="Save condition to customer"
-              attrs="{'invisible': ['|', ('discount_changed', '=', False), ('id', '=', False)]}"
+              attrs="{'invisible': ['|', '|', ('discount_changed', '=', False), ('id', '=', False), ('locked_condition_line_id', '!=', False)]}"
             />
                     </span>
                 </div>
@@ -276,6 +295,7 @@
                 <!-- Seller discount + extra discount button -->
                 <field name="extra_discount_reason" invisible="1" />
                 <field name="discount_changed" invisible="1" />
+                <field name="tr_locked_readonly_for_user" invisible="1" />
                 <label for="seller_discount" string="Seller Discount" />
                 <div name="seller_discount" class="o_row">
                     <field name="seller_discount_max" invisible="1" />
@@ -284,6 +304,7 @@
             name="seller_discount"
             class="oe_inline"
             style="max-width: 60px;"
+            attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
           /> %
                     <span
             class="text-muted"
@@ -299,7 +320,7 @@
                         <field
               name="extra_discount"
               widget="extra_discount_popover"
-              attrs="{'invisible': ['|', ('parent.state', 'not in', ['draft', 'sent']), ('seller_discount', '&lt;', 0)]}"
+              attrs="{'invisible': ['|', '|', ('parent.state', 'not in', ['draft', 'sent']), ('seller_discount', '&lt;', 0), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                     </span>
                 </div>

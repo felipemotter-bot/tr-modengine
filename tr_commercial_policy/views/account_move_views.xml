@@ -167,17 +167,19 @@
         expr="//field[@name='invoice_line_ids']/tree//field[@name='price_unit']"
         position="before"
       >
+                <field name="locked_condition_line_id" invisible="True" />
+                <field name="tr_locked_readonly_for_user" invisible="True" />
                 <field
           name="seller_discount"
           string="Seller Disc. (%)"
           optional="hide"
-          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])]}"
+          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
         />
                 <field
           name="extra_discount"
           string="Extra Disc. (%)"
           optional="hide"
-          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])]}"
+          attrs="{'column_invisible': [('parent.move_type', 'not in', ['out_invoice', 'out_refund'])], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
         />
                 <field
           name="reference_price"
@@ -289,13 +291,14 @@
                         <field
               name="reference_price"
               widget="price_calculator_button"
-              attrs="{'invisible': [('parent.state', '!=', 'draft')]}"
+              attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                     </span>
                 </div>
 
                 <!-- Seller discount + extra discount popover button -->
                 <field name="extra_discount_reason" invisible="1" />
+                <field name="tr_locked_readonly_for_user" invisible="1" />
                 <label
           for="seller_discount"
           string="Seller Discount"
@@ -320,6 +323,7 @@
             name="seller_discount"
             class="oe_inline"
             style="max-width: 60px;"
+            attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
           /> %
                     <span
             class="text-muted"
@@ -335,7 +339,7 @@
                         <field
               name="extra_discount"
               widget="extra_discount_popover"
-              attrs="{'invisible': ['|', ('parent.state', '!=', 'draft'), ('seller_discount', '&lt;', 0)]}"
+              attrs="{'invisible': ['|', '|', ('parent.state', '!=', 'draft'), ('seller_discount', '&lt;', 0), ('tr_locked_readonly_for_user', '=', True)]}"
             />
                     </span>
                 </div>
