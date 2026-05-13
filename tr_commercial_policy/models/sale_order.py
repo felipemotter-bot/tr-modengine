@@ -180,7 +180,8 @@ class SaleOrder(models.Model):
         for order in self:
             if order.partner_id and not order.commercial_condition_id:
                 order.commercial_condition_warning = _(
-                    "Customer '%s' has no commercial condition defined.",
+                    "This order has no commercial condition defined "
+                    "(customer: '%s'). Try reloading the condition.",
                     order.partner_id.display_name,
                 )
             else:

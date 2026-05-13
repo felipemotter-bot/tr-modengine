@@ -1322,8 +1322,12 @@ msgstr "Cliente"
 #. odoo-python
 #: code:addons/tr_commercial_policy/models/sale_order.py:0
 #, python-format
-msgid "Customer '%s' has no commercial condition defined."
-msgstr "O cliente '%s' não possui condição comercial definida."
+msgid ""
+"This order has no commercial condition defined (customer: '%s'). Try "
+"reloading the condition."
+msgstr ""
+"Este pedido não possui condição comercial definida (cliente: '%s'). Tente "
+"recarregar a condição."
 
 #. module: tr_commercial_policy
 #: model:ir.model.fields,field_description:tr_commercial_policy.field_res_company__default_sales_profile_id
