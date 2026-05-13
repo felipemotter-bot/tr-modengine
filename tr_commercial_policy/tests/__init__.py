@@ -45,3 +45,4 @@ from . import test_condition_line_band_tracking
 from . import test_sale_order_discount_view
 from . import test_discount_calculator_widget_template
 from . import test_locked_condition
+from . import test_locked_condition_coverage
