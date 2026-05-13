@@ -24,10 +24,12 @@
                             <field name="date" />
                         </group>
                         <group>
+                            <field name="filter_dim" widget="radio" />
                             <field
                 name="category_ids"
                 widget="many2many_tags"
                 options="{'no_create': True}"
+                attrs="{'invisible': [('filter_dim', '!=', 'category')]}"
               />
                         </group>
                     </group>

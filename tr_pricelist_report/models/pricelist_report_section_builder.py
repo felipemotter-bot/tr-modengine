@@ -3,7 +3,7 @@
 
 from collections import defaultdict
 
-from odoo import models
+from odoo import api, fields, models
 from odoo.tools.float_utils import float_round
 
 
@@ -12,14 +12,103 @@ class PricelistReportSectionBuilder(models.AbstractModel):
 
     Both ``tr.pricelist.report.wizard`` (General) and
     ``tr.pricelist.basic.wizard`` (Basic) inherit this mixin. The mixin
-    does not declare any fields — consumers pass ``category_ids``,
-    ``company_id`` and the ``pricing_resolver`` callback as arguments
-    so each wizard can keep its own UX and still share the section
-    pipeline.
+    declares the ``filter_dim`` Selection used as the single source of
+    truth for which input filter is active — only the picked dimension's
+    field is consumed by ``_resolve_products`` / ``_resolve_history_quantities``,
+    so a stale value on a non-selected dimension does not leak in.
+    Downstream modules add extra dimensions via ``selection_add`` and
+    contribute extra domain fragments through ``_get_extra_product_domain``
+    / ``_get_extra_history_line_domain``.
     """
 
     _name = "tr.pricelist.report.section.builder"
     _description = "Pricelist Report Section Builder"
+
+    filter_dim = fields.Selection(
+        [("none", "No filter"), ("category", "By Category")],
+        string="Filter by",
+        default="none",
+        required=True,
+        help="Selects which input filter is honored when resolving the "
+        "products to print. Picking ``No filter`` prints every sellable "
+        "product in scope; picking a dimension restricts to its companion "
+        "field (e.g., ``By Category`` honors the Categories list).",
+    )
+
+    def _get_extra_product_domain(self):
+        """Hook for downstream modules to append domain leaves to the
+        ``product.product`` search performed in ``_resolve_products``.
+
+        The hook returns a list of leaves (each a 3-tuple). Returning an
+        empty list is a no-op. Downstream implementations are expected to
+        gate on ``self.filter_dim`` themselves so multiple downstream
+        dimensions don't stack accidentally.
+        """
+        return []
+
+    def _get_extra_history_line_domain(self):
+        """Hook for downstream modules to append domain leaves to the
+        ``sale.order.line`` search performed by the customer-history
+        layout in ``_resolve_history_quantities``. Same contract as
+        ``_get_extra_product_domain`` but the leaves walk
+        ``product_id.<field>`` instead of ``<field>``.
+        """
+        return []
+
+    @staticmethod
+    def _commands_carry_ids(commands):
+        """Return True when an x2m-style command list materializes at
+        least one effective id.
+
+        Odoo serializes Many2many writes as a list of command tuples
+        (`[(6, 0, [...]), (4, id), (5, 0, 0), ...]`). Inspecting the
+        plain `category_ids` value in `create` vals is not enough: a
+        bare `[(5, 0, 0)]` or `[(6, 0, [])]` "clears" the relation and
+        must NOT trigger an implicit `filter_dim = "category"` resolve.
+        """
+        if not commands:
+            return False
+        for command in commands:
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            code = command[0]
+            if code == 6 and len(command) >= 3 and command[2]:
+                return True
+            if code == 4:
+                return True
+            if code == 0:
+                return True
+        return False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Resolve ``filter_dim`` from the legacy single-field API.
+
+        When a caller (test, RPC, server action) writes ``category_ids``
+        without an explicit ``filter_dim``, infer ``filter_dim = "category"``
+        so that the execution-side mutex in ``_resolve_products`` honors
+        the implicit intent. Downstream modules extend this resolver by
+        overriding ``create`` and applying the same shape to their own
+        dimension fields.
+        """
+        for vals in vals_list:
+            if vals.get("filter_dim"):
+                continue
+            if self._commands_carry_ids(vals.get("category_ids")):
+                vals["filter_dim"] = "category"
+        return super().create(vals_list)
+
+    @api.onchange("filter_dim")
+    def _onchange_filter_dim(self):
+        """Clear companion fields when leaving their dimension.
+
+        Improves UX only — execution-side mutex in ``_resolve_products``
+        is the durable guarantee. Downstream modules extend this method
+        to clear their own companion fields.
+        """
+        for record in self:
+            if record.filter_dim != "category":
+                record.category_ids = [(5, 0, 0)]
 
     # ------------------------------------------------------------------
     # Config helpers (read ir.config_parameter with safe fallbacks)
@@ -99,9 +188,15 @@ class PricelistReportSectionBuilder(models.AbstractModel):
         (False, company_id)``; when falsy (the General wizard path)
         no company filter is applied and multi-company concerns are
         enforced elsewhere by the condition record rules.
+
+        The mutex on ``self.filter_dim`` is enforced here: even if the
+        caller passes ``category_ids``, the categories filter is only
+        applied when ``filter_dim == "category"``. This is the single
+        execution-side gate so a stale value on a non-selected dimension
+        cannot leak via RPC / programmatic ``create``.
         """
         domain = [("active", "=", True), ("sale_ok", "=", True)]
-        if category_ids:
+        if category_ids and self.filter_dim == "category":
             categories = self._expand_categories(category_ids)
             domain.append(("categ_id", "in", categories.ids))
         excluded_ids = self._resolve_excluded_category_ids()
@@ -109,6 +204,7 @@ class PricelistReportSectionBuilder(models.AbstractModel):
             domain.append(("categ_id", "not in", excluded_ids))
         if company_id:
             domain.append(("company_id", "in", [False, company_id]))
+        domain.extend(self._get_extra_product_domain())
         return self.env["product.product"].search(domain)
 
     # ------------------------------------------------------------------

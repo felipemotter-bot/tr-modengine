@@ -163,7 +163,10 @@ msgid "By Brand"
 msgstr "Por Marca"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_basic_wizard__filter_dim__category
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_basic_wizard__group_axis__categoria
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_section_builder__filter_dim__category
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__filter_dim__category
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__group_axis__categoria
 msgid "By Category"
 msgstr "Por Categoria"
@@ -435,6 +438,35 @@ msgstr ""
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__net_price
 msgid "Net price only"
 msgstr "Somente preço líquido"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
+msgid "Filter by"
+msgstr "Filtrar por"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
+msgid ""
+"Selects which input filter is honored when resolving the products to print. "
+"Picking ``No filter`` prints every sellable product in scope; picking a "
+"dimension restricts to its companion field (e.g., ``By Category`` honors the"
+" Categories list)."
+msgstr ""
+"Seleciona qual filtro de entrada é considerado ao montar a lista de produtos"
+" para impressão. ``Sem filtro`` imprime todos os produtos vendáveis no "
+"escopo; escolher uma dimensão restringe ao campo companheiro (ex.: ``Por "
+"Categoria`` usa a lista de Categorias)."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_basic_wizard__filter_dim__none
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_section_builder__filter_dim__none
+#: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__filter_dim__none
+msgid "No filter"
+msgstr "Sem filtro"
 
 #. module: tr_pricelist_report
 #. odoo-python

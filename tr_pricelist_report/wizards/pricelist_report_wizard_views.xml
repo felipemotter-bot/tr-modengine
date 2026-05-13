@@ -39,11 +39,12 @@
                             <field name="send_by_email" />
                         </group>
                         <group>
+                            <field name="filter_dim" widget="radio" />
                             <field
                 name="category_ids"
                 widget="many2many_tags"
                 options="{'no_create': True}"
-                attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
+                attrs="{'invisible': [('filter_dim', '!=', 'category')]}"
               />
                         </group>
                     </group>
