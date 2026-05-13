@@ -1766,7 +1766,9 @@ class AccountMove(models.Model):
                 sale_line.seller_discount,
                 sale_line.extra_discount,
             )
-            inv_line.with_context(**ctx).write(
+            # Single sudo write keeps balance check deferred via ctx and
+            # satisfies the snapshot guard for the locked_* fields.
+            inv_line.sudo().with_context(**ctx).write(
                 {
                     "seller_discount": sale_line.seller_discount,
                     "extra_discount": sale_line.extra_discount,
@@ -1775,12 +1777,6 @@ class AccountMove(models.Model):
                     "reference_price": sale_line.reference_price,
                     "commission_rate": sale_line.commission_rate,
                     "price_unit": resynced_price_unit,
-                }
-            )
-            # Snapshot fields are internal metadata — must go through
-            # sudo() to satisfy the snapshot guard.
-            inv_line.sudo().write(
-                {
                     "locked_condition_line_id": (
                         sale_line.locked_condition_line_id.id or False
                     ),

@@ -51,9 +51,9 @@ def _field_label(record, fname):
 def _format_tracked_value(record, fname, value):
     """Formatter for the chatter tracking helpers.
 
-    Only handles the field types present in ``_LINE_TRACKED_FIELDS`` /
-    ``_BAND_TRACKED_FIELDS`` (float, many2one, selection). Float must be
-    checked before any "empty" branch because ``0.0 == False`` in Python,
+    Handles the field types present in ``_LINE_TRACKED_FIELDS`` /
+    ``_BAND_TRACKED_FIELDS`` (float, many2one, boolean, selection). Float must
+    be checked before any "empty" branch because ``0.0 == False`` in Python,
     which would render ``0.0`` as "(empty)" and lose the new value on a
     5% → 0% diff.
     """
@@ -62,6 +62,8 @@ def _format_tracked_value(record, fname, value):
         return formatLang(record.env, value or 0.0, digits=2)
     if field.type == "many2one":
         return value.display_name if value else _("(empty)")
+    if field.type == "boolean":
+        return _("Yes") if value else _("No")
     # selection — current tracked selections are all required, so
     # ``value`` is always set; no empty branch needed.
     return dict(field._description_selection(record.env)).get(value, str(value))
@@ -679,15 +681,16 @@ class PartnerCommercialCondition(models.Model):
                 chosen,
                 chosen.fixed_commission_rate or 0.0,
             )
-        # 3. Regular variant
+        # 3. Regular variant. ``locked_line`` slot stays empty —
+        # regular lines do NOT populate locked snapshots.
         variant_reg = regular_lines.filtered(
             lambda line: line.applied_on == "product" and line.product_id == product
         )
         if variant_reg:
             chosen = variant_reg[0]
             seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "variant", chosen, 0.0)
-        # 4. Regular template
+            return (seller, extra, "variant", Empty, 0.0)
+        # 4. Regular template. Same as #3 — ``locked_line`` empty.
         tmpl_reg = regular_lines.filtered(
             lambda line: line.applied_on == "product_template"
             and line.product_tmpl_id == product.product_tmpl_id
@@ -695,7 +698,7 @@ class PartnerCommercialCondition(models.Model):
         if tmpl_reg:
             chosen = tmpl_reg[0]
             seller, extra = chosen._resolve_discount_for_qty(qty, line_uom)
-            return (seller, extra, "template", chosen, 0.0)
+            return (seller, extra, "template", Empty, 0.0)
         # 5. General
         return (self.seller_discount or 0.0, 0.0, "general", Empty, 0.0)
 
