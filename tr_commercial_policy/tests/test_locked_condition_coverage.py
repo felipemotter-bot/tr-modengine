@@ -2110,3 +2110,39 @@ class TestLockedReadonlyForUserFlagOnConditionLine(CommercialPolicyTestCommon):
         self.assertFalse(
             self.regular.with_user(self.salesperson).tr_locked_readonly_for_user
         )
+
+
+@tagged("post_install", "-at_install")
+class TestDirectorOnlyForUserFlag(CommercialPolicyTestCommon):
+    """``tr_director_only_for_user`` UI flag: True for rep regardless
+    of line state, False for manager+. Drives readonly on the
+    director-only fields (``is_locked``, ``active``).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._setup_commercial_policy()
+        cls.regular = cls.env["partner.commercial.condition.line"].create(
+            {
+                "condition_id": cls.condition.id,
+                "applied_on": "product_template",
+                "product_tmpl_id": cls.product_template_a.id,
+                "seller_discount": 3.0,
+            }
+        )
+
+    def test_flag_true_for_rep(self):
+        self.assertTrue(
+            self.regular.with_user(self.salesperson).tr_director_only_for_user
+        )
+
+    def test_flag_false_for_manager(self):
+        self.assertFalse(
+            self.regular.with_user(self.manager_user).tr_director_only_for_user
+        )
+
+    def test_flag_false_for_director(self):
+        self.assertFalse(
+            self.regular.with_user(self.director_user).tr_director_only_for_user
+        )

@@ -62,10 +62,22 @@
                   decoration-warning="is_locked"
                   decoration-muted="not active"
                 >
-                                    <field name="active" optional="hide" />
-                                    <field name="is_locked" optional="show" />
+                                    <field
+                    name="active"
+                    optional="hide"
+                    attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                  />
+                                    <field
+                    name="is_locked"
+                    optional="show"
+                    attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                  />
                                     <field
                     name="tr_locked_readonly_for_user"
+                    invisible="1"
+                  />
+                                    <field
+                    name="tr_director_only_for_user"
                     invisible="1"
                   />
                                     <field
@@ -123,6 +135,10 @@
                       name="tr_locked_readonly_for_user"
                       invisible="1"
                     />
+                                        <field
+                      name="tr_director_only_for_user"
+                      invisible="1"
+                    />
                                         <group>
                                             <group>
                                                 <field
@@ -137,7 +153,10 @@
                           name="product_id"
                           attrs="{'invisible': [('applied_on', '!=', 'product')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
                         />
-                                                <field name="active" />
+                                                <field
+                          name="active"
+                          attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                        />
                                             </group>
                                             <group>
                                                 <field
@@ -148,7 +167,10 @@
                           name="extra_discount"
                           attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
                         />
-                                                <field name="is_locked" />
+                                                <field
+                          name="is_locked"
+                          attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+                        />
                                                 <field
                           name="fixed_commission_rate"
                           attrs="{'invisible': [('is_locked', '=', False)], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
@@ -205,6 +227,7 @@
             attrs="{'invisible': [('active', '=', True)]}"
           />
                     <field name="tr_locked_readonly_for_user" invisible="1" />
+                    <field name="tr_director_only_for_user" invisible="1" />
                     <group>
                         <group>
                             <field
@@ -219,7 +242,10 @@
                 name="product_id"
                 attrs="{'invisible': [('applied_on', '!=', 'product')], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
               />
-                            <field name="active" />
+                            <field
+                name="active"
+                attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+              />
                         </group>
                         <group>
                             <field
@@ -230,7 +256,10 @@
                 name="extra_discount"
                 attrs="{'readonly': [('tr_locked_readonly_for_user', '=', True)]}"
               />
-                            <field name="is_locked" />
+                            <field
+                name="is_locked"
+                attrs="{'readonly': [('tr_director_only_for_user', '=', True)]}"
+              />
                             <field
                 name="fixed_commission_rate"
                 attrs="{'invisible': [('is_locked', '=', False)], 'readonly': [('tr_locked_readonly_for_user', '=', True)]}"

@@ -107,6 +107,7 @@ class AccountMoveLine(models.Model):
     )
 
     @api.depends("locked_condition_line_id")
+    @api.depends_context("uid")
     def _compute_tr_locked_readonly_for_user(self):
         is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
         for line in self:

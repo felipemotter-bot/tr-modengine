@@ -891,12 +891,26 @@ class PartnerCommercialConditionLine(models.Model):
         "(server-side guard ``_check_locked_state_edit`` remains the "
         "authoritative check).",
     )
+    tr_director_only_for_user = fields.Boolean(
+        compute="_compute_tr_director_only_for_user",
+        help="UI helper: True when the current user is NOT a sales "
+        "manager (or above). Drives ``readonly`` on fields restricted "
+        "to managers/directors regardless of the line state "
+        "(``is_locked`` toggle, ``active`` flag).",
+    )
 
     @api.depends("is_locked")
+    @api.depends_context("uid")
     def _compute_tr_locked_readonly_for_user(self):
         is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
         for line in self:
             line.tr_locked_readonly_for_user = bool(line.is_locked) and not is_manager
+
+    @api.depends_context("uid")
+    def _compute_tr_director_only_for_user(self):
+        is_manager = self.env.user.has_group("tr_commercial_policy.group_sales_manager")
+        for line in self:
+            line.tr_director_only_for_user = not is_manager
 
     band_ids = fields.One2many(
         comodel_name="partner.commercial.condition.line.band",
