@@ -174,7 +174,7 @@ class TestPdfRender(PricelistReportTestCommon):
         # Normalize whitespace before asserting so brittle indent/newlines
         # from QWeb output don't trip this test.
         note = b" ".join(html.split())
-        self.assertIn("pedidos de venda confirmados".encode("utf-8"), note)
+        self.assertIn("pedidos do grupo confirmados".encode("utf-8"), note)
         self.assertIn("nos últimos".encode("utf-8"), note)
         self.assertIn("meses".encode("utf-8"), note)
         self.assertIn("Devoluções não são descontadas".encode("utf-8"), note)

@@ -360,6 +360,215 @@ class TestLayoutHistorico(PricelistReportTestCommon):
         with self.assertRaises(UserError):
             wizard.action_generate()
 
+    # ------------------------------------------------------------------
+    # ``_resolve_history_partners`` — consolidação pelos partners da condição
+    # ------------------------------------------------------------------
+
+    def _make_group(self):
+        """Create a head/filial fixture plus a separate group for isolation.
+
+        ``tr_commercial_policy`` enforces ``_check_condition_belongs_to_partner_or_group``,
+        which forbids a group-A member pointing its ``commercial_condition_id``
+        at a group-B condition. So the fixture sticks to valid setups:
+
+        - ``head`` is ``self.customer`` (titular of ``self.condition``);
+          ``company_group_id`` is pinned to itself.
+        - ``filial_inherit``: in the head's group, no own
+          ``commercial_condition_id`` — inherits ``self.condition``.
+        - ``filial_explicit``: in the head's group with its own
+          ``commercial_condition_id`` set to ``self.condition`` (valid
+          because the condition's titular IS the head/group). Exercises
+          the *direct* branch of the resolver.
+        - ``other_head`` + ``other_member``: a separate group with its
+          own condition — must NOT show up in the head's history.
+
+        Returns ``(head, filial_inherit, filial_explicit, other_head,
+        other_member, other_condition)``.
+        """
+        head = self.customer
+        head.company_group_id = head
+        filial_inherit = self.env["res.partner"].create(
+            {
+                "name": "Filial Inherit",
+                "ind_final": "0",
+                "company_group_id": head.id,
+            }
+        )
+        filial_explicit = self.env["res.partner"].create(
+            {
+                "name": "Filial Explicit",
+                "ind_final": "0",
+                "company_group_id": head.id,
+                "commercial_condition_id": self.condition.id,
+            }
+        )
+        other_head = self.env["res.partner"].create(
+            {"name": "Other Head", "ind_final": "0"}
+        )
+        other_head.company_group_id = other_head
+        other_condition = self.env["partner.commercial.condition"].create(
+            {
+                "partner_id": other_head.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
+        other_head.commercial_condition_id = other_condition
+        other_member = self.env["res.partner"].create(
+            {
+                "name": "Other Member",
+                "ind_final": "0",
+                "company_group_id": other_head.id,
+            }
+        )
+        return (
+            head,
+            filial_inherit,
+            filial_explicit,
+            other_head,
+            other_member,
+            other_condition,
+        )
+
+    def test_resolve_history_partners_covers_head_inherit_and_explicit(self):
+        """Helper returns head + inheriting filial + explicit-override filial."""
+        head, filial_inherit, filial_explicit, *_ = self._make_group()
+        wizard = self._open_history_wizard()
+        resolved = wizard._resolve_history_partners()
+        self.assertIn(head, resolved)
+        self.assertIn(filial_inherit, resolved)
+        self.assertIn(filial_explicit, resolved)
+
+    def test_resolve_history_partners_excludes_other_group(self):
+        """Members of a different group with a different condition are out."""
+        head, _, _, other_head, other_member, _ = self._make_group()
+        wizard = self._open_history_wizard()
+        resolved = wizard._resolve_history_partners()
+        self.assertNotIn(other_head, resolved)
+        self.assertNotIn(other_member, resolved)
+        # Sanity: head still belongs.
+        self.assertIn(head, resolved)
+
+    def test_history_quantities_consolidates_filial_purchase(self):
+        """Filial's purchase shows up when the wizard opens via the head."""
+        _, filial_inherit, *_ = self._make_group()
+        today = fields.Date.today()
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": filial_inherit.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "order_id": order.id,
+                "product_id": self.product_a.id,
+                "product_uom": self.product_a.uom_id.id,
+                "product_uom_qty": 7,
+            }
+        )
+        order.action_confirm()
+        order.date_order = fields.Datetime.to_datetime(today)
+        wizard = self._open_history_wizard()
+        totals = wizard._resolve_history_quantities()
+        self.assertIn(self.product_a, totals)
+        self.assertAlmostEqual(totals[self.product_a], 7.0)
+
+    def test_history_quantities_empty_when_no_partners_resolved(self):
+        """Resolver returns ``{}`` when no partner is tied to the condition.
+
+        Defensive branch — in practice the titular is always tied to the
+        condition, but if someone clears that link the resolver must short
+        out gracefully before hitting the order search.
+        """
+        # Unhook the customer (titular) from the condition. The condition
+        # still exists; no partner currently uses it.
+        self.customer.commercial_condition_id = False
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {"condition_id": self.condition.id, "layout": "historico"}
+        )
+        self.assertEqual(wizard._resolve_history_quantities(), {})
+
+    def test_history_quantities_excludes_other_group_purchase(self):
+        """A purchase from a partner in a different group is not aggregated."""
+        _, _, _, _, other_member, _ = self._make_group()
+        today = fields.Date.today()
+        order = self.env["sale.order"].create(
+            {
+                "partner_id": other_member.id,
+                "pricelist_id": self.pricelist.id,
+            }
+        )
+        self.env["sale.order.line"].create(
+            {
+                "order_id": order.id,
+                "product_id": self.product_a.id,
+                "product_uom": self.product_a.uom_id.id,
+                "product_uom_qty": 99,
+            }
+        )
+        order.action_confirm()
+        order.date_order = fields.Datetime.to_datetime(today)
+        wizard = self._open_history_wizard()
+        totals = wizard._resolve_history_quantities()
+        self.assertNotIn(self.product_a, totals)
+
+    # ------------------------------------------------------------------
+    # ``show_quantities`` flag — payload + template
+    # ------------------------------------------------------------------
+
+    def test_show_quantities_defaults_true(self):
+        """Wizard ``show_quantities`` field defaults to True."""
+        wizard = self._open_history_wizard()
+        self.assertTrue(wizard.show_quantities)
+
+    def test_show_quantities_in_payload(self):
+        """``_get_report_values`` propagates ``show_quantities`` to the template."""
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "show_quantities": False,
+            }
+        )
+        values = wizard._get_report_values(wizard.ids)
+        self.assertEqual(values["show_quantities"], False)
+
+    def test_history_footer_uses_group_wording(self):
+        """Footer text was updated from ``de venda`` to ``do grupo``.
+
+        Asserted by HTML render so a regression in the QWeb template
+        (or the wrong t-if envelope) shows up here.
+        """
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self._open_history_wizard()
+        html, _type = self.env["ir.actions.report"]._render_qweb_html(
+            "tr_pricelist_report.action_report_pricelist", wizard.ids
+        )
+        self.assertIn(b"do grupo confirmados", html)
+        self.assertNotIn(b"pedidos de venda confirmados", html)
+
+    def test_show_quantities_false_hides_qty_and_footer(self):
+        """``show_quantities=False`` removes both the column and the footer."""
+        today = fields.Date.today()
+        self._place_confirmed_order(self.product_a, 1, today)
+        wizard = self.env["tr.pricelist.report.wizard"].create(
+            {
+                "condition_id": self.condition.id,
+                "layout": "historico",
+                "show_quantities": False,
+            }
+        )
+        html, _type = self.env["ir.actions.report"]._render_qweb_html(
+            "tr_pricelist_report.action_report_pricelist", wizard.ids
+        )
+        # Column header gone (no ``>Qtd.<`` anywhere in the history table).
+        self.assertNotIn(b">Qtd.<", html)
+        # Footer note gone.
+        self.assertNotIn(b"do grupo confirmados", html)
+
     def test_orders_variants_of_same_template_adjacent(self):
         """Variants of the same template sit next to each other in the row list.
 

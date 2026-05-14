@@ -63,6 +63,14 @@ class PricelistReportWizard(models.TransientModel):
             "The default comes from Settings."
         ),
     )
+    show_quantities = fields.Boolean(
+        default=True,
+        help=(
+            "When checked, the customer-history layout includes a column "
+            "with the group's purchase quantities and a footnote citing "
+            "the source. Uncheck to hide both."
+        ),
+    )
     category_ids = fields.Many2many(
         "product.category",
         string="Categories",
@@ -543,12 +551,51 @@ class PricelistReportWizard(models.TransientModel):
     # Customer-history layout
     # ------------------------------------------------------------------
 
-    def _resolve_history_quantities(self):
-        """Aggregate the partner's purchased quantity by product.
+    def _resolve_history_partners(self):
+        """Return partners whose ``effective_condition_id`` is this condition.
 
-        Walks ``sale.order.line`` for the condition's partner in the
-        window ``today - history_months_back``, where the window is the
-        wizard field (defaulted from Settings, but overridable per print).
+        ``effective_condition_id`` on ``res.partner`` is a non-stored
+        compute (see ``tr_commercial_policy/models/res_partner.py``).
+        We mirror its logic via stored fields so the history scope can
+        be widened from just ``condition.partner_id`` to every partner
+        the condition actually applies to:
+
+        (a) direct: partners whose own ``commercial_condition_id`` points
+            at this condition (includes the titular and any explicit
+            overrides anywhere);
+        (b) indirect: partners in the head's ``company_group`` with no
+            own ``commercial_condition_id`` — they inherit from the head.
+
+        A final filter on ``effective_condition_id`` is kept as defense
+        against schema drifts. Comparison is by ``.id`` to avoid
+        recordset/env subtleties.
+        """
+        condition = self.condition_id
+        company = condition.company_id or self.env.company
+        head = condition.partner_id
+        Partner = self.env["res.partner"].sudo().with_company(company)
+        direct = Partner.search([("commercial_condition_id", "=", condition.id)])
+        indirect = Partner.search(
+            [
+                ("company_group_id", "=", head.id),
+                ("commercial_condition_id", "=", False),
+            ]
+        )
+        candidates = direct | indirect
+        return candidates.filtered(
+            lambda p: p.with_company(company).effective_condition_id.id == condition.id
+        )
+
+    def _resolve_history_quantities(self):
+        """Aggregate purchased quantity by product across the condition's group.
+
+        Walks ``sale.order.line`` for every partner whose
+        ``effective_condition_id`` resolves to ``self.condition_id`` (head
+        + inherited members + explicit overrides; see
+        ``_resolve_history_partners``) in the window ``today -
+        history_months_back``. The window is the wizard field (defaulted
+        from Settings, but overridable per print).
+
         Filters to confirmed or done orders, and to products that are
         still ``active=True`` and ``sale_ok=True`` (so the report is a
         recompra tool, not a full audit log).
@@ -568,10 +615,12 @@ class PricelistReportWizard(models.TransientModel):
         months = self.history_months_back
         if months <= 0:
             return {}
-        partner = self.condition_id.partner_id
+        partners = self._resolve_history_partners()
+        if not partners:
+            return {}
         threshold = fields.Date.today() - relativedelta(months=months)
         domain = [
-            ("order_id.partner_id", "=", partner.id),
+            ("order_id.partner_id", "in", partners.ids),
             ("order_id.state", "in", ("sale", "done")),
             ("order_id.date_order", ">=", threshold),
             ("product_id.active", "=", True),
@@ -809,6 +858,7 @@ class PricelistReportWizard(models.TransientModel):
             "discount_display": wizard.discount_display,
             "layout": wizard.layout,
             "history_grouping": wizard.history_grouping,
+            "show_quantities": wizard.show_quantities,
             "sections": sections,
             "variant_exceptions": variant_exceptions,
             "qty_exceptions": qty_exceptions,

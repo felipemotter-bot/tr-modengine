@@ -46,7 +46,7 @@
                       class="pricelist-cell-description"
                     >Descrição</th>
                                         <th
-                      t-if="layout == 'historico'"
+                      t-if="layout == 'historico' and show_quantities"
                       style="width: 12%;"
                     >Qtd.</th>
                                         <t t-if="discount_display == 'show_discounts'">
@@ -69,7 +69,9 @@
                           t-esc="row['template'].display_name"
                         />
                                             </td>
-                                            <td t-if="layout == 'historico'">
+                                            <td
+                        t-if="layout == 'historico' and show_quantities"
+                      >
                                                 <span
                           t-esc="row['qty']"
                           t-options="{'widget': 'float', 'precision': 2}"
@@ -119,7 +121,9 @@
                           t-options="{'widget': 'float', 'precision': 2}"
                         /> <t t-esc="band['qty_uom_label']" />
                                             </td>
-                                            <td t-if="layout == 'historico'" />
+                                            <td
+                        t-if="layout == 'historico' and show_quantities"
+                      />
                                             <t
                         t-if="discount_display == 'show_discounts'"
                       >
@@ -163,7 +167,7 @@
                             t-esc="exc['product'].display_name"
                           />
                                                 </td>
-                                                <td>
+                                                <td t-if="show_quantities">
                                                     <span
                             t-esc="exc['qty']"
                             t-options="{'widget': 'float', 'precision': 2}"
@@ -213,7 +217,9 @@
                             t-options="{'widget': 'float', 'precision': 2}"
                           /> <t t-esc="excband['qty_uom_label']" />
                                             </td>
-                                            <td t-if="layout == 'historico'" />
+                                            <td
+                          t-if="layout == 'historico' and show_quantities"
+                        />
                                             <t
                           t-if="discount_display == 'show_discounts'"
                         >
@@ -265,7 +271,7 @@
                       class="pricelist-cell-description"
                     >Descrição</th>
                                         <th
-                      t-if="layout == 'historico' and history_grouping == 'template'"
+                      t-if="layout == 'historico' and history_grouping == 'template' and show_quantities"
                       style="width: 12%;"
                     >Qtd.</th>
                                         <th style="width: 14%;">Preço</th>
@@ -279,7 +285,7 @@
                         t-esc="exc['product'].display_name"
                       />
                                             <td
-                        t-if="layout == 'historico' and history_grouping == 'template'"
+                        t-if="layout == 'historico' and history_grouping == 'template' and show_quantities"
                       >
                                                 <span
                           t-esc="exc['qty']"
@@ -307,7 +313,7 @@
                         /> <t t-esc="excband['qty_uom_label']" />
                                             </td>
                                             <td
-                        t-if="layout == 'historico' and history_grouping == 'template'"
+                        t-if="layout == 'historico' and history_grouping == 'template' and show_quantities"
                       />
                                             <td class="pricelist-cell-price">
                                                 <span
@@ -397,8 +403,11 @@
                             a floating footer) also avoids pagination
                             pitfalls with ``web.external_layout``.
                         -->
-                        <p t-if="layout == 'historico'" class="pricelist-history-note">
-                            Qtd. considera pedidos de venda confirmados nos
+                        <p
+              t-if="layout == 'historico' and show_quantities"
+              class="pricelist-history-note"
+            >
+                            Qtd. considera pedidos do grupo confirmados nos
                             últimos <t t-esc="history_months_back" /> meses
                             (desde <span
                 t-esc="date_history_threshold"
