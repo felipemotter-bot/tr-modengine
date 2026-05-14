@@ -308,6 +308,13 @@ msgid "Exclude from general pricelists"
 msgstr "Excluir das listas gerais de preços"
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
+msgid "Filter by"
+msgstr "Filtrar por"
+
+#. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__layout__geral
 msgid "General Pricelist"
 msgstr "Geral"
@@ -438,28 +445,6 @@ msgstr ""
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__net_price
 msgid "Net price only"
 msgstr "Somente preço líquido"
-
-#. module: tr_pricelist_report
-#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
-#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
-#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
-msgid "Filter by"
-msgstr "Filtrar por"
-
-#. module: tr_pricelist_report
-#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
-#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
-#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
-msgid ""
-"Selects which input filter is honored when resolving the products to print. "
-"Picking ``No filter`` prints every sellable product in scope; picking a "
-"dimension restricts to its companion field (e.g., ``By Category`` honors the"
-" Categories list)."
-msgstr ""
-"Seleciona qual filtro de entrada é considerado ao montar a lista de produtos"
-" para impressão. ``Sem filtro`` imprime todos os produtos vendáveis no "
-"escopo; escolher uma dimensão restringe ao campo companheiro (ex.: ``Por "
-"Categoria`` usa a lista de Categorias)."
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_basic_wizard__filter_dim__none
@@ -729,7 +714,7 @@ msgstr ""
 #. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
 msgid ""
-"Qtd. considera pedidos de venda confirmados nos\n"
+"Qtd. considera pedidos do grupo confirmados nos\n"
 "                            últimos"
 msgstr ""
 
@@ -760,6 +745,21 @@ msgid "Select a single partner to print the price list."
 msgstr "Selecione um único parceiro para imprimir a lista de preços."
 
 #. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_basic_wizard__filter_dim
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_section_builder__filter_dim
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__filter_dim
+msgid ""
+"Selects which input filter is honored when resolving the products to print. "
+"Picking ``No filter`` prints every sellable product in scope; picking a "
+"dimension restricts to its companion field (e.g., ``By Category`` honors the"
+" Categories list)."
+msgstr ""
+"Seleciona qual filtro de entrada é considerado ao montar a lista de produtos"
+" para impressão. ``Sem filtro`` imprime todos os produtos vendáveis no "
+"escopo; escolher uma dimensão restringe ao campo companheiro (ex.: ``Por "
+"Categoria`` usa a lista de Categorias)."
+
+#. module: tr_pricelist_report
 #. odoo-python
 #: code:addons/tr_pricelist_report/wizards/pricelist_report_wizard.py:0
 #, python-format
@@ -770,6 +770,11 @@ msgstr "Enviar Lista de Preços"
 #: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__send_by_email
 msgid "Send by email"
 msgstr "Enviar por email"
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,field_description:tr_pricelist_report.field_tr_pricelist_report_wizard__show_quantities
+msgid "Show Quantities"
+msgstr "Mostrar Quantidades"
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields.selection,name:tr_pricelist_report.selection__tr_pricelist_report_wizard__discount_display__show_discounts
@@ -819,6 +824,16 @@ msgstr ""
 "descendente não pode sobrescrever a exclusão. Produtos em categorias "
 "excluídas continuam aparecendo no layout de histórico do cliente, para que "
 "clientes que já os compraram possam ver o preço em recompras."
+
+#. module: tr_pricelist_report
+#: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__show_quantities
+msgid ""
+"When checked, the customer-history layout includes a column with the group's"
+" purchase quantities and a footnote citing the source. Uncheck to hide both."
+msgstr ""
+"Quando marcado, o layout de Histórico do Cliente inclui uma coluna com as "
+"quantidades compradas pelo grupo e uma nota de rodapé citando a origem. "
+"Desmarque para ocultar ambos."
 
 #. module: tr_pricelist_report
 #: model:ir.model.fields,help:tr_pricelist_report.field_tr_pricelist_report_wizard__send_by_email

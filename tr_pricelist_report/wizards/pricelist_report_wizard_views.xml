@@ -36,6 +36,10 @@
                 name="discount_display"
                 attrs="{'invisible': [('output_format', '=', 'xlsx')]}"
               />
+                            <field
+                name="show_quantities"
+                attrs="{'invisible': ['|', ('layout', '!=', 'historico'), ('output_format', '!=', 'pdf')]}"
+              />
                             <field name="send_by_email" />
                         </group>
                         <group>
