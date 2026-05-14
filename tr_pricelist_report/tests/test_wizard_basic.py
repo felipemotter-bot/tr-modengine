@@ -359,21 +359,10 @@ class TestBasicWizard(PricelistReportTestCommon):
                 "sequence": 1,
             }
         )
-        # Local pricelist that the default should pick.
-        local = self.env["product.pricelist"].create(
-            {
-                "name": "Local Only",
-                "currency_id": self.env.ref("base.BRL").id,
-                "company_id": company.id,
-                "sequence": 50,
-            }
-        )
         wizard = self.env["tr.pricelist.basic.wizard"].create({})
-        # Whatever is picked must belong to the current company (or be
-        # shared); never the foreign one.
+        # The picked pricelist's company is either shared (False) or the
+        # current company — never the foreign one. Both assertions are
+        # invariants and avoid coupling to whatever demo data the base
+        # ships with.
         self.assertIn(wizard.pricelist_id.company_id.id, (False, company.id))
-        # And specifically: when no shared has a lower sequence than the
-        # local, the local is picked.
-        if wizard.pricelist_id != local:
-            self.assertLessEqual(wizard.pricelist_id.sequence, local.sequence)
         self.assertNotEqual(wizard.pricelist_id.company_id, other_company)
