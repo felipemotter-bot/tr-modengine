@@ -184,3 +184,26 @@ class TestPdfRender(PricelistReportTestCommon):
         wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
         html = self._render_html(wizard)
         self.assertNotIn(b'class="pricelist-history-note"', html)
+
+    # ------------------------------------------------------------------
+    # Commercial conditions — contractual return line
+    # ------------------------------------------------------------------
+
+    def test_contractual_return_renders_when_positive(self):
+        """``contractual_return > 0`` adds a ``<li>`` in Condições Comerciais."""
+        self.condition.contractual_return = 3.0
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        # Anchor on the label and on the integer part of the value (which
+        # doesn't depend on the user's locale decimal separator).
+        self.assertIn("Retorno contratual:".encode("utf-8"), html)
+        # Accept both "3,00" (pt_BR) and "3.00" (en_US) since the test
+        # runner's locale varies.
+        self.assertTrue(b"3,00" in html or b"3.00" in html)
+
+    def test_contractual_return_hidden_when_zero(self):
+        """``contractual_return == 0`` keeps the line out of the PDF."""
+        self.condition.contractual_return = 0.0
+        wizard = self._open_wizard(category_ids=[self.categ_chemicals.id])
+        html = self._render_html(wizard)
+        self.assertNotIn("Retorno contratual:".encode("utf-8"), html)

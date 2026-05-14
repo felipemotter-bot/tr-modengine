@@ -118,6 +118,11 @@ msgid "<strong>Prazo de pagamento:</strong>"
 msgstr ""
 
 #. module: tr_pricelist_report
+#: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_document
+msgid "<strong>Retorno contratual:</strong>"
+msgstr ""
+
+#. module: tr_pricelist_report
 #: model_terms:ir.ui.view,arch_db:tr_pricelist_report.report_pricelist_basic_document
 msgid "<strong>Tabela:</strong>"
 msgstr ""
