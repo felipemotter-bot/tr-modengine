@@ -314,3 +314,66 @@ class TestBasicWizard(PricelistReportTestCommon):
         for section in values["sections"]:
             all_templates.update(row["template"].id for row in section["rows"])
         self.assertNotIn(foreign_template.id, all_templates)
+
+    # ------------------------------------------------------------------
+    # ``pricelist_id`` default — first by sequence in current company
+    # ------------------------------------------------------------------
+
+    def test_default_pricelist_picks_lowest_sequence(self):
+        """Default ``pricelist_id`` is the lowest-sequence pricelist in scope.
+
+        Mirrors the Odoo core behavior of attributing a default pricelist
+        to a freshly created customer (the one at the top of the
+        Pricelists tree view). Assertion is on the invariant (no other
+        pricelist in scope has a lower sequence) so the fixture isn't
+        coupled to whatever demo data the base ships with.
+        """
+        company = self.env.company
+        # Add a high-sequence pricelist that should NOT be picked.
+        self.env["product.pricelist"].create(
+            {
+                "name": "Z Last",
+                "currency_id": self.env.ref("base.BRL").id,
+                "company_id": company.id,
+                "sequence": 9999,
+            }
+        )
+        wizard = self.env["tr.pricelist.basic.wizard"].create({})
+        self.assertTrue(wizard.pricelist_id)
+        in_scope = self.env["product.pricelist"].search(
+            [("company_id", "in", (company.id, False))]
+        )
+        min_sequence = min(in_scope.mapped("sequence"))
+        self.assertEqual(wizard.pricelist_id.sequence, min_sequence)
+
+    def test_default_pricelist_ignores_other_company(self):
+        """Pricelists pinned to a foreign company are skipped by the default."""
+        company = self.env.company
+        other_company = self.env["res.company"].create({"name": "Foreign Co"})
+        # Foreign pricelist with the lowest sequence — must be ignored.
+        self.env["product.pricelist"].create(
+            {
+                "name": "Foreign Top",
+                "currency_id": self.env.ref("base.BRL").id,
+                "company_id": other_company.id,
+                "sequence": 1,
+            }
+        )
+        # Local pricelist that the default should pick.
+        local = self.env["product.pricelist"].create(
+            {
+                "name": "Local Only",
+                "currency_id": self.env.ref("base.BRL").id,
+                "company_id": company.id,
+                "sequence": 50,
+            }
+        )
+        wizard = self.env["tr.pricelist.basic.wizard"].create({})
+        # Whatever is picked must belong to the current company (or be
+        # shared); never the foreign one.
+        self.assertIn(wizard.pricelist_id.company_id.id, (False, company.id))
+        # And specifically: when no shared has a lower sequence than the
+        # local, the local is picked.
+        if wizard.pricelist_id != local:
+            self.assertLessEqual(wizard.pricelist_id.sequence, local.sequence)
+        self.assertNotEqual(wizard.pricelist_id.company_id, other_company)

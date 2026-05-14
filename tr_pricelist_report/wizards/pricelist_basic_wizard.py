@@ -27,6 +27,7 @@ class PricelistBasicWizard(models.TransientModel):
         required=True,
         check_company=True,
         domain="[('company_id', 'in', [False, company_id])]",
+        default=lambda self: self._default_pricelist_id(),
     )
     company_id = fields.Many2one(
         "res.company",
@@ -69,6 +70,31 @@ class PricelistBasicWizard(models.TransientModel):
             "name, UoM, price) intended for filtering and search."
         ),
     )
+
+    # ------------------------------------------------------------------
+    # Defaults
+    # ------------------------------------------------------------------
+
+    def _default_pricelist_id(self):
+        """Return the same pricelist a new customer would inherit by default.
+
+        Mirrors the Odoo core behavior: when no explicit pricelist is set
+        on a partner, the system picks the first ``product.pricelist``
+        sorted by ``sequence`` ascending (the one at the top of the
+        Pricelists tree view) within the current company scope. We do the
+        same here so reps opening the basic wizard already see a sane
+        default — they can still pick a different one before generating.
+        """
+        company = self.env.company
+        return (
+            self.env["product.pricelist"]
+            .search(
+                [("company_id", "in", (company.id, False))],
+                order="sequence, id",
+                limit=1,
+            )
+            .id
+        ) or False
 
     # ------------------------------------------------------------------
     # Actions
