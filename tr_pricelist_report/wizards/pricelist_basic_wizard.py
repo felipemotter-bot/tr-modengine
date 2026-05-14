@@ -84,6 +84,9 @@ class PricelistBasicWizard(models.TransientModel):
         Pricelists tree view) within the current company scope. We do the
         same here so reps opening the basic wizard already see a sane
         default — they can still pick a different one before generating.
+
+        An empty recordset's ``.id`` is already ``False``, so we don't
+        need an explicit ``or False`` fallback.
         """
         company = self.env.company
         return (
@@ -94,7 +97,7 @@ class PricelistBasicWizard(models.TransientModel):
                 limit=1,
             )
             .id
-        ) or False
+        )
 
     # ------------------------------------------------------------------
     # Actions
