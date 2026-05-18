@@ -516,12 +516,17 @@ class SaleOrder(models.Model):
         if not pricelist or not line.product_id:
             return 0.0
         product = line.product_id
-        price = pricelist._get_product_price(
-            product,
-            line.product_uom_qty or 1.0,
-            uom=line.product_uom,
-            date=self.date_order,
-        )
+        if pricelist == line.order_id.pricelist_id:
+            price = line.with_company(line.company_id)._get_display_price()
+            currency = line.currency_id
+        else:
+            price = pricelist._get_product_price(
+                product,
+                line.product_uom_qty or 1.0,
+                uom=line.product_uom,
+                date=self.date_order,
+            )
+            currency = pricelist.currency_id
         return product._get_tax_included_unit_price(
             line.company_id,
             self.currency_id,
@@ -529,7 +534,7 @@ class SaleOrder(models.Model):
             "sale",
             fiscal_position=self.fiscal_position_id,
             product_price_unit=price,
-            product_currency=pricelist.currency_id,
+            product_currency=currency,
         )
 
     def _apply_reload_conditions(self):
