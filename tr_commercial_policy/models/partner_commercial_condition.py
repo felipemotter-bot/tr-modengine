@@ -195,7 +195,7 @@ class PartnerCommercialCondition(models.Model):
             ("show_discounts", "Show Discounts"),
             ("net_price", "Net Price Only"),
         ],
-        default="show_discounts",
+        default="net_price",
         tracking=True,
         help="Controls how prices appear on printed documents. "
         "'Show Discounts' displays reference price with discount breakdown. "
