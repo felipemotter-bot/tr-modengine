@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!-- Picking form: add planned_delivery_date next to scheduled_date,
+         invisible when not applicable, readonly for non-planners. -->
+    <record id="view_picking_form_inherit_delivery_planning" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.delivery.planning</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='scheduled_date']" position="before">
+                <field name="is_sale_delivery_planning_applicable" invisible="1" />
+                <field name="is_delivery_planned" invisible="1" />
+                <field
+          name="planned_delivery_date"
+          attrs="{'invisible': [('is_sale_delivery_planning_applicable', '=', False)]}"
+          groups="tr_sale_delivery_planning.group_delivery_planner"
+        />
+                <field
+          name="planned_delivery_date"
+          string="Planned Delivery Date"
+          readonly="1"
+          attrs="{'invisible': [('is_sale_delivery_planning_applicable', '=', False)]}"
+          groups="!tr_sale_delivery_planning.group_delivery_planner"
+        />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search view: blindar filtros nativos "Late" e "Planning Issues" -->
+    <record id="view_picking_internal_search_inherit_planning" model="ir.ui.view">
+        <field name="name">stock.picking.search.inherit.delivery.planning</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='late']" position="attributes">
+                <attribute name="domain">[
+                    '&amp;',
+                    ('state', 'in', ('assigned', 'waiting', 'confirmed')),
+                    '&amp;',
+                    '|',
+                    ('is_sale_delivery_planning_applicable', '=', False),
+                    ('is_delivery_planned', '=', True),
+                    '|', '|',
+                    ('has_deadline_issue', '=', True),
+                    ('date_deadline', '&lt;', current_date),
+                    ('scheduled_date', '&lt;', current_date),
+                ]</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='planning_issues']" position="attributes">
+                <attribute name="domain">[
+                    '&amp;',
+                    '|',
+                    ('is_sale_delivery_planning_applicable', '=', False),
+                    ('is_delivery_planned', '=', True),
+                    '|',
+                    ('delay_alert_date', '!=', False),
+                    '&amp;',
+                    ('scheduled_date', '&lt;', time.strftime('%Y-%m-%d %H:%M:%S')),
+                    ('state', 'in', ('assigned', 'waiting', 'confirmed')),
+                ]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

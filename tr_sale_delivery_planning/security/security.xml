@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="module_category_sale_delivery_planning" model="ir.module.category">
+        <field name="name">Sale Delivery Planning</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <record id="group_delivery_planner" model="res.groups">
+        <field name="name">Delivery Planner</field>
+        <field name="category_id" ref="module_category_sale_delivery_planning" />
+        <field name="implied_ids" eval="[(6, 0, [ref('stock.group_stock_user')])]" />
+        <field name="comment">
+            User allowed to set the planned delivery date on outgoing
+            sale pickings. Members of this group can write the field
+            planned_delivery_date on stock.picking; other users see it
+            read-only. The check is enforced server-side via Python
+            guard, with a bypass context used only by the automatic
+            initialization at sale order confirmation.
+        </field>
+    </record>
+</odoo>
