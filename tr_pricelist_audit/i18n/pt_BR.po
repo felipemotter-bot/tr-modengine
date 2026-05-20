@@ -1,0 +1,333 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* tr_pricelist_audit
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-20 01:23+0000\n"
+"PO-Revision-Date: 2026-05-20 01:23+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "(empty)"
+msgstr "(vazio)"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_needaction
+msgid "Action Needed"
+msgstr "Ação Necessária"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__active
+msgid "Active"
+msgstr "Ativo"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_ids
+msgid "Activities"
+msgstr "Atividades"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "Decoração da Exceção da Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_state
+msgid "Activity State"
+msgstr "Estado da Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "Ícone do Tipo de Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_attachment_count
+msgid "Attachment Count"
+msgstr "Contagem de Anexos"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Batch change on %(n)d pricelist rules"
+msgstr "Alteração em lote de %(n)d regras da lista de preços"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Category: %(name)s"
+msgstr "Categoria: %(name)s"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__company_id
+msgid "Company"
+msgstr "Empresa"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__currency_id
+msgid "Currency"
+msgstr "Moeda"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__discount_policy
+msgid "Discount Policy"
+msgstr "Política de Desconto"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_follower_ids
+msgid "Followers"
+msgstr "Seguidores"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Seguidores (Parceiros)"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "Ícone do Font Awesome, ex.: fa-tasks"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Global"
+msgstr ""
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__has_message
+msgid "Has Message"
+msgstr "Tem Mensagem"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_exception_icon
+msgid "Icon"
+msgstr "Ícone"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "Ícone para indicar uma atividade de exceção."
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Se marcado, novas mensagens requerem sua atenção."
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__message_has_error
+msgid "If checked, some messages have a delivery error."
+msgstr "Se marcado, algumas mensagens têm erro de entrega."
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__active
+msgid ""
+"If unchecked, it will allow you to hide the pricelist without removing it."
+msgstr "Se desmarcado, permite ocultar a lista de preços sem removê-la."
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_is_follower
+msgid "Is Follower"
+msgstr "É Seguidor"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Line added (moved from %(origin)s): %(desc)s"
+msgstr "Linha adicionada (movida de %(origin)s): %(desc)s"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Line added: %(desc)s"
+msgstr "Linha adicionada: %(desc)s"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Line removed (moved to %(target)s): %(desc)s"
+msgstr "Linha removida (movida para %(target)s): %(desc)s"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Line removed: %(desc)s"
+msgstr "Linha removida: %(desc)s"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Line updated: %(desc)s"
+msgstr "Linha atualizada: %(desc)s"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_main_attachment_id
+msgid "Main Attachment"
+msgstr "Anexo Principal"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_has_error
+msgid "Message Delivery error"
+msgstr "Erro de Entrega de Mensagem"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_ids
+msgid "Messages"
+msgstr "Mensagens"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "Prazo da Minha Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_calendar_event_id
+msgid "Next Activity Calendar Event"
+msgstr "Evento de Calendário da Próxima Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "Prazo da Próxima Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_summary
+msgid "Next Activity Summary"
+msgstr "Resumo da Próxima Atividade"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_type_id
+msgid "Next Activity Type"
+msgstr "Tipo da Próxima Atividade"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "No"
+msgstr "Não"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Número de Ações"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__message_has_error_counter
+msgid "Number of errors"
+msgstr "Número de erros"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Número de mensagens que requerem ação"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Número de mensagens com erro de entrega"
+
+#. module: tr_pricelist_audit
+#: model:ir.model,name:tr_pricelist_audit.model_product_pricelist
+msgid "Pricelist"
+msgstr "Lista de Preços"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__name
+msgid "Pricelist Name"
+msgstr "Nome da Lista de Preços"
+
+#. module: tr_pricelist_audit
+#: model:ir.model,name:tr_pricelist_audit.model_product_pricelist_item
+msgid "Pricelist Rule"
+msgstr "Regra da Lista de Preços"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Product: %(name)s"
+msgstr "Produto: %(name)s"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__activity_user_id
+msgid "Responsible User"
+msgstr "Usuário Responsável"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Rule #%(rid)s"
+msgstr "Regra #%(rid)s"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__smart_search
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist_item__smart_search
+msgid "Smart Search"
+msgstr "Busca Inteligente"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"Status baseado nas atividades\n"
+"Atrasada: a data limite já passou\n"
+"Hoje: a data da atividade é hoje\n"
+"Planejada: atividades futuras."
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "Tipo da atividade de exceção no registro."
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Variant: %(name)s"
+msgstr "Variante: %(name)s"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,field_description:tr_pricelist_audit.field_product_pricelist__website_message_ids
+msgid "Website Messages"
+msgstr "Mensagens do Site"
+
+#. module: tr_pricelist_audit
+#: model:ir.model.fields,help:tr_pricelist_audit.field_product_pricelist__website_message_ids
+msgid "Website communication history"
+msgstr "Histórico de comunicação do site"
+
+#. module: tr_pricelist_audit
+#. odoo-python
+#: code:addons/tr_pricelist_audit/models/product_pricelist_item.py:0
+#, python-format
+msgid "Yes"
+msgstr "Sim"
