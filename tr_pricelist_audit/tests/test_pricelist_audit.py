@@ -179,6 +179,28 @@ class TestPricelistAudit(TransactionCase):
         latest = str(self._msg_bodies(self.pricelist)[0])
         self.assertIn("Variant: Audit Var Tmpl", latest)
 
+    def test_item_write_clears_many2one_logs_empty(self):
+        categ = self.env["product.category"].create({"name": "Cat X"})
+        item = self.Item.create(
+            {
+                "pricelist_id": self.pricelist.id,
+                "applied_on": "2_product_category",
+                "categ_id": categ.id,
+                "fixed_price": 5.0,
+            }
+        )
+        item.write({"categ_id": False, "applied_on": "3_global"})
+        latest = str(self._msg_bodies(self.pricelist)[0])
+        self.assertIn("Cat X", latest)
+        self.assertIn("(empty)", latest)
+
+    def test_item_write_sets_date_logs_empty_to_value(self):
+        item = self.Item.create({"pricelist_id": self.pricelist.id, "fixed_price": 5.0})
+        item.write({"date_start": "2026-01-01"})
+        latest = str(self._msg_bodies(self.pricelist)[0])
+        self.assertIn("(empty)", latest)
+        self.assertIn("2026-01-01", latest)
+
     def test_item_write_logs_many2one_change(self):
         categ1 = self.env["product.category"].create({"name": "Cat A"})
         categ2 = self.env["product.category"].create({"name": "Cat B"})

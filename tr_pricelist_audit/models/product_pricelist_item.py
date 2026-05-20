@@ -41,13 +41,8 @@ def _format_value(record, fname, value):
         return value.display_name
     if field.type in ("date", "datetime"):
         return str(value) if value else _("(empty)")
-    if field.type == "selection":
-        if not value:
-            return _("(empty)")
-        return dict(field._description_selection(record.env)).get(value, str(value))
-    if field.type == "boolean":
-        return _("Yes") if value else _("No")
-    return str(value) if value else _("(empty)")
+    # selection — applied_on / compute_price are required, always set.
+    return dict(field._description_selection(record.env)).get(value, str(value))
 
 
 def _render_values_html(values):
